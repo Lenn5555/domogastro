@@ -1,0 +1,5 @@
+site/
+__pycache__/
+*.pyc
+# Einkaufspreise und Lieferanten nie ins Repo
+intern/
