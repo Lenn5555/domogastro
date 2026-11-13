@@ -1,0 +1,27 @@
+# Prüft den Shop-Server bei jedem Push (nur Tests, nichts wird eingerichtet).
+# Veröffentlichen auf Cloudflare NUR von Hand mit "deploy" = ja; braucht das Secret CLOUDFLARE_API_TOKEN.
+name: Shop-Server
+on:
+  push:
+    paths: ["worker/**", "daten/**", "werkzeuge/build_site.py"]
+  workflow_dispatch:
+    inputs:
+      deploy: { description: "Auf Cloudflare veröffentlichen? (ja/nein)", default: "nein" }
+permissions: { contents: read }
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: python3 werkzeuge/build_site.py
+      - run: npm ci || npm install
+        working-directory: worker
+      - run: npm test
+        working-directory: worker
+      - if: github.event_name == 'workflow_dispatch' && inputs.deploy == 'ja'
+        run: npx wrangler deploy
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
