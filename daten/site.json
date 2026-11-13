@@ -1,10 +1,10 @@
 {
-  "_hinweis": "Einstellungen der Domogastro-Website. anfrage_email: Empfänger für Bestellungen/Anfragen. bestell_api: URL des Cloudflare-Workers, leer = Bestellung öffnet vorbereitete E-Mail. mwst: Steuersatz. standard_modus: privat oder gewerbe.",
+  "_hinweis": "Einstellungen der Domogastro-Website. anfrage_email: Empfänger für Bestellungen/Anfragen. api: URL des Cloudflare-Workers (oder Umgebungsvariable SITE_API), leer = Bestellung öffnet vorbereitete E-Mail. mwst: Steuersatz. standard_modus: privat oder gewerbe.",
   "name": "Domo Gastro",
   "claim": "Zuhause in der Gastronomie",
   "anfrage_email": "sales@ts-systec.de",
   "betreiber_zeile": "Ein Angebot der T&S Systemtechnik GmbH, Pfungstadt.",
-  "bestell_api": "",
+  "api": "",
   "mwst": 0.19,
   "standard_modus": "privat"
 }

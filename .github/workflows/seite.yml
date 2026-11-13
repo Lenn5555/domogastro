@@ -1,0 +1,32 @@
+# Baut die Website und veröffentlicht sie auf GitHub Pages.
+# Läuft NUR von Hand (Actions → "Website veröffentlichen" → Run workflow), damit nichts ohne Freigabe online geht.
+# Vorher: Settings → Pages → Source "GitHub Actions". Variable SITE_API = Adresse des Workers (optional).
+name: Website veröffentlichen
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency: { group: pages, cancel-in-progress: true }
+jobs:
+  bauen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python3 werkzeuge/build_site.py
+        env:
+          SITE_API: ${{ vars.SITE_API }}
+          # Ohne eigene Domain (Datei CNAME) liegt die Seite unter /domogastro
+          SITE_BASIS: ${{ hashFiles('CNAME') == '' && '/domogastro' || '' }}
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+  veroeffentlichen:
+    needs: bauen
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: "${{ steps.d.outputs.page_url }}" }
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4

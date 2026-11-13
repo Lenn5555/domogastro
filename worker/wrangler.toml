@@ -1,0 +1,30 @@
+# Shop-Server für Domo Gastro: Kundenkonto, Bestellung, Bestellstatus, Bewertungen, PayPal.
+# NOCH NICHT EINGERICHTET. Erst nach Lenns Okay: Cloudflare-Konto, D1-Datenbank anlegen, Secrets setzen, deployen.
+# Geheimnisse NIE hier eintragen, sondern als Worker-Secrets: RESEND_API_KEY, PAYPAL_CLIENT_ID, PAYPAL_SECRET, VERWALTUNG_SCHLUESSEL.
+name = "domogastro-shop"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Seiten, die den Server aufrufen dürfen (kommagetrennt)
+HERKUNFT = "https://lenn5555.github.io,http://localhost:8000"
+# Öffentliche Adresse der Website (für Links in Mails und die Rückkehr von PayPal)
+SITE_URL = "https://lenn5555.github.io/domogastro"
+BESTELL_EMAIL = "sales@ts-systec.de"
+# Absender muss bei Resend als Domain bestätigt sein (SPF, DKIM, DMARC). Bis dahin werden keine Mails verschickt.
+ABSENDER = "Domo Gastro <bestellung@domogastro.de>"
+BANK_INHABER = "T&S Systemtechnik GmbH"
+BANK_IBAN = "DE17 5084 0005 0610 6090 00"
+# "ja" = PayPal-Testumgebung
+PAYPAL_SANDBOX = "ja"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "domogastro"
+# Nach `wrangler d1 create domogastro` hier die ausgegebene ID eintragen
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[[ratelimits]]
+name = "BREMSE"
+namespace_id = "2001"
+simple = { limit = 30, period = 60 }
