@@ -6,7 +6,8 @@
 - Abzugshauben gleicher Bauart werden zu einem Produkt mit Breiten-Varianten zusammengefasst
 - Auffälligkeiten (Dubletten, kurze Texte, fremde Bilder) landen in daten/pruefliste.csv
 
-Preise stehen nicht im Metro-Export; sie kommen aus daten/preise.csv (Artikelnummer;Preis netto), sobald vorhanden.
+Preise, Bestand, Lieferzeit und Hersteller kommen aus dem METRO-Angebotsexport (quelle/metro-angebote.xlsx),
+Zuordnung über Artikelnummer (SKU, sonst MPN). daten/preise.csv (Artikelnummer;Preis netto) überschreibt einzelne Preise.
 
 Aufruf: python3 werkzeuge/import_metro.py [quelle/metro-export.xlsx]
 """
@@ -26,6 +27,7 @@ QUELLE = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "quelle/metro-export
 ZIEL = ROOT / "daten/produkte.json"
 PRUEF = ROOT / "daten/pruefliste.csv"
 PREISE = ROOT / "daten/preise.csv"
+ANGEBOTE = ROOT / "quelle/metro-angebote.xlsx"
 
 # Reihenfolge zählt: erste passende Regel gewinnt. (Kategorie, Unterkategorie, Muster im Namen)
 REGELN = [
@@ -74,6 +76,17 @@ def zahl(v):
         return None
 
 
+FAKTOR = {None: 1, "mm": 1, "cm": 10, "m": 1000}
+
+
+def mm(wert, einheit):
+    """Maß in mm; der Export mischt mm, cm und m."""
+    try:
+        return round(float(str(wert).replace(",", ".")) * FAKTOR[einheit])
+    except (TypeError, ValueError, KeyError):
+        return None
+
+
 def kategorie(name):
     for k, u, m in REGELN:
         if re.search(m, name, re.I):
@@ -98,6 +111,27 @@ def main():
     def alle(z, name):
         return [z[i] for i in spalten.get(name, []) if z[i] not in (None, "")]
 
+    angebote = {}
+    if ANGEBOTE.exists():
+        aws = openpyxl.load_workbook(ANGEBOTE, data_only=True).worksheets[0]
+        az = list(aws.iter_rows(values_only=True))
+        for r in az[1:]:
+            o = dict(zip(az[0], r))
+            if not o.get("Net price"):
+                continue
+            eintrag = {
+                "preis": float(str(o["Net price"]).replace(",", ".")),
+                "bestand": zahl(o.get("Quantity")) or 0,
+                "lieferzeit": [zahl(o.get("Processing time min")), zahl(o.get("Processing time max"))],
+                "spedition": str(o.get("Freight forwarding")).lower() == "yes",
+                "hersteller": o.get("Manufacturer"),
+                "staffel": {n: float(o[f"Net Unit Price for {n}+ pcs"]) for n in (2, 3, 4, 5)
+                            if o.get(f"Net Unit Price for {n}+ pcs")},
+            }
+            for k in (o.get("MPN"), o.get("SKU")):  # SKU gewinnt
+                if k:
+                    angebote[str(k).strip()] = eintrag
+
     preise = {}
     if PREISE.exists():
         for r in csv.reader(PREISE.open(encoding="utf-8"), delimiter=";"):
@@ -110,6 +144,7 @@ def main():
         name = str(feld(z, "Product name DE")).strip()
         sku = str(feld(z, "MPN")).strip()
         k, u = kategorie(name)
+        ang = angebote.get(sku, {})
         bilder = [str(b) for b in alle(z, "Image")]
         a = {
             "sku": sku,
@@ -120,12 +155,17 @@ def main():
             "text": ohne_html(feld(z, "Description DE")),
             "merkmale": [ohne_html(m) for m in alle(z, "Key feature DE")],
             "masse_mm": {
-                "breite": zahl(feld(z, "Width")),
-                "tiefe": zahl(feld(z, "Length")),
-                "hoehe": zahl(feld(z, "Height")),
+                "breite": mm(feld(z, "Width"), feld(z, "Width unit")),
+                "tiefe": mm(feld(z, "Length"), feld(z, "Length unit")),
+                "hoehe": mm(feld(z, "Height"), feld(z, "Height unit")),
             },
             "bilder": bilder,
-            "preis_netto": preise.get(sku),
+            "preis_netto": preise.get(sku, ang.get("preis")),
+            "bestand": ang.get("bestand"),
+            "lieferzeit_tage": ang.get("lieferzeit"),
+            "spedition": ang.get("spedition", False),
+            "hersteller": ang.get("hersteller") or feld(z, "Manufacturer"),
+            "staffel_netto": ang.get("staffel") or None,
             "sicherheit": ohne_html(feld(z, "Product safety instructions DE")) or None,
             "energie": {
                 "klasse": feld(z, "Energy efficiency class"),
@@ -134,10 +174,14 @@ def main():
             } if feld(z, "Energy efficiency class") else None,
         }
         for einheit in ("Width unit", "Length unit", "Height unit"):
-            if feld(z, einheit) not in (None, "mm"):
-                pruef.append((sku, name, f"Einheit {einheit} = {feld(z, einheit)}"))
+            if feld(z, einheit) not in FAKTOR:
+                pruef.append((sku, name, f"Unbekannte Einheit {einheit} = {feld(z, einheit)}"))
         if len(a["text"]) < 80:
             pruef.append((sku, name, f"Beschreibung sehr kurz ({len(a['text'])} Zeichen)"))
+        if not a["preis_netto"]:
+            pruef.append((sku, name, "Kein Preis im Angebotsexport"))
+        elif ang and ang["bestand"] == 0:
+            pruef.append((sku, name, "Bestand 0 bei Metro"))
         if any("ts-systemtechnik.de" not in b for b in bilder):
             pruef.append((sku, name, "Bild von fremder Seite: Bildrechte klären"))
         artikel.append(a)
@@ -165,7 +209,8 @@ def main():
         basis = liste[0][1]
         produkte.append(dict(
             basis, sku=basis["sku"], name=fam,
-            varianten=[{"breite_mm": b, "sku": a["sku"], "preis_netto": a["preis_netto"],
+            varianten=[{"breite_mm": b, "sku": a["sku"], "preis_netto": a["preis_netto"], "bestand": a["bestand"],
+                        "lieferzeit_tage": a["lieferzeit_tage"],
                         "masse_mm": a["masse_mm"], "bilder": a["bilder"]} for b, a in liste],
         ))
 
@@ -186,6 +231,7 @@ def main():
         w.writerow(["Artikelnummer", "Name", "Hinweis"])
         w.writerows(pruef)
 
+    print(f"Angebote ohne Produkt: {len(set(angebote) - {a['sku'] for a in artikel})} Artikelnummern")
     print(f"{len(artikel)} Zeilen → {len(produkte)} Produkte ({len(familien)} Haubenfamilien), "
           f"{sum(1 for a in artikel if a['preis_netto'])} mit Preis, {len(pruef)} Prüfhinweise")
     for (k, u), n in sorted(Counter((p["kategorie"], p["unterkategorie"]) for p in produkte).items()):
