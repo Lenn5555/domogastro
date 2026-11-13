@@ -25,6 +25,8 @@ BASIS = os.environ.get("SITE_BASIS", "").rstrip("/")
 API = os.environ.get("SITE_API", CFG.get("api", "")).rstrip("/")
 CNAME = (ROOT / "CNAME").read_text(encoding="utf-8").strip() if (ROOT / "CNAME").exists() else ""
 SITE_URL = f"https://{CNAME}" if CNAME else "https://lenn5555.github.io/domogastro"
+# Vorschau: für Suchmaschinen gesperrt, mit Hinweisleiste oben (SITE_VORSCHAU=ja)
+VORSCHAU = os.environ.get("SITE_VORSCHAU", "") == "ja"
 e = html.escape
 SEITEN = []
 
@@ -97,10 +99,11 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <title>{e(titel)}</title><meta name="description" content="{e((beschreibung or CFG['claim'])[:160])}">
 <link rel="canonical" href="{SITE_URL}{pfad}"><meta name="theme-color" content="#0A1628">
 <meta property="og:title" content="{e(titel)}"><meta property="og:locale" content="de_DE">
-{'' if index else '<meta name="robots" content="noindex">'}
+{'' if index and not VORSCHAU else '<meta name="robots" content="noindex">'}
 <link rel="stylesheet" href="{u('/stil.css')}"><link rel="icon" href="{u('/logo.svg')}">
 <script>window.DG={json.dumps(dg)}</script><script src="{u('/shop.js')}" defer></script></head>
 <body>
+{'<div style="background:#F2B84B;color:#0A1628;text-align:center;font:600 14px/1.4 sans-serif;padding:8px 16px">Vorschau – noch kein echter Shop. Bestellungen werden nicht ausgeführt.</div>' if VORSCHAU else ''}
 <div class="top g"><div class="in">
 <form class="suche" action="{u('/suche/')}" role="search"><label class="sr" for="q">Suche</label><input id="q" name="q" placeholder="Suche nach Artikel, Artikelnummer oder Kategorie"><button>Suchen</button></form>
 <div class="r"><a class="konto-link" href="{u('/konto/')}">Anmelden | Konto anlegen</a>
@@ -379,7 +382,10 @@ def main():
     heute = date.today().isoformat()
     (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
         "".join(f"<url><loc>{SITE_URL}{p}</loc><lastmod>{heute}</lastmod></url>\n" for p in SEITEN) + "</urlset>\n", encoding="utf-8")
-    (OUT / "robots.txt").write_text(f"User-agent: *\nDisallow: /konto/\nDisallow: /warenkorb/\nDisallow: /bestellung/\nDisallow: /verwaltung/\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
+    if VORSCHAU:
+        (OUT / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+    else:
+        (OUT / "robots.txt").write_text(f"User-agent: *\nDisallow: /konto/\nDisallow: /warenkorb/\nDisallow: /bestellung/\nDisallow: /verwaltung/\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
     print(f"site/ gebaut: {len(PRODUKTE)} Produktseiten, {len(kategorien())} Kategorien, {len(artikel)} Artikelnummern, API {'an' if API else 'aus'}")
 
 

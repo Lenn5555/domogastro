@@ -4,6 +4,8 @@
 name: Website veröffentlichen
 on:
   workflow_dispatch:
+    inputs:
+      vorschau: { description: "Nur Vorschau (für Google gesperrt, Hinweisleiste)? ja/nein", default: "ja" }
 permissions:
   contents: read
   pages: write
@@ -19,6 +21,7 @@ jobs:
       - run: python3 werkzeuge/build_site.py
         env:
           SITE_API: ${{ vars.SITE_API }}
+          SITE_VORSCHAU: ${{ inputs.vorschau }}
           # Ohne eigene Domain (Datei CNAME) liegt die Seite unter /domogastro
           SITE_BASIS: ${{ hashFiles('CNAME') == '' && '/domogastro' || '' }}
       - uses: actions/upload-pages-artifact@v3
