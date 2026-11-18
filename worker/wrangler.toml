@@ -1,9 +1,11 @@
 # Shop-Server für Domo Gastro: Kundenkonto, Bestellung, Bestellstatus, Bewertungen, PayPal.
-# NOCH NICHT EINGERICHTET. Erst nach Lenns Okay: Cloudflare-Konto, D1-Datenbank anlegen, Secrets setzen, deployen.
+# Einrichten und Veröffentlichen über GitHub Actions → "Shop-Server" (siehe .github/workflows/server.yml).
 # Geheimnisse NIE hier eintragen, sondern als Worker-Secrets: RESEND_API_KEY, PAYPAL_CLIENT_ID, PAYPAL_SECRET, VERWALTUNG_SCHLUESSEL.
 name = "domogastro-shop"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
+# Cloudflare-Konto (nicht geheim)
+account_id = ""
 
 [vars]
 # Seiten, die den Server aufrufen dürfen (kommagetrennt)
@@ -21,7 +23,7 @@ PAYPAL_SANDBOX = "ja"
 [[d1_databases]]
 binding = "DB"
 database_name = "domogastro"
-# Nach `wrangler d1 create domogastro` hier die ausgegebene ID eintragen
+# ID aus dem Lauf "datenbank-anlegen"
 database_id = "00000000-0000-0000-0000-000000000000"
 
 [[ratelimits]]
