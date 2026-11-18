@@ -20,54 +20,6 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site"
 CFG = json.loads((ROOT / "daten/site.json").read_text(encoding="utf-8"))
 PRODUKTE = json.loads((ROOT / "daten/produkte.json").read_text(encoding="utf-8"))["produkte"]
-# Echte Bewertungen von METRO Marketplace (gekennzeichnet, getrennt von eigenen Bewertungen)
-_METRO_DATEI = Path(os.environ.get("METRO_BEWERTUNGEN") or ROOT / "daten/metro-bewertungen.json")
-METRO = json.loads(_METRO_DATEI.read_text(encoding="utf-8")).get("bewertungen", {}) if _METRO_DATEI.exists() else {}
-# Solange keine echten Metro-Zahlen da sind: Beispielzahlen NUR in der versteckten Vorschau, sichtbar als „Beispiel“ markiert
-METRO_BEISPIEL = False
-if not METRO and os.environ.get("SITE_VORSCHAU", "") == "ja" and (ROOT / "daten/metro-beispiel.json").exists():
-    METRO = json.loads((ROOT / "daten/metro-beispiel.json").read_text(encoding="utf-8"))["bewertungen"]
-    METRO_BEISPIEL = True
-BEISPIEL = '<span class="beispiel">Beispiel</span>'
-
-
-def metro(p):
-    """Anzahl je Sternzahl (1–5) über Produkt und alle Varianten, oder None."""
-    v = {k: 0 for k in range(1, 6)}
-    for schl in {p["slug"], p.get("sku") or "", *(x["sku"] for x in p["varianten"])}:
-        for k, n in (METRO.get(schl) or {}).items():
-            v[int(k)] += int(n)
-    n = sum(v.values())
-    return (v, n, sum(k * m for k, m in v.items()) / n) if n else None
-
-
-def sterne_text(schnitt):
-    return "".join("★" if i <= round(schnitt) else "☆" for i in range(1, 6))
-
-
-def metro_kurz(p, karte=False):
-    m = metro(p)
-    if not m:
-        return ""
-    v, n, s = m
-    if karte:
-        return f'<span class="mk sterne" title="{s:.1f} von 5 bei METRO Marketplace">{sterne_text(s)} <small>({n})</small>{BEISPIEL if METRO_BEISPIEL else ""}</span>'.replace(".", ",", 1)
-    return (f'<a class="metro-kurz" href="#metro"><span class="sterne">{sterne_text(s)}</span> '
-            f'{s:.1f} von 5 · {n} {"Bewertung" if n == 1 else "Bewertungen"} bei METRO Marketplace{" " + BEISPIEL if METRO_BEISPIEL else ""}</a>').replace(".", ",", 1)
-
-
-def metro_block(p):
-    m = metro(p)
-    if not m:
-        return ""
-    v, n, s = m
-    balken = "".join(f'<div><span>{k} ★</span><i><b style="width:{round(v[k] / n * 100)}%"></b></i><span>{v[k]} {"Person" if v[k] == 1 else "Personen"}</span></div>' for k in range(5, 0, -1))
-    return (f'<div class="bewertungen" id="metro"><h2 class="titel" style="font-size:28px">Bewertungen von METRO Marketplace '
-            f'<span class="sterne">{sterne_text(s)} {s:.1f} von 5 ({n})</span></h2>'.replace(f"{s:.1f}", f"{s:.1f}".replace(".", ","))
-            + ('<p class="hinweis">Beispielzahlen für die Vorschau, keine echten Bewertungen. Im echten Shop stehen hier nur die echten Zahlen von METRO.</p>' if METRO_BEISPIEL else '')
-            + '<p class="klein">Diese Bewertungen haben Kundinnen und Kunden zu diesem Artikel auf METRO Marketplace abgegeben, wo die T&amp;S Systemtechnik GmbH ihn ebenfalls verkauft. '
-              'Wir übernehmen Anzahl und Sterne unverändert; sie stammen nicht aus Käufen bei Domo Gastro.</p>'
-            f'<div class="verteilung">{balken}</div></div>')
 RECHT = ROOT / "daten/rechtstexte"
 BASIS = os.environ.get("SITE_BASIS", "").rstrip("/")
 API = (os.environ.get("SITE_API") or CFG.get("api", "")).rstrip("/")
@@ -174,7 +126,7 @@ def karte(p):
     pr = ab_preis(p)
     return (f'<a class="p" href="{u("/produkt/" + p["slug"] + "/")}" data-unter="{e(p["unterkategorie"])}" data-name="{e(p["name"])}" data-preis="{pr or ""}">'
             f'<div class="ph">{f"<img src={chr(34)}{e(b)}{chr(34)} alt={chr(34)}{chr(34)} loading=lazy>" if b else ""}</div>'
-            f'<p class="n">{e(p["name"])}</p>{metro_kurz(p, True)}<span class="t">{e(p["hersteller"] or "")}{" · " + str(len(p["varianten"])) + " Breiten" if p["varianten"] else ""}</span>'
+            f'<p class="n">{e(p["name"])}</p><span class="t">{e(p["hersteller"] or "")}{" · " + str(len(p["varianten"])) + " Breiten" if p["varianten"] else ""}</span>'
             f'{preis_html(pr, bool(p["varianten"]) and len(set(preise(p))) > 1)}</a>')
 
 
@@ -217,14 +169,13 @@ def produktseite(p):
 <nav class="pfad" aria-label="Pfad"><a href="{u('/')}">Start</a> › <a href="{u('/' + slug(p['kategorie']) + '/')}">{e(p['kategorie'])}</a> › <a href="{u('/' + slug(p['kategorie']) + '/#' + p['unterkategorie'])}">{e(p['unterkategorie'])}</a></nav>
 <article class="produkt" data-slug="{e(p['slug'])}">
 <div class="bilder"><div class="gross">{f'<img src="{e(bilder[0])}" alt="{e(p["name"])}">' if bilder[0] else ''}</div><div class="daumen">{daumen}</div></div>
-<div class="info"><h1>{e(p['name'])}</h1><p class="marke">{e(p['hersteller'] or '')}</p>{metro_kurz(p)}
+<div class="info"><h1>{e(p['name'])}</h1><p class="marke">{e(p['hersteller'] or '')}</p>
 {wahl}{preis}
 <div class="status-zeile"><span class="lieferzeit">{e(lz)}</span></div>
 {kauf}{hinweis}
 <ul class="merkmale">{''.join(f'<li>{e(x)}</li>' for x in p['merkmale'])}</ul>
 <table class="tabelle">{tabelle}</table></div>
 <div class="beschreibung"><h2 class="titel" style="font-size:28px">Beschreibung</h2>{text}</div>
-{metro_block(p)}
 <div class="bewertungen" id="bewertungen" hidden><h2 class="titel" style="font-size:28px">Bewertungen <span class="schnitt sterne"></span></h2>
 <p class="klein">Bewerten können nur angemeldete Kundinnen und Kunden, die dieses Produkt bei uns gekauft haben. So stammt jede Bewertung von einem echten Kauf. Bewertungen erscheinen sofort; wir veröffentlichen positive wie negative und entfernen nur Beiträge, die gegen unsere Regeln verstoßen.</p>
 <div class="liste"></div>

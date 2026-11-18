@@ -147,10 +147,6 @@ select,input[type=text],input[type=email],input[type=password],input[type=tel],i
 .bewertungen{grid-column:1/-1;border-top:1px solid var(--n2);padding-top:28px}
 .bewertung{border-bottom:1px solid var(--n2);padding-block:14px}
 .bewertung p{margin:4px 0;color:var(--soft)}
-.metro-kurz{display:inline-block;margin:-4px 0 12px;font-size:14px;color:var(--soft);text-decoration:none}
-.metro-kurz:hover{color:var(--cyan)}
-.p .mk{display:block;font-size:12px;margin:2px 0}.p .mk small{color:var(--soft);letter-spacing:0}
-.beispiel{display:inline-block;margin-left:6px;padding:0 6px;border-radius:4px;background:#F2B84B;color:#0A1628;font:700 10px/16px var(--sans);letter-spacing:.04em;text-transform:uppercase;vertical-align:middle}
 .verteilung{display:grid;gap:6px;max-width:420px;margin:4px 0 12px;font-size:14px}
 .verteilung>div{display:grid;grid-template-columns:38px 1fr 90px;gap:10px;align-items:center}
 .verteilung span:first-child{color:var(--warn);white-space:nowrap}
