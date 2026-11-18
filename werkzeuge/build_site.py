@@ -217,7 +217,7 @@ def startseite(nach_kat):
         f'<a class="c" href="{u("/" + slug(k) + "/")}"><div class="ph"><img src="{e(bild)}" alt="" loading="lazy"></div><b>{e(k)}</b><span>{e(KAT_TEXT.get(k, ""))}</span></a>'
         for k in kategorien()
         for n, bild in [(sum(len(v) for v in nach_kat[k].values()), next((p["bilder"][0] for v in nach_kat[k].values() for p in v if p["bilder"]), ""))])
-    kacheln += (f'<a class="c" href="{u("/stellfuesse/")}"><div class="ph"><img src="{u("/bilder/beinundfuss-kachel.webp")}" alt="" loading="lazy"></div>'
+    kacheln += (f'<a class="c" href="{u("/stellfuesse/")}"><div class="ph"><img src="{u("/bilder/stellfuesse-kachel.webp")}" alt="" loading="lazy"></div>'
                 f'<b>{e(BF_TITEL)}</b><span>Unser Spezialshop beinundfuss.de</span></a>')
     inhalt = f"""<div class="hero g"><div class="in">
 <div class="copy"><div class="hand">Gute Gastronomie beginnt mit den richtigen Partnern!</div>
