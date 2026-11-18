@@ -22,7 +22,7 @@ CFG = json.loads((ROOT / "daten/site.json").read_text(encoding="utf-8"))
 PRODUKTE = json.loads((ROOT / "daten/produkte.json").read_text(encoding="utf-8"))["produkte"]
 RECHT = ROOT / "daten/rechtstexte"
 BASIS = os.environ.get("SITE_BASIS", "").rstrip("/")
-API = os.environ.get("SITE_API", CFG.get("api", "")).rstrip("/")
+API = (os.environ.get("SITE_API") or CFG.get("api", "")).rstrip("/")
 CNAME = (ROOT / "CNAME").read_text(encoding="utf-8").strip() if (ROOT / "CNAME").exists() else ""
 SITE_URL = f"https://{CNAME}" if CNAME else "https://lenn5555.github.io/domogastro"
 # Vorschau: für Suchmaschinen gesperrt, mit Hinweisleiste oben (SITE_VORSCHAU=ja)
