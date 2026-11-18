@@ -122,24 +122,35 @@
   function sterne(n) { var s = ""; for (var i = 1; i <= 5; i++) s += i <= Math.round(n) ? "★" : "☆"; return s; }
   function bewertungen(slug) {
     var box = $("#bewertungen"); if (!box) return;
-    var liste = $(".liste", box), form = $("form", box);
-    if (!DG.api) { liste.innerHTML = '<p class="klein">Bewertungen werden freigeschaltet, sobald der Shop-Server läuft.</p>'; form.hidden = true; return; }
-    api("/bewertungen?produkt=" + encodeURIComponent(slug)).then(function (d) {
-      $(".schnitt", box).textContent = d.anzahl ? sterne(d.schnitt) + " " + d.schnitt.toFixed(1).replace(".", ",") + " von 5 (" + d.anzahl + ")" : "";
-      liste.innerHTML = d.liste.length ? d.liste.map(function (b) {
-        return '<div class="bewertung"><span class="sterne">' + sterne(b.sterne) + "</span> <b>" + esc(b.titel) + "</b>" +
-          (b.verifiziert ? ' <span class="klein">· Verifizierter Kauf</span>' : "") +
-          "<p>" + esc(b.text) + '</p><span class="klein">' + esc(b.name) + " am " + new Date(b.datum).toLocaleDateString("de-DE") + "</span></div>";
-      }).join("") : '<p class="klein">Noch keine Bewertungen. Kaufen Sie das Produkt, können Sie es als Erste(r) bewerten.</p>';
-    }).catch(function () { liste.innerHTML = '<p class="klein">Bewertungen konnten nicht geladen werden.</p>'; });
-    if (!sitzung()) { form.innerHTML = '<p class="klein"><a href="' + B + '/konto/">Melden Sie sich an</a>, um ein gekauftes Produkt zu bewerten.</p>'; return; }
+    var liste = $(".liste", box), form = $("form", box), hinweis = $(".bew-hinweis", box);
+    if (!DG.api) { liste.innerHTML = '<p class="klein">Bewertungen werden freigeschaltet, sobald der Shop-Server läuft.</p>'; return; }
+    // Das Formular erscheint nur, wenn der Server bestätigt: angemeldet, gekauft und bezahlt, noch nicht bewertet
+    var HINWEIS = {
+      anmelden: '<a href="' + B + '/konto/">Melden Sie sich an</a>, um ein gekauftes Produkt zu bewerten.',
+      nicht_gekauft: "Bewerten können Sie dieses Produkt, sobald Sie es bei uns gekauft und bezahlt haben.",
+      schon_bewertet: "Sie haben dieses Produkt bereits bewertet. Vielen Dank!",
+    };
+    function laden() {
+      return api("/bewertungen?produkt=" + encodeURIComponent(slug)).then(function (d) {
+        $(".schnitt", box).textContent = d.anzahl ? sterne(d.schnitt) + " " + d.schnitt.toFixed(1).replace(".", ",") + " von 5 (" + d.anzahl + ")" : "";
+        liste.innerHTML = d.liste.length ? d.liste.map(function (b) {
+          return '<div class="bewertung"><span class="sterne">' + sterne(b.sterne) + "</span>" + (b.titel ? " <b>" + esc(b.titel) + "</b>" : "") +
+            (b.verifiziert ? ' <span class="klein">· Verifizierter Kauf</span>' : "") +
+            (b.text ? "<p>" + esc(b.text) + "</p>" : "<br>") + '<span class="klein">' + esc(b.name) + " am " + new Date(b.datum).toLocaleDateString("de-DE") + "</span></div>";
+        }).join("") : '<p class="klein">Noch keine Bewertungen. Kaufen Sie das Produkt, können Sie es als Erste(r) bewerten.</p>';
+        form.hidden = d.darf !== "ja";
+        hinweis.innerHTML = HINWEIS[d.darf] || "";
+      }).catch(function () { liste.innerHTML = '<p class="klein">Bewertungen konnten nicht geladen werden.</p>'; });
+    }
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var f = new FormData(form), st = $(".status", form);
       api("/bewertungen", { produkt: slug, sterne: +f.get("sterne"), titel: f.get("titel"), text: f.get("text") })
-        .then(function () { st.className = "status meldung ok"; st.textContent = "Danke! Ihre Bewertung erscheint nach kurzer Prüfung."; form.reset(); })
+        .then(function () { form.reset(); return laden(); })
+        .then(function () { hinweis.textContent = "Danke! Ihre Bewertung ist jetzt sichtbar."; })
         .catch(function (err) { st.className = "status meldung fehler"; st.textContent = err.message; });
     });
+    laden();
   }
 
   /* ---------- Kategorie: Filter und Sortierung ---------- */
@@ -249,7 +260,8 @@
         var daten = {
           modus: modus, positionen: r.pos.map(function (p) { return { sku: p.sku, menge: p.menge }; }),
           kunde: { name: f.get("name"), firma: f.get("firma") || "", ustid: f.get("ustid") || "", strasse: f.get("strasse"), plz: f.get("plz"), ort: f.get("ort"),
-                   email: f.get("email"), telefon: f.get("telefon") || "", hinweis: f.get("hinweis") || "" },
+                   email: f.get("email"), telefon: f.get("telefon") || "", hinweis: f.get("hinweis") || "",
+                   liefer: f.get("gleich") ? null : { firma: f.get("l_firma") || "", name: f.get("l_name"), strasse: f.get("l_strasse"), plz: f.get("l_plz"), ort: f.get("l_ort") } },
           zahlart: f.get("zahlart"), agb: !!f.get("agb"), gesamt_brutto: r.brutto,
           konto_anlegen: !!f.get("konto_anlegen"), passwort: f.get("passwort") || "",
         };
@@ -258,7 +270,8 @@
           // Übergangslösung ohne Server: vorbereitete E-Mail
           var zeilen = r.pos.map(function (p) { return p.menge + " × " + p.a.n + " (Art.-Nr. " + p.sku + ") je " + eur(p.a.p) + " netto"; });
           var text = "Bestellung (" + (istGewerbe() ? "Gewerbe" : "Privat") + ")\n\n" + zeilen.join("\n") + "\n\nSumme: " + eur(r.netto) + " netto, " + eur(r.brutto) + " brutto\nZahlart: " + daten.zahlart +
-            "\n\n" + [daten.kunde.firma, daten.kunde.name, daten.kunde.strasse, daten.kunde.plz + " " + daten.kunde.ort, daten.kunde.email, daten.kunde.telefon, daten.kunde.ustid, daten.kunde.hinweis].filter(Boolean).join("\n");
+            "\n\n" + [daten.kunde.firma, daten.kunde.name, daten.kunde.strasse, daten.kunde.plz + " " + daten.kunde.ort, daten.kunde.email, daten.kunde.telefon, daten.kunde.ustid, daten.kunde.hinweis].filter(Boolean).join("\n") +
+            (daten.kunde.liefer ? "\n\nLieferadresse:\n" + [daten.kunde.liefer.firma, daten.kunde.liefer.name, daten.kunde.liefer.strasse, daten.kunde.liefer.plz + " " + daten.kunde.liefer.ort].filter(Boolean).join("\n") : "");
           location.href = "mailto:" + DG.mail + "?subject=" + encodeURIComponent("Bestellung Domo Gastro") + "&body=" + encodeURIComponent(text);
           return;
         }
@@ -270,6 +283,15 @@
           location.href = B + "/bestellung/?nr=" + encodeURIComponent(d.nr) + "&email=" + encodeURIComponent(daten.kunde.email) + "&neu=1";
         }).catch(function (err) { knopf.disabled = false; st.className = "status meldung fehler"; st.textContent = err.message; });
       });
+      // Lieferadresse: nur wenn „gleich wie Rechnungsadresse“ abgewählt ist; dann darf die Rechnungsadresse auch im Ausland liegen
+      var gl = form.elements.gleich;
+      function lieferUmschalten() {
+        var eigen = !gl.checked;
+        $("#liefer").hidden = !eigen;
+        ["l_name", "l_strasse", "l_plz", "l_ort"].forEach(function (n) { form.elements[n].required = eigen; });
+        if (eigen) form.elements.plz.removeAttribute("pattern"); else form.elements.plz.setAttribute("pattern", "[0-9]{5}");
+      }
+      gl.addEventListener("change", lieferUmschalten); lieferUmschalten();
       var ka = form.elements.konto_anlegen;
       if (ka) ka.addEventListener("change", function () { $("#pw-feld").hidden = !ka.checked; form.elements.passwort.required = ka.checked; });
       if (s && ka) ka.closest("label").hidden = true;

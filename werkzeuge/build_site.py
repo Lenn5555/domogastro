@@ -177,12 +177,13 @@ def produktseite(p):
 <table class="tabelle">{tabelle}</table></div>
 <div class="beschreibung"><h2 class="titel" style="font-size:28px">Beschreibung</h2>{text}</div>
 <div class="bewertungen" id="bewertungen"><h2 class="titel" style="font-size:28px">Bewertungen <span class="schnitt sterne"></span></h2>
-<p class="klein">Bewerten können nur angemeldete Kundinnen und Kunden, die dieses Produkt bei uns gekauft haben. Wir prüfen jede Bewertung vor der Veröffentlichung auf Echtheit und veröffentlichen positive wie negative Bewertungen.</p>
+<p class="klein">Bewerten können nur angemeldete Kundinnen und Kunden, die dieses Produkt bei uns gekauft haben. So stammt jede Bewertung von einem echten Kauf. Bewertungen erscheinen sofort; wir veröffentlichen positive wie negative und entfernen nur Beiträge, die gegen unsere Regeln verstoßen.</p>
 <div class="liste"></div>
-<form class="kasten" style="margin-top:18px"><b>Produkt bewerten</b>
+<p class="klein bew-hinweis" style="margin-top:18px"></p>
+<form class="kasten" hidden style="margin-top:18px"><b>Produkt bewerten</b>
 <fieldset class="sternwahl" style="border:0;padding:0"><legend class="sr">Sterne</legend>{''.join(f'<input type="radio" id="s{i}" name="sterne" value="{i}" required><label for="s{i}" title="{i} Sterne">★</label>' for i in range(5, 0, -1))}</fieldset>
-<label>Überschrift <input type="text" name="titel" maxlength="80" required></label>
-<label>Ihre Erfahrung <textarea name="text" rows="4" maxlength="2000" required></textarea></label>
+<label>Überschrift (optional) <input type="text" name="titel" maxlength="80"></label>
+<label>Ihre Erfahrung (optional) <textarea name="text" rows="4" maxlength="2000"></textarea></label>
 <button class="btn pri" type="submit">Bewertung senden</button><p class="status" role="status"></p></form></div>
 </article></div></div>"""
     return seite(f"{p['name']} | Domo Gastro", inhalt, f"/produkt/{p['slug']}/", p["text"][:155], p["kategorie"])
@@ -236,16 +237,24 @@ def warenkorb():
 <form id="bestellung" hidden style="margin-top:28px">
 <p class="klein" id="gast-hinweis">Sie bestellen als Gast. Ein Konto ist nicht nötig. <a href="{u('/konto/')}">Anmelden</a></p>
 <p class="meldung nur-gewerbe" hidden>Sie bestellen als <b>Gewerbekunde</b>. Preise netto zzgl. MwSt.; es gilt kein Widerrufsrecht.</p>
-<fieldset><legend>Rechnungs- und Lieferadresse</legend>
-<label class="nur-gewerbe" hidden>Firma <input type="text" name="firma" autocomplete="organization"></label>
+<div class="adressen">
+<fieldset><legend>Rechnungsadresse</legend>
+<label class="nur-gewerbe" hidden>Firma <input type="text" name="firma" autocomplete="billing organization"></label>
 <label class="nur-gewerbe" hidden>USt-IdNr. (optional) <input type="text" name="ustid"></label>
-<label>Vor- und Nachname <input type="text" name="name" required autocomplete="name"></label>
-<label>Straße und Hausnummer <input type="text" name="strasse" required autocomplete="street-address"></label>
-<div class="zwei"><label>PLZ <input type="text" name="plz" required pattern="[0-9]{{5}}" autocomplete="postal-code" inputmode="numeric"></label><label>Ort <input type="text" name="ort" required autocomplete="address-level2"></label></div>
-<p class="klein">Wir liefern nur innerhalb Deutschlands.</p>
-<label>E-Mail <input type="email" name="email" required autocomplete="email"></label>
-<label>Telefon (für die Spedition) <input type="tel" name="telefon" autocomplete="tel"></label>
-<label>Hinweis zur Bestellung (optional) <textarea name="hinweis" rows="2" maxlength="1000"></textarea></label></fieldset>
+<label>Vor- und Nachname <input type="text" name="name" required autocomplete="billing name"></label>
+<label>Straße und Hausnummer <input type="text" name="strasse" required autocomplete="billing street-address"></label>
+<div class="zwei"><label>PLZ <input type="text" name="plz" required pattern="[0-9]{{5}}" autocomplete="billing postal-code" inputmode="numeric"></label><label>Ort <input type="text" name="ort" required autocomplete="billing address-level2"></label></div>
+<label>E-Mail (Pflicht, für die Bestellbestätigung) <input type="email" name="email" required autocomplete="email"></label>
+<label>Telefon (für die Spedition) <input type="tel" name="telefon" autocomplete="tel"></label></fieldset>
+<fieldset><legend>Lieferadresse</legend>
+<label class="check"><input type="checkbox" name="gleich" checked> Lieferadresse ist gleich Rechnungsadresse</label>
+<div id="liefer" class="liefer" hidden>
+<label>Firma (optional) <input type="text" name="l_firma" autocomplete="shipping organization"></label>
+<label>Vor- und Nachname <input type="text" name="l_name" autocomplete="shipping name"></label>
+<label>Straße und Hausnummer <input type="text" name="l_strasse" autocomplete="shipping street-address"></label>
+<div class="zwei"><label>PLZ <input type="text" name="l_plz" pattern="[0-9]{{5}}" autocomplete="shipping postal-code" inputmode="numeric"></label><label>Ort <input type="text" name="l_ort" autocomplete="shipping address-level2"></label></div></div>
+<p class="klein">Wir liefern nur innerhalb Deutschlands.</p></fieldset></div>
+<label style="display:block;margin-top:14px">Hinweis zur Bestellung (optional) <textarea name="hinweis" rows="2" maxlength="1000"></textarea></label>
 <fieldset><legend>Zahlungsart</legend>
 <label class="check"><input type="radio" name="zahlart" value="Vorkasse" checked> Vorkasse per Überweisung (Bankverbindung kommt per E-Mail)</label>
 <label class="check"><input type="radio" name="zahlart" value="PayPal"> PayPal oder Kreditkarte über PayPal (Sie werden zu PayPal weitergeleitet)</label></fieldset>
@@ -303,7 +312,7 @@ def textseite(titel, datei, pfad, beschreibung=""):
 
 def verwaltung():
     return f"""<div class="seite g"><div class="in" style="max-width:960px"><h1 class="titel">Verwaltung</h1>
-<p class="klein">Bestellstatus setzen und Bewertungen freigeben. Zugang nur mit dem Verwaltungsschlüssel.</p>
+<p class="klein">Bestellstatus setzen und Bewertungen verwalten. Zugang nur mit dem Verwaltungsschlüssel.</p>
 <div id="verwaltung"></div></div></div><script src="{u('/verwaltung.js')}" defer></script>"""
 
 

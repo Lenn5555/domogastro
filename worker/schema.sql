@@ -35,3 +35,5 @@ CREATE TABLE IF NOT EXISTS bewertungen (
   UNIQUE(produkt, kunde_id)
 );
 CREATE INDEX IF NOT EXISTS bewertungen_produkt ON bewertungen(produkt, freigegeben);
+-- Bewertungen erscheinen seit 2026-11-18 sofort (keine Freigabe mehr); ältere wartende einmalig freischalten
+UPDATE bewertungen SET freigegeben = 1 WHERE freigegeben = 0;

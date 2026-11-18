@@ -34,11 +34,18 @@ export function rechnen(positionen) {
 function kundendaten(k, modus) {
   const d = {
     name: text(k?.name, 120), firma: text(k?.firma, 120), ustid: text(k?.ustid, 30), strasse: text(k?.strasse, 120),
-    plz: text(k?.plz, 5), ort: text(k?.ort, 80), telefon: text(k?.telefon, 40), hinweis: text(k?.hinweis, 1000),
+    plz: text(k?.plz, 10), ort: text(k?.ort, 80), telefon: text(k?.telefon, 40), hinweis: text(k?.hinweis, 1000),
   };
-  if (!d.name || !d.strasse || !d.ort) throw new Fehler("Bitte Name und vollständige Adresse angeben.");
-  if (!/^\d{5}$/.test(d.plz)) throw new Fehler("Bitte eine gültige deutsche Postleitzahl angeben. Wir liefern nur innerhalb Deutschlands.");
+  if (!d.name || !d.strasse || !d.plz || !d.ort) throw new Fehler("Bitte Name und vollständige Rechnungsadresse angeben.");
   if (modus === "gewerbe" && !d.firma) throw new Fehler("Bitte den Firmennamen angeben oder oben auf „Privat“ wechseln.");
+  // Eigene Lieferadresse nur, wenn der Kunde „gleich wie Rechnungsadresse“ abgewählt hat
+  const l = k?.liefer;
+  if (l && typeof l === "object") {
+    d.liefer = { firma: text(l.firma, 120), name: text(l.name, 120), strasse: text(l.strasse, 120), plz: text(l.plz, 5), ort: text(l.ort, 80) };
+    if (!d.liefer.name || !d.liefer.strasse || !d.liefer.ort) throw new Fehler("Bitte Name und vollständige Lieferadresse angeben.");
+  }
+  if (!/^\d{5}$/.test(d.liefer ? d.liefer.plz : d.plz))
+    throw new Fehler("Bitte eine gültige deutsche Postleitzahl für die Lieferadresse angeben. Wir liefern nur innerhalb Deutschlands.");
   return d;
 }
 
@@ -107,12 +114,26 @@ export async function status(env, d) {
 }
 
 /* ---------- Bewertungen ---------- */
-export async function bewertungenLesen(env, slug) {
+// Hat der Kunde einen Artikel dieses Produkts gekauft UND bezahlt? (Vorkasse zählt erst, wenn in der Verwaltung „bezahlt“ gesetzt ist)
+async function gekauft(env, kundeId, skus) {
+  const b = await env.DB.prepare("SELECT positionen FROM bestellungen WHERE kunde_id = ? AND status IN ('bezahlt', 'in_bearbeitung', 'versendet', 'zugestellt')").bind(kundeId).all();
+  return b.results.some((z) => JSON.parse(z.positionen).some((p) => skus.includes(p.sku)));
+}
+
+// darf: "anmelden" | "nicht_gekauft" | "schon_bewertet" | "ja"  – steuert, ob die Produktseite das Formular zeigt
+async function darfBewerten(env, kunde, slug) {
+  const skus = KATALOG.produkte[slug];
+  if (!kunde || !skus) return "anmelden";
+  if (await env.DB.prepare("SELECT id FROM bewertungen WHERE produkt = ? AND kunde_id = ?").bind(slug, kunde.id).first()) return "schon_bewertet";
+  return (await gekauft(env, kunde.id, skus)) ? "ja" : "nicht_gekauft";
+}
+
+export async function bewertungenLesen(env, slug, kunde = null) {
   const r = await env.DB.prepare("SELECT name, sterne, titel, text, verifiziert, datum FROM bewertungen WHERE produkt = ? AND freigegeben = 1 ORDER BY datum DESC LIMIT 100")
     .bind(text(slug, 120)).all();
   const liste = r.results;
   const schnitt = liste.length ? liste.reduce((s, b) => s + b.sterne, 0) / liste.length : 0;
-  return { anzahl: liste.length, schnitt: Math.round(schnitt * 10) / 10, liste };
+  return { anzahl: liste.length, schnitt: Math.round(schnitt * 10) / 10, liste, darf: await darfBewerten(env, kunde, text(slug, 120)) };
 }
 
 export async function bewerten(env, ctx, kunde, d) {
@@ -121,23 +142,20 @@ export async function bewerten(env, ctx, kunde, d) {
   if (!skus) throw new Fehler("Produkt nicht gefunden.", 404);
   const sterne = parseInt(d.sterne, 10);
   if (!(sterne >= 1 && sterne <= 5)) throw new Fehler("Bitte 1 bis 5 Sterne wählen.");
-  const titel = text(d.titel, 80), inhalt = text(d.text, 2000);
-  if (!titel || inhalt.length < 10) throw new Fehler("Bitte Überschrift und mindestens einen Satz schreiben.");
+  const titel = text(d.titel, 80), inhalt = text(d.text, 2000);  // beides freiwillig, Pflicht sind nur die Sterne
   // Nur wer das Produkt gekauft und bezahlt hat
-  const b = await env.DB.prepare("SELECT positionen FROM bestellungen WHERE kunde_id = ? AND status IN ('bezahlt', 'in_bearbeitung', 'versendet', 'zugestellt')").bind(kunde.id).all();
-  const gekauft = b.results.some((z) => JSON.parse(z.positionen).some((p) => skus.includes(p.sku)));
-  if (!gekauft) throw new Fehler("Bewerten können Sie Produkte, die Sie bei uns gekauft haben.", 403);
+  if (!(await gekauft(env, kunde.id, skus))) throw new Fehler("Bewerten können Sie Produkte, die Sie bei uns gekauft haben.", 403);
   const teile = (kunde.name || "Kunde").trim().split(/\s+/);
   const name = teile.length > 1 ? `${teile[0]} ${teile[teile.length - 1][0]}.` : teile[0];
   try {
-    await env.DB.prepare("INSERT INTO bewertungen (produkt, kunde_id, name, sterne, titel, text, datum) VALUES (?, ?, ?, ?, ?, ?, ?)")
+    await env.DB.prepare("INSERT INTO bewertungen (produkt, kunde_id, name, sterne, titel, text, freigegeben, datum) VALUES (?, ?, ?, ?, ?, ?, 1, ?)")
       .bind(slug, kunde.id, name, sterne, titel, inhalt, jetzt()).run();
   } catch (err) {
     if (String(err).includes("UNIQUE")) throw new Fehler("Sie haben dieses Produkt schon bewertet.", 409);
     throw err;
   }
   ctx.waitUntil(senden(env, env.BESTELL_EMAIL, `Neue Bewertung (${sterne} Sterne): ${slug}`,
-    `${name} hat „${slug}“ mit ${sterne} Sternen bewertet:\n\n${titel}\n${inhalt}\n\nFreigeben: ${env.SITE_URL}/verwaltung/`));
+    `${name} hat „${slug}“ mit ${sterne} Sternen bewertet (ist schon sichtbar):\n\n${titel || "(ohne Überschrift)"}\n${inhalt || "(ohne Text)"}\n\nProdukt: ${env.SITE_URL}/produkt/${slug}/\nLöschen, falls nötig: ${env.SITE_URL}/verwaltung/`));
   return { ok: true };
 }
 
@@ -149,7 +167,7 @@ export async function verwaltungPruefen(env, request) {
 
 export async function verwaltungListe(env) {
   const b = await env.DB.prepare("SELECT * FROM bestellungen ORDER BY datum DESC LIMIT 200").all();
-  const r = await env.DB.prepare("SELECT id, produkt, name, sterne, titel, text, datum FROM bewertungen WHERE freigegeben = 0 ORDER BY datum").all();
+  const r = await env.DB.prepare("SELECT id, produkt, name, sterne, titel, text, datum FROM bewertungen ORDER BY datum DESC LIMIT 100").all();
   return { bestellungen: b.results.map((z) => ({ ...oeffentlich(z), email: z.email, kunde: JSON.parse(z.kunde), transaktion: z.transaktion })), bewertungen: r.results };
 }
 

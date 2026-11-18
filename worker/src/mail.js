@@ -28,6 +28,13 @@ function summen(b) {
 function adresse(k) {
   return [k.firma, k.name, k.strasse, `${k.plz} ${k.ort}`, k.telefon && `Tel. ${k.telefon}`, k.ustid && `USt-IdNr. ${k.ustid}`].filter(Boolean).join("\n");
 }
+function lieferadresse(k) {
+  const l = k.liefer;
+  return l ? [l.firma, l.name, l.strasse, `${l.plz} ${l.ort}`].filter(Boolean).join("\n") : "wie Rechnungsadresse";
+}
+function adressen(k) {
+  return `Rechnungsadresse:\n${adresse(k)}\n\nLieferadresse:\n${lieferadresse(k)}`;
+}
 
 // Eingangsbestätigung an den Kunden. Für Verbraucher mit Widerrufsbelehrung und Muster-Formular (Textform, § 312f BGB).
 export function kundenmail(env, b) {
@@ -49,8 +56,7 @@ ${summen(b)}
 Zahlart: ${b.zahlart}
 ${zahlung}
 
-Lieferadresse:
-${adresse(b.kunde)}
+${adressen(b.kunde)}
 
 Status Ihrer Bestellung: ${env.SITE_URL}/bestellung/?nr=${encodeURIComponent(b.nr)}&email=${encodeURIComponent(b.email)}
 
@@ -73,8 +79,9 @@ ${posten(b)}
 
 ${summen(b)}
 
-Kunde (${b.email}${b.kunde_id ? ", mit Konto" : ", Gast"}):
-${adresse(b.kunde)}
+Kunde (${b.email}${b.kunde_id ? ", mit Konto" : ", Gast"})
+
+${adressen(b.kunde)}
 ${b.kunde.hinweis ? `\nHinweis: ${b.kunde.hinweis}` : ""}
 
 Status ändern: ${env.SITE_URL}/verwaltung/`;
