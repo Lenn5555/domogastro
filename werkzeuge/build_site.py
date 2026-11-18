@@ -89,10 +89,27 @@ def kategorien():
     return [k for k in KAT_REIHE if k in da] + sorted(da - set(KAT_REIHE))
 
 
+BF_TITEL = "Stellfüße & Einschlagfüße"
+
+
+def stellfuesse():
+    """Eigene Seite für den Spezialshop beinundfuss.de (Menüpunkt und Kachel bei „Nach Bereich einkaufen“)."""
+    return f"""<div class="seite g"><div class="in" style="max-width:1100px">
+<nav class="pfad" aria-label="Pfad"><a href="{u('/')}">Start</a> › {e(BF_TITEL)}</nav>
+<p class="kicker">Unser Spezialshop</p><h1 class="titel">Stellfüße und Einschlagfüße</h1>
+<a class="bf-bild" href="https://beinundfuss.de/" target="_blank" rel="noopener"><img src="{u('/bilder/beinundfuss-fuesse.webp')}" alt="Stellfüße, Edelstahl-Stellbeine und Einschlagfüße von Beinundfuß" width="1344" height="390"></a>
+<div class="bf-text">
+<p>Gerätefüße gibt es bei uns in einem eigenen Shop: <b>beinundfuss.de</b>. Dort finden Sie Stellfüße, Einschlagfüße, Maschinenfüße und Edelstahl-Stellbeine für Gastro-Geräte, Kühlmöbel, Arbeitstische und Maschinen.</p>
+<ul class="merkmale"><li>Stellfüße mit Gewinde, höhenverstellbar, aus Edelstahl oder verzinktem Stahl</li><li>Einschlagfüße und Rohrstopfen für Rund- und Vierkantrohre</li><li>Ein Berater findet den passenden Fuß nach Gewinde, Last und Boden</li><li>Feste Nettopreise, direkt bestellen</li></ul>
+<p class="klein">Beinundfuß verkauft an Gewerbekunden und ist wie Domo Gastro ein Shop der T&amp;S Systemtechnik GmbH.</p>
+<a class="btn pri" href="https://beinundfuss.de/" target="_blank" rel="noopener">Zu beinundfuss.de</a></div></div></div>"""
+
+
 def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
     if index:
         SEITEN.append(pfad)
     nav = "".join(f'<a href="{u("/" + slug(k) + "/")}"{" aria-current=page" if k == aktiv else ""}>{e(k)}</a>' for k in kategorien())
+    nav += f'<a href="{u("/stellfuesse/")}"{" aria-current=page" if aktiv == BF_TITEL else ""}>{e(BF_TITEL)}</a>'
     dg = {"mwst": CFG["mwst"], "modus": CFG["standard_modus"], "api": API, "mail": CFG["anfrage_email"], "basis": BASIS}
     return f"""<!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -200,6 +217,8 @@ def startseite(nach_kat):
         f'<a class="c" href="{u("/" + slug(k) + "/")}"><div class="ph"><img src="{e(bild)}" alt="" loading="lazy"></div><b>{e(k)}</b><span>{e(KAT_TEXT.get(k, ""))}</span></a>'
         for k in kategorien()
         for n, bild in [(sum(len(v) for v in nach_kat[k].values()), next((p["bilder"][0] for v in nach_kat[k].values() for p in v if p["bilder"]), ""))])
+    kacheln += (f'<a class="c" href="{u("/stellfuesse/")}"><div class="ph"><img src="{u("/bilder/beinundfuss-kachel.webp")}" alt="" loading="lazy"></div>'
+                f'<b>{e(BF_TITEL)}</b><span>Unser Spezialshop beinundfuss.de</span></a>')
     inhalt = f"""<div class="hero g"><div class="in">
 <div class="copy"><div class="hand">Gute Gastronomie beginnt mit den richtigen Partnern!</div>
 <h1>Alles für Profis mit <em>Geschmack.</em></h1>
@@ -210,12 +229,6 @@ def startseite(nach_kat):
 <div class="leiste g"><div class="in"><span>Für Restaurants</span><span>Für Hotels</span><span>Für Cafés</span><span>Für Imbisse</span><span>Für Catering</span><span>Für Zuhause</span></div></div>
 <section class="g"><div class="in"><div class="sh"><h2>Ausgewählte Produkte</h2></div><div class="raster">{''.join(karte(p) for p in ausgewaehlt[:10])}</div></div></section>
 <section class="cats g" id="bereiche"><div class="in"><div class="sh"><h2>Nach Bereich einkaufen</h2></div><div class="cg">{kacheln}</div></div></section>
-<section class="bf g" id="stellfuesse"><div class="in"><div class="bf-karte">
-<a class="bf-bild" href="https://beinundfuss.de/" target="_blank" rel="noopener"><img src="{u('/bilder/beinundfuss-fuesse.webp')}" alt="Stellfüße, Edelstahl-Stellbeine und Einschlagfüße von Beinundfuß" width="1344" height="390" loading="lazy"></a>
-<div class="bf-text"><p class="kicker">Unser Spezialshop</p><h2>Stellfüße und Einschlagfüße</h2>
-<p>Auf <b>beinundfuss.de</b> finden Sie Stellfüße, Einschlagfüße, Maschinenfüße und Edelstahl-Stellbeine für Gastro-Geräte, Kühlmöbel, Arbeitstische und Maschinen. Ein Berater findet den passenden Fuß nach Gewinde, Last und Boden, mit festen Nettopreisen für Gewerbekunden.</p>
-<p class="klein">Beinundfuß ist wie Domo Gastro ein Shop der T&amp;S Systemtechnik GmbH.</p>
-<a class="btn pri" href="https://beinundfuss.de/" target="_blank" rel="noopener">Zu beinundfuss.de</a></div></div></div></section>
 <div class="ben g"><div class="in">
 <div><svg viewBox="0 0 34 34" fill="none" stroke="#22C3E6" stroke-width="2" aria-hidden="true"><rect x="6" y="9" width="22" height="18" rx="2"/><path d="M6 14h22M12 9V6h10v3"/></svg><span>Profi-Qualität für Küche und Gastronomie</span></div>
 <div><svg viewBox="0 0 34 34" fill="none" stroke="#22C3E6" stroke-width="2" aria-hidden="true"><path d="M3 10h17v13H3zM20 15h6l5 5v3H20z"/><circle cx="9" cy="25" r="3"/><circle cx="25" cy="25" r="3"/></svg><span>Versandkostenfrei in Deutschland</span></div>
@@ -362,6 +375,8 @@ def main():
         schreib(f"/{slug(k)}/", kategorieseite(k, nach_kat[k]))
     for p in PRODUKTE:
         schreib(f"/produkt/{p['slug']}/", produktseite(p))
+    schreib("/stellfuesse/", seite(f"{BF_TITEL} | Domo Gastro", stellfuesse(), "/stellfuesse/",
+                                    "Stellfüße, Einschlagfüße und Maschinenfüße: unser Spezialshop beinundfuss.de.", BF_TITEL))
     schreib("/warenkorb/", seite("Warenkorb | Domo Gastro", warenkorb(), "/warenkorb/", index=False))
     schreib("/konto/", seite("Kundenkonto | Domo Gastro", konto(), "/konto/", index=False))
     schreib("/bestellung/", seite("Bestellung verfolgen | Domo Gastro", bestellung(), "/bestellung/", index=False))
