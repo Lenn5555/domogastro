@@ -133,11 +133,15 @@
     function laden() {
       return api("/bewertungen?produkt=" + encodeURIComponent(slug)).then(function (d) {
         $(".schnitt", box).textContent = d.anzahl ? sterne(d.schnitt) + " " + d.schnitt.toFixed(1).replace(".", ",") + " von 5 (" + d.anzahl + ")" : "";
-        liste.innerHTML = d.liste.length ? d.liste.map(function (b) {
+        var vt = d.verteilung || {}, balken = d.anzahl ? '<div class="verteilung">' + [5, 4, 3, 2, 1].map(function (k) {
+          var n = vt[k] || 0;
+          return '<div><span>' + k + ' ★</span><i><b style="width:' + Math.round(n / d.anzahl * 100) + '%"></b></i><span>' + n + (n === 1 ? " Person" : " Personen") + "</span></div>";
+        }).join("") + "</div>" : "";
+        liste.innerHTML = balken + (d.liste.length ? d.liste.map(function (b) {
           return '<div class="bewertung"><span class="sterne">' + sterne(b.sterne) + "</span>" + (b.titel ? " <b>" + esc(b.titel) + "</b>" : "") +
             (b.verifiziert ? ' <span class="klein">· Verifizierter Kauf</span>' : "") +
-            (b.text ? "<p>" + esc(b.text) + "</p>" : "<br>") + '<span class="klein">' + (b.name ? esc(b.name) + " am " : "Am ") + new Date(b.datum).toLocaleDateString("de-DE") + "</span></div>";
-        }).join("") : '<p class="klein">Noch keine Bewertungen. Kaufen Sie das Produkt, können Sie es als Erste(r) bewerten.</p>';
+            (b.text ? "<p>" + esc(b.text) + "</p>" : "<br>") + '<span class="klein">' + esc(b.name) + " am " + new Date(b.datum).toLocaleDateString("de-DE") + "</span></div>";
+        }).join("") : d.anzahl ? "" : '<p class="klein">Noch keine Bewertungen. Kaufen Sie das Produkt, können Sie es als Erste(r) bewerten.</p>');
         form.hidden = d.darf !== "ja";
         hinweis.innerHTML = HINWEIS[d.darf] || "";
       }).catch(function () { liste.innerHTML = '<p class="klein">Bewertungen konnten nicht geladen werden.</p>'; });

@@ -129,12 +129,16 @@ async function darfBewerten(env, kunde, slug) {
 }
 
 export async function bewertungenLesen(env, slug, kunde = null) {
-  const r = await env.DB.prepare("SELECT name, sterne, titel, text, verifiziert, datum FROM bewertungen WHERE produkt = ? AND freigegeben = 1 ORDER BY datum DESC LIMIT 100")
-    .bind(text(slug, 120)).all();
-  // Name nur zeigen, wenn die Person etwas geschrieben hat (reine Sterne-Bewertungen bleiben anonym)
-  const liste = r.results.map((b) => ({ ...b, name: b.titel || b.text ? b.name : "" }));
-  const schnitt = liste.length ? liste.reduce((s, b) => s + b.sterne, 0) / liste.length : 0;
-  return { anzahl: liste.length, schnitt: Math.round(schnitt * 10) / 10, liste, darf: await darfBewerten(env, kunde, text(slug, 120)) };
+  const p = text(slug, 120);
+  // Öffentlich: nur wie viele Personen wie viele Sterne gegeben haben. Einzeln (mit Namen) erscheinen nur Bewertungen mit Kommentar.
+  const v = await env.DB.prepare("SELECT sterne, COUNT(*) AS n FROM bewertungen WHERE produkt = ? AND freigegeben = 1 GROUP BY sterne").bind(p).all();
+  const verteilung = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const z of v.results) verteilung[z.sterne] = z.n;
+  const anzahl = Object.values(verteilung).reduce((s, n) => s + n, 0);
+  const schnitt = anzahl ? Object.entries(verteilung).reduce((s, [k, n]) => s + k * n, 0) / anzahl : 0;
+  const r = await env.DB.prepare("SELECT name, sterne, titel, text, verifiziert, datum FROM bewertungen WHERE produkt = ? AND freigegeben = 1 AND (titel <> '' OR text <> '') ORDER BY datum DESC LIMIT 100")
+    .bind(p).all();
+  return { anzahl, schnitt: Math.round(schnitt * 10) / 10, verteilung, liste: r.results, darf: await darfBewerten(env, kunde, p) };
 }
 
 export async function bewerten(env, ctx, kunde, d) {
