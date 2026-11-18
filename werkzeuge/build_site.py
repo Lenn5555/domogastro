@@ -409,7 +409,14 @@ def main():
     katalog = {"artikel": {sku: {"n": a["n"], "p": a["p"], "s": a["s"]} for sku, a in artikel.items()},
                "produkte": {x["s"]: x["skus"] for x in liste}}
     (worker / "katalog.json").write_text(json.dumps(katalog, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    (worker / "texte.json").write_text(json.dumps({"agb": klartext("agb.html"), "widerruf": klartext("widerruf.html")}, ensure_ascii=False, indent=1), encoding="utf-8")
+    # Rechtstexte als PDF-Anhang der Bestellbestätigung (Base64), nicht mehr im Mailtext
+    from pdf_text import pdf
+    import base64
+    b64 = lambda titel, datei: base64.b64encode(pdf(titel, klartext(datei))).decode()
+    (worker / "texte.json").write_text(json.dumps({
+        "agb_pdf": b64("Allgemeine Geschäftsbedingungen – Domo Gastro", "agb.html"),
+        "widerruf_pdf": b64("Widerrufsbelehrung und Muster-Widerrufsformular – Domo Gastro", "widerruf.html"),
+    }), encoding="utf-8")
 
     heute = date.today().isoformat()
     (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +

@@ -2,15 +2,58 @@
 import TEXTE from "./texte.json" with { type: "json" };
 import { euro, runden } from "./hilfe.js";
 
-export async function senden(env, an, betreff, text, abruf = fetch) {
-  if (!env.RESEND_API_KEY) { console.log(`[Mail nicht verschickt, kein RESEND_API_KEY] an ${an}: ${betreff}`); return false; }
+// Jede Mail geht als Text UND als schlichte HTML-Version raus (beides senkt die Spam-Wertung). anhaenge: [{ filename, content (Base64) }]
+export async function senden(env, an, betreff, text, { abruf = fetch, anhaenge } = {}) {
+  if (!env.RESEND_API_KEY) { console.log(`[Mail nicht verschickt, kein RESEND_API_KEY] an ${an}: ${betreff}${anhaenge ? ` (+${anhaenge.length} Anhang)` : ""}`); return false; }
   const r = await abruf("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.ABSENDER, to: [an], subject: betreff, text, reply_to: env.BESTELL_EMAIL }),
+    body: JSON.stringify({ from: env.ABSENDER, to: [an], subject: betreff, text, html: alsHtml(text), reply_to: env.BESTELL_EMAIL,
+      ...(anhaenge?.length ? { attachments: anhaenge } : {}) }),
   });
   if (!r.ok) console.error("Resend:", r.status, await r.text().catch(() => ""));
   return r.ok;
+}
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+export function alsHtml(text) {
+  const inhalt = esc(text)
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#0E7FA0;word-break:break-all">$1</a>')
+    .replace(/^ {2,}/gm, (m) => "&nbsp;".repeat(m.length))
+    .replace(/\n/g, "<br>");
+  return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:#EEF2F6">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF2F6"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:10px">
+<tr><td style="background:#0A1628;padding:22px 28px;border-radius:10px 10px 0 0;color:#ffffff;font:600 24px Georgia,'Times New Roman',serif">Domo Gastro
+<div style="font:600 11px Arial,Helvetica,sans-serif;letter-spacing:2px;color:#B8C4D4;margin-top:6px">ZUHAUSE IN DER GASTRONOMIE</div></td></tr>
+<tr><td style="padding:28px;font:15px/1.6 Arial,Helvetica,sans-serif;color:#0A1628">${inhalt}</td></tr>
+<tr><td style="padding:16px 28px;background:#F5F7FA;border-radius:0 0 10px 10px;font:12px/1.5 Arial,Helvetica,sans-serif;color:#5A6B80">T&amp;S Systemtechnik GmbH · Am Hintergraben 26 · 64319 Pfungstadt · sales@ts-systec.de</td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+// Rechtstexte als PDF-Anhang (Textform, § 312f BGB): AGB immer, Widerrufsbelehrung mit Muster-Formular für Verbraucher
+export function rechtsAnhaenge(b) {
+  const a = [{ filename: "AGB-Domo-Gastro.pdf", content: TEXTE.agb_pdf }];
+  if (b.modus === "privat") a.push({ filename: "Widerrufsbelehrung-und-Formular-Domo-Gastro.pdf", content: TEXTE.widerruf_pdf });
+  return a;
+}
+
+// Eigene kurze Mail mit der Bankverbindung (Vorkasse)
+export function zahlungsmail(env, b) {
+  return `Guten Tag ${b.kunde.name},
+
+für Ihre Bestellung ${b.nr} bitten wir Sie, ${euro(b.brutto)} innerhalb von 7 Tagen zu überweisen:
+
+  Empfänger: ${env.BANK_INHABER}
+  IBAN: ${env.BANK_IBAN}
+  Betrag: ${euro(b.brutto)}
+  Verwendungszweck: ${b.nr}
+
+Sobald das Geld da ist, versenden wir Ihre Bestellung.
+
+Freundliche Grüße
+Ihr Domo-Gastro-Team`;
 }
 
 const STATUS = {
@@ -42,7 +85,7 @@ function adressen(k) {
 export function kundenmail(env, b) {
   const privat = b.modus === "privat";
   const zahlung = b.zahlart === "Vorkasse"
-    ? `Bitte überweisen Sie ${euro(b.brutto)} innerhalb von 7 Tagen an:\n  ${env.BANK_INHABER}\n  IBAN ${env.BANK_IBAN}\n  Verwendungszweck: ${b.nr}\nWir versenden nach Zahlungseingang.`
+    ? `Die Bankverbindung für Ihre Überweisung schicken wir Ihnen gleich in einer eigenen E-Mail. Wir versenden nach Zahlungseingang.`
     : `Ihre Zahlung über PayPal ist eingegangen. Vielen Dank!`;
   return `Guten Tag ${b.kunde.name},
 
@@ -64,14 +107,8 @@ Status Ihrer Bestellung: ${env.SITE_URL}/bestellung/?nr=${encodeURIComponent(b.n
 
 Freundliche Grüße
 Ihr Domo-Gastro-Team
-T&S Systemtechnik GmbH · Am Hintergraben 26 · 64319 Pfungstadt · sales@ts-systec.de
 
-————————————————————————————————————————
-ALLGEMEINE GESCHÄFTSBEDINGUNGEN
-${TEXTE.agb}
-${privat ? `
-————————————————————————————————————————
-${TEXTE.widerruf}` : ""}`;
+Im Anhang finden Sie unsere AGB${privat ? " sowie die Widerrufsbelehrung mit Muster-Widerrufsformular" : ""} als PDF.`;
 }
 
 export function vertriebsmail(env, b) {

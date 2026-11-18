@@ -2,7 +2,7 @@
 import KATALOG from "./katalog.json" with { type: "json" };
 import { Fehler, text, email, jetzt, runden, zufall, sha256, gleich } from "./hilfe.js";
 import { anlegen as kontoAnlegen, oeffentlich } from "./konto.js";
-import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail, gutscheinmail } from "./mail.js";
+import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail, gutscheinmail, zahlungsmail, rechtsAnhaenge } from "./mail.js";
 import * as paypal from "./paypal.js";
 
 export const MWST = 0.19;
@@ -99,7 +99,9 @@ export async function bestellen(env, ctx, d, kunde, abruf = fetch) {
 
 function benachrichtigen(env, ctx, b) {
   ctx.waitUntil(Promise.all([
-    senden(env, b.email, `Ihre Bestellung ${b.nr} bei Domo Gastro`, kundenmail(env, b)),
+    // Bestätigung zuerst, bei Vorkasse danach die Bankverbindung als eigene kurze Mail
+    senden(env, b.email, `Ihre Bestellung ${b.nr} bei Domo Gastro`, kundenmail(env, b), { anhaenge: rechtsAnhaenge(b) })
+      .then(() => b.zahlart === "Vorkasse" && senden(env, b.email, `Zahlungsinformationen zu Ihrer Bestellung ${b.nr}`, zahlungsmail(env, b))),
     senden(env, env.BESTELL_EMAIL, `Bestellung ${b.nr} (${b.modus}) ${b.zahlart}`, vertriebsmail(env, b)),
   ]));
 }

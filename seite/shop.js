@@ -343,7 +343,7 @@
     function laden(nr, email) {
       api("/bestellung/status", { nr: nr, email: email }).then(function (b) {
         ziel.innerHTML = (q.get("neu") ? '<p class="meldung ok">Vielen Dank! Ihre Bestellung ist eingegangen. Eine Bestätigung kommt per E-Mail.' +
-          (b.zahlart === "Vorkasse" ? " Die Bankverbindung steht in der E-Mail; Verwendungszweck ist Ihre Bestellnummer." : "") + "</p>" : "") + bestellHtml(b);
+          (b.zahlart === "Vorkasse" ? " Die Bankverbindung kommt in einer eigenen E-Mail; Verwendungszweck ist Ihre Bestellnummer." : "") + "</p>" : "") + bestellHtml(b);
       }).catch(function (err) { ziel.innerHTML = '<p class="meldung fehler">' + esc(err.message) + "</p>"; });
     }
     // Rückkehr von PayPal
