@@ -154,8 +154,7 @@ export async function bewerten(env, ctx, kunde, d) {
     if (String(err).includes("UNIQUE")) throw new Fehler("Sie haben dieses Produkt schon bewertet.", 409);
     throw err;
   }
-  ctx.waitUntil(senden(env, env.BESTELL_EMAIL, `Neue Bewertung (${sterne} Sterne): ${slug}`,
-    `${name} hat „${slug}“ mit ${sterne} Sternen bewertet (ist schon sichtbar):\n\n${titel || "(ohne Überschrift)"}\n${inhalt || "(ohne Text)"}\n\nProdukt: ${env.SITE_URL}/produkt/${slug}/\nLöschen, falls nötig: ${env.SITE_URL}/verwaltung/`));
+  // Keine Mail bei neuen Bewertungen (Lenn 2026-11-18); Übersicht in /verwaltung/
   return { ok: true };
 }
 
