@@ -25,3 +25,12 @@ test("Passwort-Hash ist gesalzen und vergleichbar", async () => {
   assert.ok(gleich(a, await passwortHash("sehrgeheim123", "salz1")));
   assert.ok(!gleich(a, await passwortHash("sehrgeheim123", "salz2")));
 });
+
+test("Gutschein-Rabatt wird vom Warenwert abgezogen, MwSt. auf den reduzierten Betrag", () => {
+  const ohne = rechnen([{ sku, menge: 3 }]);
+  const mit = rechnen([{ sku, menge: 3 }], 5);
+  assert.equal(mit.warenwert, ohne.netto);
+  assert.equal(mit.rabatt, Math.round(ohne.netto * 5) / 100);
+  assert.equal(mit.netto, Math.round((ohne.netto - mit.rabatt) * 100) / 100);
+  assert.equal(mit.brutto, Math.round((mit.netto + mit.mwst) * 100) / 100);
+});

@@ -37,5 +37,11 @@ CREATE TABLE IF NOT EXISTS bewertungen (
 CREATE INDEX IF NOT EXISTS bewertungen_produkt ON bewertungen(produkt, freigegeben);
 -- Einmalige Bitte um Bewertung per Mail (nur mit Kundenkonto und Zustimmung beim Bestellen)
 CREATE TABLE IF NOT EXISTS bewertungsanfragen (nr TEXT PRIMARY KEY, faellig TEXT NOT NULL, gesendet TEXT NOT NULL DEFAULT '');
+-- Gutscheine: 5 % für jede Bewertung (egal wie viele Sterne), einmal einlösbar
+CREATE TABLE IF NOT EXISTS gutscheine (
+  code TEXT PRIMARY KEY, kunde_id INTEGER, bewertung_id INTEGER, prozent INTEGER NOT NULL,
+  erstellt TEXT NOT NULL, eingeloest_nr TEXT NOT NULL DEFAULT '', eingeloest_am TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS gutscheine_bewertung ON gutscheine(bewertung_id);
 -- Bewertungen erscheinen seit 2026-11-18 sofort (keine Freigabe mehr); ältere wartende einmalig freischalten
 UPDATE bewertungen SET freigegeben = 1 WHERE freigegeben = 0;

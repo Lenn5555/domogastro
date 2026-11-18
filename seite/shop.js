@@ -139,7 +139,7 @@
         }).join("") + "</div>" : "";
         liste.innerHTML = balken + (d.liste.length ? d.liste.map(function (b) {
           return '<div class="bewertung"><span class="sterne">' + sterne(b.sterne) + "</span>" + (b.titel ? " <b>" + esc(b.titel) + "</b>" : "") +
-            (b.verifiziert ? ' <span class="klein">· Verifizierter Kauf</span>' : "") +
+            (b.verifiziert ? ' <span class="klein">· Verifizierter Kauf</span>' : "") + (b.belohnt ? ' <span class="klein">· mit 5-%-Gutschein bedankt</span>' : "") +
             (b.text ? "<p>" + esc(b.text) + "</p>" : "<br>") + '<span class="klein">' + esc(b.name) + " am " + new Date(b.datum).toLocaleDateString("de-DE") + "</span></div>";
         }).join("") : d.anzahl ? "" : '<p class="klein">Noch keine Bewertungen. Seien Sie die oder der Erste!</p>');
         form.hidden = d.darf !== "ja";
@@ -155,7 +155,7 @@
       var f = new FormData(form), st = $(".status", form);
       api("/bewertungen", { produkt: slug, sterne: +f.get("sterne"), titel: f.get("titel"), text: f.get("text") })
         .then(function () { form.reset(); return laden(); })
-        .then(function () { hinweis.textContent = "Danke! Ihre Bewertung ist jetzt sichtbar."; })
+        .then(function () { hinweis.textContent = "Danke! Ihre Bewertung ist jetzt sichtbar. Ihren persönlichen 5-%-Gutscheincode haben wir Ihnen per E-Mail geschickt."; })
         .catch(function (err) { st.className = "status meldung fehler"; st.textContent = err.message; });
     });
     laden();
@@ -208,12 +208,15 @@
   }
 
   /* ---------- Warenkorb und Kasse ---------- */
+  var gutschein = null;  // { code, prozent } nach erfolgreicher Prüfung
+  function r2(x) { return Math.round(x * 100) / 100; }
   function rechnen(ix) {
     var pos = korb().map(function (p) { var a = ix.artikel[p.sku]; return a && a.p ? { sku: p.sku, menge: p.menge, a: a } : null; }).filter(Boolean);
-    var netto = pos.reduce(function (s, p) { return s + p.a.p * p.menge; }, 0);
-    netto = Math.round(netto * 100) / 100;
-    var mwst = Math.round(netto * MWST * 100) / 100;
-    return { pos: pos, netto: netto, mwst: mwst, brutto: Math.round((netto + mwst) * 100) / 100 };
+    var warenwert = r2(pos.reduce(function (s, p) { return s + p.a.p * p.menge; }, 0));
+    var rabatt = gutschein ? r2(warenwert * gutschein.prozent / 100) : 0;
+    var netto = r2(warenwert - rabatt);
+    var mwst = r2(netto * MWST);
+    return { pos: pos, warenwert: warenwert, rabatt: rabatt, netto: netto, mwst: mwst, brutto: r2(netto + mwst) };
   }
   function kasse() {
     var ziel = $("#korb-liste"); if (!ziel) return;
@@ -232,7 +235,9 @@
             '<div><span class="pr" data-netto="' + (p.a.p * p.menge).toFixed(2) + '"></span></div></div>';
         }).join("");
         var g = istGewerbe();
-        sum.innerHTML = "<div><span>Warenwert " + (g ? "netto" : "inkl. MwSt.") + "</span><b>" + eur(g ? r.netto : r.brutto) + "</b></div>" +
+        var faktor = g ? 1 : 1 + MWST;
+        sum.innerHTML = "<div><span>Warenwert " + (g ? "netto" : "inkl. MwSt.") + "</span><b>" + eur(r2(r.warenwert * faktor)) + "</b></div>" +
+          (gutschein ? "<div><span>Gutschein " + esc(gutschein.code) + " (" + gutschein.prozent + " %)</span><b>−" + eur(r2(r.warenwert * faktor) - (g ? r.netto : r.brutto)) + "</b></div>" : "") +
           "<div><span>Versand (Deutschland)</span><b>kostenlos</b></div>" +
           (g ? "<div><span>zzgl. 19 % MwSt.</span><b>" + eur(r.mwst) + "</b></div>" : "<div><span>darin 19 % MwSt.</span><b>" + eur(r.mwst) + "</b></div>") +
           '<div class="gesamt"><span>Gesamtbetrag</span><span>' + eur(r.brutto) + "</span></div>" +
@@ -270,7 +275,7 @@
           kunde: { name: f.get("name"), firma: f.get("firma") || "", ustid: f.get("ustid") || "", strasse: f.get("strasse"), plz: f.get("plz"), ort: f.get("ort"),
                    email: f.get("email"), telefon: f.get("telefon") || "", hinweis: f.get("hinweis") || "",
                    liefer: f.get("gleich") ? null : { firma: f.get("l_firma") || "", name: f.get("l_name"), strasse: f.get("l_strasse"), plz: f.get("l_plz"), ort: f.get("l_ort") } },
-          zahlart: f.get("zahlart"), agb: !!f.get("agb"), gesamt_brutto: r.brutto,
+          zahlart: f.get("zahlart"), agb: !!f.get("agb"), gesamt_brutto: r.brutto, gutschein: gutschein ? gutschein.code : "",
           konto_anlegen: !!f.get("konto_anlegen"), passwort: f.get("passwort") || "", bewertungsmail: !!f.get("bewertungsmail"),
         };
         var knopf = $("button[type=submit]", form);
@@ -291,6 +296,16 @@
           location.href = B + "/bestellung/?nr=" + encodeURIComponent(d.nr) + "&email=" + encodeURIComponent(daten.kunde.email) + "&neu=1";
         }).catch(function (err) { knopf.disabled = false; st.className = "status meldung fehler"; st.textContent = err.message; });
       });
+      // Gutscheincode prüfen und Rabatt in der Summe zeigen
+      var gs = $("#gutschein-status");
+      $("#gutschein-los").addEventListener("click", function () {
+        var code = form.elements.gutschein.value.trim();
+        if (!code) { gutschein = null; gs.textContent = ""; zeichnen(); return; }
+        api("/gutschein/pruefen", { code: code }).then(function (d) {
+          gutschein = d; gs.className = "klein ok"; gs.textContent = "Gutschein eingelöst: " + d.prozent + " % Rabatt auf den Warenwert."; zeichnen();
+        }).catch(function (err) { gutschein = null; gs.className = "klein fehler"; gs.textContent = err.message; zeichnen(); });
+      });
+      form.elements.gutschein.addEventListener("input", function () { if (gutschein) { gutschein = null; gs.textContent = ""; zeichnen(); } });
       // Lieferadresse: nur wenn „gleich wie Rechnungsadresse“ abgewählt ist; dann darf die Rechnungsadresse auch im Ausland liegen
       var gl = form.elements.gleich;
       function lieferUmschalten() {

@@ -2,10 +2,11 @@
 import KATALOG from "./katalog.json" with { type: "json" };
 import { Fehler, text, email, jetzt, runden, zufall, sha256, gleich } from "./hilfe.js";
 import { anlegen as kontoAnlegen, oeffentlich } from "./konto.js";
-import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail } from "./mail.js";
+import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail, gutscheinmail } from "./mail.js";
 import * as paypal from "./paypal.js";
 
 export const MWST = 0.19;
+export const GUTSCHEIN_PROZENT = 5;
 const ZAHLARTEN = ["Vorkasse", "PayPal"];
 export const STATI = ["eingegangen", "zahlung_offen", "bezahlt", "in_bearbeitung", "versendet", "zugestellt", "storniert"];
 
@@ -15,8 +16,8 @@ function bestellnummer() {
   return `DG-${tag}-${zufall(3).toUpperCase()}`;
 }
 
-// Preise kommen nur aus dem Katalog des Servers, nie aus dem Browser
-export function rechnen(positionen) {
+// Preise kommen nur aus dem Katalog des Servers, nie aus dem Browser. prozent = Gutschein-Rabatt auf den Warenwert.
+export function rechnen(positionen, prozent = 0) {
   if (!Array.isArray(positionen) || !positionen.length) throw new Fehler("Der Warenkorb ist leer.");
   if (positionen.length > 50) throw new Fehler("Zu viele Positionen.");
   const pos = positionen.map((p) => {
@@ -26,9 +27,11 @@ export function rechnen(positionen) {
     if (!(menge >= 1 && menge <= 99)) throw new Fehler("Ungültige Menge.");
     return { sku: String(p.sku), name: a.n, slug: a.s, menge, netto: a.p };
   });
-  const netto = runden(pos.reduce((s, p) => s + p.netto * p.menge, 0));
+  const warenwert = runden(pos.reduce((s, p) => s + p.netto * p.menge, 0));
+  const rabatt = runden(warenwert * prozent / 100);
+  const netto = runden(warenwert - rabatt);
   const mwst = runden(netto * MWST);
-  return { positionen: pos, netto, mwst, brutto: runden(netto + mwst) };
+  return { positionen: pos, warenwert, rabatt, netto, mwst, brutto: runden(netto + mwst) };
 }
 
 function kundendaten(k, modus) {
@@ -56,7 +59,9 @@ export async function bestellen(env, ctx, d, kunde, abruf = fetch) {
   if (d.zahlart === "PayPal" && !paypal.aktiv(env)) throw new Fehler("PayPal ist gerade nicht verfügbar. Bitte Vorkasse wählen.");
   const mail = email(d.kunde?.email);
   const k = kundendaten(d.kunde, modus);
-  const r = rechnen(d.positionen);
+  const code = gutscheinCode(d.gutschein);
+  const g = code ? await gutscheinLesen(env, code) : null;
+  const r = rechnen(d.positionen, g ? g.prozent : 0);
   // Der Browser zeigt den Betrag vor dem Absenden an; weicht er ab (z. B. Preisänderung), lieber neu bestätigen lassen
   if (d.gesamt_brutto != null && Math.abs(Number(d.gesamt_brutto) - r.brutto) > 0.01)
     throw new Fehler("Die Preise haben sich geändert. Bitte laden Sie den Warenkorb neu und prüfen Sie den Betrag.", 409);
@@ -68,8 +73,15 @@ export async function bestellen(env, ctx, d, kunde, abruf = fetch) {
   }
   // Bitte um Bewertung nur mit Konto (Bewerten setzt Anmeldung voraus) und nur mit ausdrücklicher Zustimmung
   k.bewertungsmail = Boolean(d.bewertungsmail && kundeId);
+  const nr = bestellnummer();
+  if (g) {
+    // Code reservieren, bevor die Bestellung gespeichert wird (gleichzeitige Doppel-Einlösung verhindern)
+    const u = await env.DB.prepare("UPDATE gutscheine SET eingeloest_nr = ?, eingeloest_am = ? WHERE code = ? AND eingeloest_nr = ''").bind(nr, jetzt(), g.code).run();
+    if (!u.meta.changes) throw new Fehler("Dieser Gutscheincode wurde bereits eingelöst.");
+    k.gutschein = { code: g.code, prozent: g.prozent, rabatt: r.rabatt };
+  }
   const b = {
-    nr: bestellnummer(), kunde_id: kundeId, email: kunde?.email || mail, modus, kunde: k, ...r,
+    nr, kunde_id: kundeId, email: kunde?.email || mail, modus, kunde: k, ...r,
     zahlart: d.zahlart, status: d.zahlart === "PayPal" ? "zahlung_offen" : "eingegangen", datum: jetzt(),
   };
   let link = null;
@@ -138,7 +150,9 @@ export async function bewertungenLesen(env, slug, kunde = null) {
   for (const z of v.results) verteilung[z.sterne] = z.n;
   const anzahl = Object.values(verteilung).reduce((s, n) => s + n, 0);
   const schnitt = anzahl ? Object.entries(verteilung).reduce((s, [k, n]) => s + k * n, 0) / anzahl : 0;
-  const r = await env.DB.prepare("SELECT name, sterne, titel, text, verifiziert, datum FROM bewertungen WHERE produkt = ? AND freigegeben = 1 AND (titel <> '' OR text <> '') ORDER BY datum DESC LIMIT 100")
+  const r = await env.DB.prepare(`SELECT name, sterne, titel, text, verifiziert, datum,
+      EXISTS (SELECT 1 FROM gutscheine g WHERE g.bewertung_id = bewertungen.id) AS belohnt
+    FROM bewertungen WHERE produkt = ? AND freigegeben = 1 AND (titel <> '' OR text <> '') ORDER BY datum DESC LIMIT 100`)
     .bind(p).all();
   return { anzahl, schnitt: Math.round(schnitt * 10) / 10, verteilung, liste: r.results, darf: await darfBewerten(env, kunde, p) };
 }
@@ -154,14 +168,20 @@ export async function bewerten(env, ctx, kunde, d) {
   if (!(await gekauft(env, kunde.id, skus))) throw new Fehler("Bewerten können Sie Produkte, die Sie bei uns gekauft haben.", 403);
   const teile = (kunde.name || "Kunde").trim().split(/\s+/);
   const name = teile.length > 1 ? `${teile[0]} ${teile[teile.length - 1][0]}.` : teile[0];
+  let bewertungId;
   try {
-    await env.DB.prepare("INSERT INTO bewertungen (produkt, kunde_id, name, sterne, titel, text, freigegeben, datum) VALUES (?, ?, ?, ?, ?, ?, 1, ?)")
-      .bind(slug, kunde.id, name, sterne, titel, inhalt, jetzt()).run();
+    bewertungId = (await env.DB.prepare("INSERT INTO bewertungen (produkt, kunde_id, name, sterne, titel, text, freigegeben, datum) VALUES (?, ?, ?, ?, ?, ?, 1, ?)")
+      .bind(slug, kunde.id, name, sterne, titel, inhalt, jetzt()).run()).meta.last_row_id;
   } catch (err) {
     if (String(err).includes("UNIQUE")) throw new Fehler("Sie haben dieses Produkt schon bewertet.", 409);
     throw err;
   }
-  // Keine Mail bei neuen Bewertungen (Lenn 2026-11-18); Übersicht in /verwaltung/
+  // Keine Mail an uns bei neuen Bewertungen (Lenn 2026-11-18); Übersicht in /verwaltung/
+  // Dankeschön für JEDE Bewertung, unabhängig von den Sternen: persönlicher 5-%-Code per Mail
+  const code = `DG5-${gutscheinZufall()}`;
+  await env.DB.prepare("INSERT INTO gutscheine (code, kunde_id, bewertung_id, prozent, erstellt) VALUES (?, ?, ?, ?, ?)")
+    .bind(code, kunde.id, bewertungId, GUTSCHEIN_PROZENT, jetzt()).run();
+  ctx.waitUntil(senden(env, kunde.email, `Danke für Ihre Bewertung – Ihr ${GUTSCHEIN_PROZENT}-%-Gutschein`, gutscheinmail(env, kunde.name || "liebe Kundin, lieber Kunde", code, GUTSCHEIN_PROZENT)));
   return { ok: true };
 }
 
@@ -174,7 +194,21 @@ export async function verwaltungPruefen(env, request) {
 export async function verwaltungListe(env) {
   const b = await env.DB.prepare("SELECT * FROM bestellungen ORDER BY datum DESC LIMIT 200").all();
   const r = await env.DB.prepare("SELECT id, produkt, name, sterne, titel, text, datum FROM bewertungen ORDER BY datum DESC LIMIT 100").all();
-  return { bestellungen: b.results.map((z) => ({ ...oeffentlich(z), email: z.email, kunde: JSON.parse(z.kunde), transaktion: z.transaktion })), bewertungen: r.results };
+  return { bestellungen: b.results.map((z) => ({ ...oeffentlich(z), email: z.email, kunde: JSON.parse(z.kunde), transaktion: z.transaktion })), bewertungen: r.results,
+    gutscheine: await gutscheinStatistik(env) };
+}
+
+// Wie viele Bewertungs-Gutscheine wurden vergeben/eingelöst, und was haben die Bestellungen damit eingebracht (ohne Stornos)?
+async function gutscheinStatistik(env) {
+  const v = await env.DB.prepare("SELECT COUNT(*) AS vergeben, SUM(eingeloest_nr <> '') AS eingeloest FROM gutscheine").first();
+  const summe = (bedingung) => env.DB.prepare(`SELECT COUNT(*) AS anzahl, COALESCE(SUM(b.brutto), 0) AS brutto, COALESCE(SUM(b.netto), 0) AS netto,
+      COALESCE(SUM(json_extract(b.kunde, '$.gutschein.rabatt')), 0) AS rabatt
+    FROM bestellungen b JOIN gutscheine g ON g.eingeloest_nr = b.nr WHERE ${bedingung}`).first();
+  return {
+    vergeben: v.vergeben || 0, eingeloest: v.eingeloest || 0,
+    alle: await summe("b.status <> 'storniert'"),
+    bezahlt: await summe("b.status IN ('bezahlt', 'in_bearbeitung', 'versendet', 'zugestellt')"),
+  };
 }
 
 export async function verwaltungStatus(env, ctx, d) {
@@ -191,10 +225,34 @@ export async function verwaltungStatus(env, ctx, d) {
   return { ok: true };
 }
 
+/* ---------- Gutscheine ---------- */
+const ZEICHEN = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";  // ohne 0/O, 1/I
+function gutscheinZufall(n = 8) {
+  return [...crypto.getRandomValues(new Uint8Array(n))].map((x) => ZEICHEN[x % ZEICHEN.length]).join("");
+}
+function gutscheinCode(v) {
+  return text(v, 30).toUpperCase().replace(/\s+/g, "");
+}
+async function gutscheinLesen(env, code) {
+  const g = await env.DB.prepare("SELECT code, prozent, eingeloest_nr FROM gutscheine WHERE code = ?").bind(code).first();
+  if (!g) throw new Fehler("Diesen Gutscheincode kennen wir nicht. Bitte prüfen Sie die Schreibweise.");
+  if (g.eingeloest_nr) throw new Fehler("Dieser Gutscheincode wurde bereits eingelöst.");
+  return g;
+}
+export async function gutscheinPruefen(env, d) {
+  const g = await gutscheinLesen(env, gutscheinCode(d.code));
+  return { code: g.code, prozent: g.prozent };
+}
+
 /* ---------- Bitte um Bewertung (einmal je Bestellung) ---------- */
 const TAG = 86400000;
 async function bewertungsanfrageVormerken(env, z, status) {
-  if (status === "storniert") { await env.DB.prepare("DELETE FROM bewertungsanfragen WHERE nr = ? AND gesendet = ''").bind(z.nr).run(); return; }
+  if (status === "storniert") {
+    await env.DB.prepare("DELETE FROM bewertungsanfragen WHERE nr = ? AND gesendet = ''").bind(z.nr).run();
+    // Gutschein einer stornierten Bestellung wieder freigeben
+    await env.DB.prepare("UPDATE gutscheine SET eingeloest_nr = '', eingeloest_am = '' WHERE eingeloest_nr = ?").bind(z.nr).run();
+    return;
+  }
   if (!z.kunde_id || !JSON.parse(z.kunde).bewertungsmail) return;
   // 7 Tage nach „versendet“ oder 3 Tage nach „zugestellt“, je nachdem, was früher ist
   const tage = status === "versendet" ? 7 : status === "zugestellt" ? 3 : 0;

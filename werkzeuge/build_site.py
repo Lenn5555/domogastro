@@ -177,13 +177,14 @@ def produktseite(p):
 <table class="tabelle">{tabelle}</table></div>
 <div class="beschreibung"><h2 class="titel" style="font-size:28px">Beschreibung</h2>{text}</div>
 <div class="bewertungen" id="bewertungen" hidden><h2 class="titel" style="font-size:28px">Bewertungen <span class="schnitt sterne"></span></h2>
-<p class="klein">Bewerten können nur angemeldete Kundinnen und Kunden, die dieses Produkt bei uns gekauft haben. So stammt jede Bewertung von einem echten Kauf. Bewertungen erscheinen sofort; wir veröffentlichen positive wie negative und entfernen nur Beiträge, die gegen unsere Regeln verstoßen.</p>
+<p class="klein">Bewerten können nur angemeldete Kundinnen und Kunden, die dieses Produkt bei uns gekauft haben. So stammt jede Bewertung von einem echten Kauf. Bewertungen erscheinen sofort; wir veröffentlichen positive wie negative und entfernen nur Beiträge, die gegen unsere Regeln verstoßen. Als Dankeschön erhält jede Person, die bewertet, einen Gutschein über 5 % für die nächste Bestellung, unabhängig davon, wie sie bewertet.</p>
 <div class="liste"></div>
 <p class="klein bew-hinweis" style="margin-top:18px"></p>
 <form class="kasten" hidden style="margin-top:18px"><b>Produkt bewerten</b>
 <fieldset class="sternwahl" style="border:0;padding:0"><legend class="sr">Sterne</legend>{''.join(f'<input type="radio" id="s{i}" name="sterne" value="{i}" required><label for="s{i}" title="{i} Sterne">★</label>' for i in range(5, 0, -1))}</fieldset>
 <label>Überschrift (optional) <input type="text" name="titel" maxlength="80"></label>
 <label>Ihre Erfahrung (optional) <textarea name="text" rows="4" maxlength="2000"></textarea></label>
+<p class="klein">Als Dankeschön schicken wir Ihnen einen persönlichen Gutscheincode über 5 % per E-Mail, egal wie Sie bewerten.</p>
 <button class="btn pri" type="submit">Bewertung senden</button><p class="status" role="status"></p></form></div>
 </article></div></div>"""
     return seite(f"{p['name']} | Domo Gastro", inhalt, f"/produkt/{p['slug']}/", p["text"][:155], p["kategorie"])
@@ -255,6 +256,8 @@ def warenkorb():
 <div class="zwei"><label>PLZ <input type="text" name="l_plz" pattern="[0-9]{{5}}" autocomplete="shipping postal-code" inputmode="numeric"></label><label>Ort <input type="text" name="l_ort" autocomplete="shipping address-level2"></label></div></div>
 <p class="klein">Wir liefern nur innerhalb Deutschlands.</p></fieldset></div>
 <label style="display:block;margin-top:14px">Hinweis zur Bestellung (optional) <textarea name="hinweis" rows="2" maxlength="1000"></textarea></label>
+<div class="gutschein"><label>Gutscheincode (optional) <input type="text" name="gutschein" autocomplete="off" spellcheck="false" style="text-transform:uppercase"></label><button class="btn sec" type="button" id="gutschein-los">Einlösen</button></div>
+<p class="klein" id="gutschein-status" role="status"></p>
 <fieldset><legend>Zahlungsart</legend>
 <label class="check"><input type="radio" name="zahlart" value="Vorkasse" checked> Vorkasse per Überweisung (Bankverbindung kommt per E-Mail)</label>
 <label class="check"><input type="radio" name="zahlart" value="PayPal"> PayPal oder Kreditkarte über PayPal (Sie werden zu PayPal weitergeleitet)</label></fieldset>

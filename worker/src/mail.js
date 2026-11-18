@@ -1,6 +1,6 @@
 // E-Mails über Resend (Region EU). Ohne RESEND_API_KEY wird nichts verschickt, nur protokolliert.
 import TEXTE from "./texte.json" with { type: "json" };
-import { euro } from "./hilfe.js";
+import { euro, runden } from "./hilfe.js";
 
 export async function senden(env, an, betreff, text, abruf = fetch) {
   if (!env.RESEND_API_KEY) { console.log(`[Mail nicht verschickt, kein RESEND_API_KEY] an ${an}: ${betreff}`); return false; }
@@ -23,7 +23,9 @@ function posten(b) {
   return b.positionen.map((p) => `  ${p.menge} × ${p.name} (Art.-Nr. ${p.sku})  je ${euro(p.netto)} netto`).join("\n");
 }
 function summen(b) {
-  return `Warenwert netto: ${euro(b.netto)}\nzzgl. 19 % MwSt.: ${euro(b.mwst)}\nVersand (Deutschland): kostenlos\nGesamtbetrag: ${euro(b.brutto)}`;
+  const g = b.kunde?.gutschein;
+  const rabatt = g ? `Warenwert netto: ${euro(runden(b.netto + g.rabatt))}\nGutschein ${g.code} (${g.prozent} %): −${euro(g.rabatt)}\nnach Gutschein netto: ${euro(b.netto)}` : `Warenwert netto: ${euro(b.netto)}`;
+  return `${rabatt}\nzzgl. 19 % MwSt.: ${euro(b.mwst)}\nVersand (Deutschland): kostenlos\nGesamtbetrag: ${euro(b.brutto)}`;
 }
 function adresse(k) {
   return [k.firma, k.name, k.strasse, `${k.plz} ${k.ort}`, k.telefon && `Tel. ${k.telefon}`, k.ustid && `USt-IdNr. ${k.ustid}`].filter(Boolean).join("\n");
@@ -85,6 +87,22 @@ ${adressen(b.kunde)}
 ${b.kunde.hinweis ? `\nHinweis: ${b.kunde.hinweis}` : ""}
 
 Status ändern: ${env.SITE_URL}/verwaltung/`;
+}
+
+// Dank für die Bewertung mit persönlichem Gutscheincode
+export function gutscheinmail(env, name, code, prozent) {
+  return `Guten Tag ${name},
+
+vielen Dank für Ihre Bewertung! Als Dankeschön erhalten Sie ${prozent} % Rabatt auf Ihre nächste Bestellung bei Domo Gastro.
+
+Ihr persönlicher Gutscheincode: ${code}
+
+So lösen Sie ihn ein: Geben Sie den Code im Warenkorb unter „Gutscheincode“ ein. Er gilt einmal, für den gesamten Warenwert einer Bestellung, und ist nicht mit anderen Gutscheinen kombinierbar. Eine Barauszahlung ist nicht möglich.
+
+Zum Shop: ${env.SITE_URL}/
+
+Freundliche Grüße
+Ihr Domo-Gastro-Team`;
 }
 
 // Einmalige Bitte um Bewertung, nur nach Zustimmung beim Bestellen

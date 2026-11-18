@@ -2,7 +2,8 @@
 // Konto:      POST /konto/registrieren, /konto/anmelden, /konto/abmelden, /konto/passwort-vergessen, /konto/passwort-setzen
 //             GET/PUT/DELETE /konto
 // Bestellung: POST /bestellung, /bestellung/status, /bezahlen/abschluss
-// Bewertung:  GET /bewertungen?produkt=…, POST /bewertungen
+// Bewertung:  GET /bewertungen?produkt=…, POST /bewertungen (danach 5-%-Gutschein per Mail)
+// Gutschein:  POST /gutschein/pruefen
 // Zeitplan:   täglich fällige Bitten um Bewertung verschicken (wrangler.toml [triggers])
 // Verwaltung: GET /verwaltung, POST /verwaltung/status, /verwaltung/bewertung (Schlüssel VERWALTUNG_SCHLUESSEL)
 import { Fehler, json } from "./hilfe.js";
@@ -42,6 +43,7 @@ async function verteilen(request, env, ctx) {
     case "POST /bestellung/status": return shop.status(env, d);
     case "POST /bezahlen/abschluss": return shop.bezahlt(env, ctx, d);
     case "GET /bewertungen": return shop.bewertungenLesen(env, url.searchParams.get("produkt"), await konto.kundeAusAnfrage(env, request));
+    case "POST /gutschein/pruefen": return shop.gutscheinPruefen(env, d);
     case "POST /bewertungen": return shop.bewerten(env, ctx, await konto.pflichtKunde(env, request), d);
     case "GET /verwaltung": await shop.verwaltungPruefen(env, request); return shop.verwaltungListe(env);
     case "POST /verwaltung/status": await shop.verwaltungPruefen(env, request); return shop.verwaltungStatus(env, ctx, d);

@@ -45,13 +45,19 @@
       <p class="klein">Rechnung: ${esc([b.kunde.firma, b.kunde.name, b.kunde.strasse, `${b.kunde.plz} ${b.kunde.ort}`, b.email, b.kunde.telefon].filter(Boolean).join(" · "))}${b.transaktion ? ` · PayPal ${esc(b.transaktion)}` : ""}</p>
       <p class="klein">Lieferung: ${b.kunde.liefer ? esc([b.kunde.liefer.firma, b.kunde.liefer.name, b.kunde.liefer.strasse, `${b.kunde.liefer.plz} ${b.kunde.liefer.ort}`].filter(Boolean).join(" · ")) : "wie Rechnungsadresse"}</p>
       <p class="klein">${b.positionen.map((p) => `${p.menge} × ${esc(p.name)} (${esc(p.sku)})`).join("<br>")}</p>
+      ${b.kunde.gutschein ? `<p class="klein">Gutschein ${esc(b.kunde.gutschein.code)}: −${b.kunde.gutschein.prozent} % (−${euro(b.kunde.gutschein.rabatt)} netto)</p>` : ""}
       ${b.kunde.hinweis ? `<p class="klein">Hinweis: ${esc(b.kunde.hinweis)}</p>` : ""}
       <form class="v-status" data-nr="${esc(b.nr)}"><select name="status">${Object.entries(STATI).map(([k, t]) => `<option value="${k}"${k === b.status ? " selected" : ""}>${t}</option>`).join("")}</select>
       <input name="sendung" placeholder="Sendungsnummer / Link" value="${esc(b.sendung || "")}">
       <label class="check klein"><input type="checkbox" name="mail" checked> Kunde per E-Mail informieren</label>
       <button class="btn pri">Speichern</button></form></div>`).join("")
       : "<p>Noch keine Bestellungen.</p>";
-    box.innerHTML = `<h2>Neueste Bewertungen (${d.bewertungen.length})</h2>${bew}<h2>Bestellungen (${d.bestellungen.length})</h2>${best}
+    const g = d.gutscheine;
+    const gut = g ? `<div class="v-karte"><b>Bewertungs-Gutscheine (5 %)</b>
+      <p>Vergeben: <b>${g.vergeben}</b> · eingelöst: <b>${g.eingeloest}</b>${g.vergeben ? ` (${Math.round(g.eingeloest / g.vergeben * 100)} %)` : ""}</p>
+      <p>Bestellungen mit Code: <b>${g.alle.anzahl}</b> · Umsatz <b>${euro(g.alle.brutto)}</b> brutto (${euro(g.alle.netto)} netto) · gewährter Rabatt ${euro(g.alle.rabatt)} netto</p>
+      <p class="klein">Davon bezahlt: ${g.bezahlt.anzahl} Bestellungen, ${euro(g.bezahlt.brutto)} brutto (${euro(g.bezahlt.netto)} netto). Stornierte Bestellungen zählen nicht mit.</p></div>` : "";
+    box.innerHTML = `<h2>Gutscheine</h2>${gut}<h2>Neueste Bewertungen (${d.bewertungen.length})</h2>${bew}<h2>Bestellungen (${d.bestellungen.length})</h2>${best}
       <p><button class="btn sec" id="v-ab">Abmelden</button></p>`;
     box.querySelectorAll("[data-bew]").forEach((k) => k.addEventListener("click", async () => {
       if (!confirm("Diese Bewertung endgültig löschen?")) return;
