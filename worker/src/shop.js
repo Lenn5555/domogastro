@@ -131,7 +131,8 @@ async function darfBewerten(env, kunde, slug) {
 export async function bewertungenLesen(env, slug, kunde = null) {
   const r = await env.DB.prepare("SELECT name, sterne, titel, text, verifiziert, datum FROM bewertungen WHERE produkt = ? AND freigegeben = 1 ORDER BY datum DESC LIMIT 100")
     .bind(text(slug, 120)).all();
-  const liste = r.results;
+  // Name nur zeigen, wenn die Person etwas geschrieben hat (reine Sterne-Bewertungen bleiben anonym)
+  const liste = r.results.map((b) => ({ ...b, name: b.titel || b.text ? b.name : "" }));
   const schnitt = liste.length ? liste.reduce((s, b) => s + b.sterne, 0) / liste.length : 0;
   return { anzahl: liste.length, schnitt: Math.round(schnitt * 10) / 10, liste, darf: await darfBewerten(env, kunde, text(slug, 120)) };
 }

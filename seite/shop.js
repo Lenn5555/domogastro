@@ -136,7 +136,7 @@
         liste.innerHTML = d.liste.length ? d.liste.map(function (b) {
           return '<div class="bewertung"><span class="sterne">' + sterne(b.sterne) + "</span>" + (b.titel ? " <b>" + esc(b.titel) + "</b>" : "") +
             (b.verifiziert ? ' <span class="klein">· Verifizierter Kauf</span>' : "") +
-            (b.text ? "<p>" + esc(b.text) + "</p>" : "<br>") + '<span class="klein">' + esc(b.name) + " am " + new Date(b.datum).toLocaleDateString("de-DE") + "</span></div>";
+            (b.text ? "<p>" + esc(b.text) + "</p>" : "<br>") + '<span class="klein">' + (b.name ? esc(b.name) + " am " : "Am ") + new Date(b.datum).toLocaleDateString("de-DE") + "</span></div>";
         }).join("") : '<p class="klein">Noch keine Bewertungen. Kaufen Sie das Produkt, können Sie es als Erste(r) bewerten.</p>';
         form.hidden = d.darf !== "ja";
         hinweis.innerHTML = HINWEIS[d.darf] || "";
