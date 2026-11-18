@@ -2,7 +2,7 @@
 import KATALOG from "./katalog.json" with { type: "json" };
 import { Fehler, text, email, jetzt, runden, zufall, sha256, gleich } from "./hilfe.js";
 import { anlegen as kontoAnlegen, oeffentlich } from "./konto.js";
-import { senden, kundenmail, vertriebsmail, statusmail } from "./mail.js";
+import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail } from "./mail.js";
 import * as paypal from "./paypal.js";
 
 export const MWST = 0.19;
@@ -66,6 +66,8 @@ export async function bestellen(env, ctx, d, kunde, abruf = fetch) {
     const neu = await kontoAnlegen(env, { email: mail, passwort: d.passwort, name: k.name, ...k });
     kundeId = neu.id; sitzung = neu.sitzung;
   }
+  // Bitte um Bewertung nur mit Konto (Bewerten setzt Anmeldung voraus) und nur mit ausdrücklicher Zustimmung
+  k.bewertungsmail = Boolean(d.bewertungsmail && kundeId);
   const b = {
     nr: bestellnummer(), kunde_id: kundeId, email: kunde?.email || mail, modus, kunde: k, ...r,
     zahlart: d.zahlart, status: d.zahlart === "PayPal" ? "zahlung_offen" : "eingegangen", datum: jetzt(),
@@ -181,11 +183,47 @@ export async function verwaltungStatus(env, ctx, d) {
   if (!z) throw new Fehler("Bestellung nicht gefunden.", 404);
   const sendung = text(d.sendung ?? z.sendung, 200);
   await env.DB.prepare("UPDATE bestellungen SET status = ?, sendung = ?, aktualisiert = ? WHERE nr = ?").bind(d.status, sendung, jetzt(), z.nr).run();
+  await bewertungsanfrageVormerken(env, z, d.status);
   if (d.status !== z.status && d.benachrichtigen !== false) {
     const b = { ...ausZeile(z), status: d.status, sendung };
     ctx.waitUntil(senden(env, b.email, `Ihre Bestellung ${b.nr}: Status geändert`, statusmail(env, b)));
   }
   return { ok: true };
+}
+
+/* ---------- Bitte um Bewertung (einmal je Bestellung) ---------- */
+const TAG = 86400000;
+async function bewertungsanfrageVormerken(env, z, status) {
+  if (status === "storniert") { await env.DB.prepare("DELETE FROM bewertungsanfragen WHERE nr = ? AND gesendet = ''").bind(z.nr).run(); return; }
+  if (!z.kunde_id || !JSON.parse(z.kunde).bewertungsmail) return;
+  // 7 Tage nach „versendet“ oder 3 Tage nach „zugestellt“, je nachdem, was früher ist
+  const tage = status === "versendet" ? 7 : status === "zugestellt" ? 3 : 0;
+  if (!tage) return;
+  await env.DB.prepare(`INSERT INTO bewertungsanfragen (nr, faellig) VALUES (?, ?)
+    ON CONFLICT(nr) DO UPDATE SET faellig = MIN(faellig, excluded.faellig) WHERE gesendet = ''`)
+    .bind(z.nr, new Date(Date.now() + tage * TAG).toISOString()).run();
+}
+
+export async function bewertungsanfragenSenden(env) {
+  const r = await env.DB.prepare("SELECT nr, faellig FROM bewertungsanfragen WHERE gesendet = '' AND faellig <= ? LIMIT 50").bind(jetzt()).all();
+  for (const { nr, faellig } of r.results) {
+    const z = await env.DB.prepare("SELECT * FROM bestellungen WHERE nr = ?").bind(nr).first();
+    let ergebnis = "uebersprungen";
+    const kunde = z && z.kunde_id && await env.DB.prepare("SELECT id FROM kunden WHERE id = ?").bind(z.kunde_id).first();
+    if (kunde && ["versendet", "zugestellt"].includes(z.status)) {
+      const b = ausZeile(z);
+      const schon = (await env.DB.prepare("SELECT produkt FROM bewertungen WHERE kunde_id = ?").bind(z.kunde_id).all()).results.map((x) => x.produkt);
+      const produkte = [];
+      for (const p of b.positionen) {
+        const slug = KATALOG.artikel[String(p.sku)]?.s;
+        if (slug && !schon.includes(slug) && !produkte.some((x) => x.slug === slug)) produkte.push({ slug, name: p.name });
+      }
+      if (produkte.length && await senden(env, b.email, "Wie zufrieden sind Sie mit Ihrer Bestellung?", bewertungsmail(env, b, produkte))) ergebnis = jetzt();
+      // Versand fehlgeschlagen: morgen erneut versuchen, aber höchstens 14 Tage lang
+      else if (produkte.length && Date.parse(faellig) > Date.now() - 14 * TAG) continue;
+    }
+    await env.DB.prepare("UPDATE bewertungsanfragen SET gesendet = ? WHERE nr = ?").bind(ergebnis, nr).run();
+  }
 }
 
 export async function verwaltungBewertung(env, d) {

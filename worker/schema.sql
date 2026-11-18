@@ -35,5 +35,7 @@ CREATE TABLE IF NOT EXISTS bewertungen (
   UNIQUE(produkt, kunde_id)
 );
 CREATE INDEX IF NOT EXISTS bewertungen_produkt ON bewertungen(produkt, freigegeben);
+-- Einmalige Bitte um Bewertung per Mail (nur mit Kundenkonto und Zustimmung beim Bestellen)
+CREATE TABLE IF NOT EXISTS bewertungsanfragen (nr TEXT PRIMARY KEY, faellig TEXT NOT NULL, gesendet TEXT NOT NULL DEFAULT '');
 -- Bewertungen erscheinen seit 2026-11-18 sofort (keine Freigabe mehr); ältere wartende einmalig freischalten
 UPDATE bewertungen SET freigegeben = 1 WHERE freigegeben = 0;

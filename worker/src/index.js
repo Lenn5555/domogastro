@@ -3,6 +3,7 @@
 //             GET/PUT/DELETE /konto
 // Bestellung: POST /bestellung, /bestellung/status, /bezahlen/abschluss
 // Bewertung:  GET /bewertungen?produkt=…, POST /bewertungen
+// Zeitplan:   täglich fällige Bitten um Bewertung verschicken (wrangler.toml [triggers])
 // Verwaltung: GET /verwaltung, POST /verwaltung/status, /verwaltung/bewertung (Schlüssel VERWALTUNG_SCHLUESSEL)
 import { Fehler, json } from "./hilfe.js";
 import * as konto from "./konto.js";
@@ -50,6 +51,9 @@ async function verteilen(request, env, ctx) {
 }
 
 export default {
+  async scheduled(ereignis, env, ctx) {
+    ctx.waitUntil(shop.bewertungsanfragenSenden(env));
+  },
   async fetch(request, env, ctx) {
     const herkunft = herkunftVon(env, request);
     const cors = herkunft ? { "Access-Control-Allow-Origin": herkunft, Vary: "Origin" } : {};

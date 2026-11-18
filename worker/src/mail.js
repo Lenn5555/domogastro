@@ -87,6 +87,24 @@ ${b.kunde.hinweis ? `\nHinweis: ${b.kunde.hinweis}` : ""}
 Status ändern: ${env.SITE_URL}/verwaltung/`;
 }
 
+// Einmalige Bitte um Bewertung, nur nach Zustimmung beim Bestellen
+export function bewertungsmail(env, b, produkte) {
+  return `Guten Tag ${b.kunde.name},
+
+Ihre Bestellung ${b.nr} sollte inzwischen bei Ihnen angekommen sein. Wir hoffen, Sie sind zufrieden!
+
+Würden Sie Ihre Artikel kurz bewerten? Ein paar Sterne genügen, ein Kommentar ist freiwillig. Damit helfen Sie anderen Kundinnen und Kunden bei der Auswahl.
+
+${produkte.map((p) => `  ${p.name}\n  ${env.SITE_URL}/produkt/${p.slug}/#bewertungen`).join("\n\n")}
+
+Zum Bewerten melden Sie sich mit Ihrem Kundenkonto an.
+
+Freundliche Grüße
+Ihr Domo-Gastro-Team
+
+Sie erhalten diese einmalige E-Mail, weil Sie beim Bestellen zugestimmt haben. Weitere E-Mails dieser Art bekommen Sie zu dieser Bestellung nicht.`;
+}
+
 export function statusmail(env, b) {
   return `Guten Tag ${b.kunde.name},
 

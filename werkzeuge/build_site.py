@@ -176,7 +176,7 @@ def produktseite(p):
 <ul class="merkmale">{''.join(f'<li>{e(x)}</li>' for x in p['merkmale'])}</ul>
 <table class="tabelle">{tabelle}</table></div>
 <div class="beschreibung"><h2 class="titel" style="font-size:28px">Beschreibung</h2>{text}</div>
-<div class="bewertungen" id="bewertungen"><h2 class="titel" style="font-size:28px">Bewertungen <span class="schnitt sterne"></span></h2>
+<div class="bewertungen" id="bewertungen" hidden><h2 class="titel" style="font-size:28px">Bewertungen <span class="schnitt sterne"></span></h2>
 <p class="klein">Bewerten können nur angemeldete Kundinnen und Kunden, die dieses Produkt bei uns gekauft haben. So stammt jede Bewertung von einem echten Kauf. Bewertungen erscheinen sofort; wir veröffentlichen positive wie negative und entfernen nur Beiträge, die gegen unsere Regeln verstoßen.</p>
 <div class="liste"></div>
 <p class="klein bew-hinweis" style="margin-top:18px"></p>
@@ -260,6 +260,7 @@ def warenkorb():
 <label class="check"><input type="radio" name="zahlart" value="PayPal"> PayPal oder Kreditkarte über PayPal (Sie werden zu PayPal weitergeleitet)</label></fieldset>
 <label class="check"><input type="checkbox" name="konto_anlegen"> Kundenkonto anlegen (Bestellungen verfolgen, Produkte bewerten)</label>
 <label id="pw-feld" hidden>Passwort für Ihr Konto (mind. 10 Zeichen) <input type="password" name="passwort" minlength="10" autocomplete="new-password"></label>
+<label class="check" id="bew-mail" hidden><input type="checkbox" name="bewertungsmail"> Ja, erinnern Sie mich nach der Lieferung einmal per E-Mail daran, die Artikel zu bewerten (freiwillig).</label>
 <label class="check"><input type="checkbox" name="agb" required> Ich habe die <a href="{u('/agb/')}" target="_blank">AGB</a> gelesen und akzeptiere sie. Die <a href="{u('/datenschutz/')}" target="_blank">Datenschutzerklärung</a> habe ich zur Kenntnis genommen.</label>
 <p class="klein nur-privat">Als Verbraucher haben Sie ein gesetzliches Widerrufsrecht. Einzelheiten in der <a href="{u('/widerruf/')}" target="_blank">Widerrufsbelehrung</a>.</p>
 <label class="check nur-gewerbe" hidden><input type="checkbox" name="gewerbe_bestaetigt"> Ich bestelle als Unternehmer (§ 14 BGB) für mein Gewerbe oder meine selbständige Tätigkeit.</label>

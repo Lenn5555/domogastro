@@ -20,6 +20,10 @@ BANK_IBAN = "DE17 5084 0005 0610 6090 00"
 # "ja" = PayPal-Testumgebung
 PAYPAL_SANDBOX = "ja"
 
+# Täglich 8 Uhr UTC: fällige Bitten um Bewertung verschicken
+[triggers]
+crons = ["0 8 * * *"]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "domogastro"

@@ -141,9 +141,13 @@
           return '<div class="bewertung"><span class="sterne">' + sterne(b.sterne) + "</span>" + (b.titel ? " <b>" + esc(b.titel) + "</b>" : "") +
             (b.verifiziert ? ' <span class="klein">· Verifizierter Kauf</span>' : "") +
             (b.text ? "<p>" + esc(b.text) + "</p>" : "<br>") + '<span class="klein">' + esc(b.name) + " am " + new Date(b.datum).toLocaleDateString("de-DE") + "</span></div>";
-        }).join("") : d.anzahl ? "" : '<p class="klein">Noch keine Bewertungen. Kaufen Sie das Produkt, können Sie es als Erste(r) bewerten.</p>');
+        }).join("") : d.anzahl ? "" : '<p class="klein">Noch keine Bewertungen. Seien Sie die oder der Erste!</p>');
         form.hidden = d.darf !== "ja";
         hinweis.innerHTML = HINWEIS[d.darf] || "";
+        // Ohne Bewertungen bleibt der Bereich unsichtbar, außer der Kunde darf gerade bewerten
+        var vorher = box.hidden;
+        box.hidden = !(d.anzahl || d.darf === "ja");
+        if (vorher && !box.hidden && location.hash === "#bewertungen") box.scrollIntoView();
       }).catch(function () { liste.innerHTML = '<p class="klein">Bewertungen konnten nicht geladen werden.</p>'; });
     }
     form.addEventListener("submit", function (e) {
@@ -267,7 +271,7 @@
                    email: f.get("email"), telefon: f.get("telefon") || "", hinweis: f.get("hinweis") || "",
                    liefer: f.get("gleich") ? null : { firma: f.get("l_firma") || "", name: f.get("l_name"), strasse: f.get("l_strasse"), plz: f.get("l_plz"), ort: f.get("l_ort") } },
           zahlart: f.get("zahlart"), agb: !!f.get("agb"), gesamt_brutto: r.brutto,
-          konto_anlegen: !!f.get("konto_anlegen"), passwort: f.get("passwort") || "",
+          konto_anlegen: !!f.get("konto_anlegen"), passwort: f.get("passwort") || "", bewertungsmail: !!f.get("bewertungsmail"),
         };
         var knopf = $("button[type=submit]", form);
         if (!DG.api) {
@@ -297,7 +301,10 @@
       }
       gl.addEventListener("change", lieferUmschalten); lieferUmschalten();
       var ka = form.elements.konto_anlegen;
-      if (ka) ka.addEventListener("change", function () { $("#pw-feld").hidden = !ka.checked; form.elements.passwort.required = ka.checked; });
+      // Bitte um Bewertung nur mit Konto anbieten
+      function bewMail() { $("#bew-mail").hidden = !(s || (ka && ka.checked)); if ($("#bew-mail").hidden) form.elements.bewertungsmail.checked = false; }
+      if (ka) ka.addEventListener("change", function () { $("#pw-feld").hidden = !ka.checked; form.elements.passwort.required = ka.checked; bewMail(); });
+      bewMail();
       if (s && ka) ka.closest("label").hidden = true;
     });
   }
