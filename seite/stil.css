@@ -53,6 +53,25 @@ header.h .in{display:grid;grid-template-columns:1fr;align-items:center}
 .domo{position:relative;justify-self:center;display:flex;align-items:flex-end;height:100%;padding-top:36px}
 .domo::before{content:"";position:absolute;left:50%;bottom:8%;width:120%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,#22C3E626,transparent 70%)}
 .domo img{position:relative;display:block;height:min(560px,58vw);width:auto;margin-bottom:-4px;filter:drop-shadow(0 18px 24px #0008)}
+.domo-figur{position:relative;will-change:transform}
+.domo-figur canvas{position:absolute;left:0;top:0;width:100%;height:calc(100% + 4px);pointer-events:none}
+.domo-figur.links img,.domo-figur.links canvas{scale:-1 1}
+.domo-blase{position:absolute;left:62%;top:2%;z-index:2;max-width:240px;padding:10px 14px;border-radius:14px 14px 14px 4px;background:#fff;color:#0A1628;font:600 15px/1.3 var(--sans);box-shadow:0 8px 20px #0006;opacity:0;translate:0 8px;transition:opacity .2s,translate .2s;pointer-events:none;white-space:nowrap}
+.domo-blase.an{opacity:1;translate:0 0}
+.domo img.kitzel{animation:kitzel .9s ease-in-out}
+.domo img.wackel{animation:wackel .6s ease-in-out}
+.domo img.nies{animation:nies .7s ease-out}
+.domo img.zuck{animation:zuck .35s ease-out}
+.domo img.kipp{animation:kipp .8s ease-in-out}
+.domo img.hops{animation:hops .6s cubic-bezier(.3,0,.4,1)}
+@keyframes kitzel{0%,100%{rotate:0deg}10%,30%,50%,70%{rotate:-3deg;translate:0 -3px}20%,40%,60%,80%{rotate:3deg;translate:0 0}}
+@keyframes wackel{0%,100%{rotate:0deg}25%{rotate:-4deg}75%{rotate:4deg}}
+@keyframes nies{0%{scale:1}30%{scale:1.04 .96}45%{scale:.97 1.04;translate:0 -6px}100%{scale:1}}
+@keyframes zuck{0%,100%{translate:0 0}40%{translate:0 6px;scale:.98 1.01}}
+@keyframes kipp{0%,100%{rotate:0deg}30%{rotate:-6deg}60%{rotate:4deg}}
+@keyframes hops{0%,100%{translate:0 0}40%{translate:0 -40px}70%{translate:0 0;scale:1.03 .97}}
+.domo img{transform-origin:50% 100%}
+@media (prefers-reduced-motion:reduce){.domo img{animation:none!important}}
 .hero .copy{display:grid;gap:22px;justify-items:start;padding-block:56px 72px}
 .hand{font:600 clamp(24px,2.4vw,32px)/1.1 var(--hand);transform:rotate(-4deg);max-width:22ch}
 .hand::after{content:"";display:block;width:60%;height:4px;margin-top:8px;border-radius:4px;background:var(--cyan)}
