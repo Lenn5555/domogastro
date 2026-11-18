@@ -5,7 +5,7 @@ name = "domogastro-shop"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
 # Cloudflare-Konto (nicht geheim)
-account_id = ""
+account_id = "4b855f0470ebca3d071a170d0a9b51df"
 
 [vars]
 # Seiten, die den Server aufrufen dürfen (kommagetrennt)
@@ -23,8 +23,8 @@ PAYPAL_SANDBOX = "ja"
 [[d1_databases]]
 binding = "DB"
 database_name = "domogastro"
-# ID aus dem Lauf "datenbank-anlegen"
-database_id = "00000000-0000-0000-0000-000000000000"
+# Datenbank in der EU (Jurisdiction EU), angelegt 18.11.2026
+database_id = "52ad0eaf-a8d9-40ed-8900-62d7d8359bc4"
 
 [[ratelimits]]
 name = "BREMSE"
