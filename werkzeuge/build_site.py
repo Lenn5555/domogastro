@@ -195,13 +195,13 @@ def startseite(nach_kat):
             if p["bilder"] and ab_preis(p) and "ts-systemtechnik.de" in p["bilder"][0] and p["unterkategorie"] not in gesehen:
                 ausgewaehlt.append(p); gesehen.add(p["unterkategorie"]); break
     kacheln = "".join(
-        f'<a class="c" href="{u("/" + slug(k) + "/")}"><div class="ph"><img src="{e(bild)}" alt="" loading="lazy"></div><b>{e(k)}</b><span>{e(KAT_TEXT.get(k, ""))} · {n} Produkte</span></a>'
+        f'<a class="c" href="{u("/" + slug(k) + "/")}"><div class="ph"><img src="{e(bild)}" alt="" loading="lazy"></div><b>{e(k)}</b><span>{e(KAT_TEXT.get(k, ""))}</span></a>'
         for k in kategorien()
         for n, bild in [(sum(len(v) for v in nach_kat[k].values()), next((p["bilder"][0] for v in nach_kat[k].values() for p in v if p["bilder"]), ""))])
     inhalt = f"""<div class="hero g"><div class="in">
 <div class="copy"><div class="hand">Gute Gastronomie beginnt mit den richtigen Partnern!</div>
 <h1>Alles für Profis mit <em>Geschmack.</em></h1>
-<p class="lead">{len(PRODUKTE)} Profigeräte für Restaurant, Hotel, Café, Imbiss und die Küche zu Hause. Versandkostenfrei in ganz Deutschland, mit Preisen für Privat und Gewerbe.</p>
+<p class="lead">Profigeräte für Restaurant, Hotel, Café, Imbiss und die Küche zu Hause. Versandkostenfrei in ganz Deutschland, mit Preisen für Privat und Gewerbe.</p>
 <div class="ctas"><a class="btn pri" href="{u('/' + slug(kategorien()[0]) + '/')}">Jetzt entdecken →</a><a class="btn sec" href="#bereiche">Sortiment ansehen</a></div></div>
 <div class="domo"><img src="{u('/bilder/domo-koch.webp')}" alt="Domo, das Erdmännchen von Domo Gastro, als Koch" width="523" height="1100" fetchpriority="high"></div>
 </div></div>
@@ -209,7 +209,7 @@ def startseite(nach_kat):
 <section class="g"><div class="in"><div class="sh"><h2>Ausgewählte Produkte</h2></div><div class="raster">{''.join(karte(p) for p in ausgewaehlt[:10])}</div></div></section>
 <section class="cats g" id="bereiche"><div class="in"><div class="sh"><h2>Nach Bereich einkaufen</h2></div><div class="cg">{kacheln}</div></div></section>
 <div class="ben g"><div class="in">
-<div><svg viewBox="0 0 34 34" fill="none" stroke="#22C3E6" stroke-width="2" aria-hidden="true"><rect x="6" y="9" width="22" height="18" rx="2"/><path d="M6 14h22M12 9V6h10v3"/></svg><span>{len(PRODUKTE)} Profi-Artikel</span></div>
+<div><svg viewBox="0 0 34 34" fill="none" stroke="#22C3E6" stroke-width="2" aria-hidden="true"><rect x="6" y="9" width="22" height="18" rx="2"/><path d="M6 14h22M12 9V6h10v3"/></svg><span>Profi-Qualität für Küche und Gastronomie</span></div>
 <div><svg viewBox="0 0 34 34" fill="none" stroke="#22C3E6" stroke-width="2" aria-hidden="true"><path d="M3 10h17v13H3zM20 15h6l5 5v3H20z"/><circle cx="9" cy="25" r="3"/><circle cx="25" cy="25" r="3"/></svg><span>Versandkostenfrei in Deutschland</span></div>
 <div><svg viewBox="0 0 34 34" fill="none" stroke="#22C3E6" stroke-width="2" aria-hidden="true"><path d="M5 17h24M17 5v24"/><circle cx="17" cy="17" r="12"/></svg><span>Preise für Privat und Gewerbe</span></div>
 <div><svg viewBox="0 0 34 34" fill="none" stroke="#22C3E6" stroke-width="2" aria-hidden="true"><path d="M6 26c0-6 5-9 11-9s11 3 11 9"/><circle cx="17" cy="10" r="5"/></svg><span>Beratung vom Fachhändler</span></div>
