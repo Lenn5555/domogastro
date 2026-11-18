@@ -4,7 +4,7 @@
   "claim": "Zuhause in der Gastronomie",
   "anfrage_email": "sales@ts-systec.de",
   "betreiber_zeile": "Ein Angebot der T&S Systemtechnik GmbH, Pfungstadt.",
-  "api": "",
+  "api": "https://domogastro-shop.beinundfuss.workers.dev",
   "mwst": 0.19,
   "standard_modus": "privat"
 }
