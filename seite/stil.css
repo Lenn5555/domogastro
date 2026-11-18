@@ -38,15 +38,12 @@ button{cursor:pointer;border:0;background:none}
 .korb.bump{animation:bump .35s ease}@keyframes bump{50%{transform:scale(1.1)}}
 
 header.h{background:var(--n1);padding-block:12px 10px;position:sticky;top:0;z-index:15;border-bottom:1px solid var(--n2)}
-header.h .in{display:grid;grid-template-columns:110px 1fr 110px;align-items:center;gap:12px}
-.seal{width:76px;height:76px}
+header.h .in{display:grid;grid-template-columns:1fr;align-items:center}
 .mid{display:grid;justify-items:center;gap:10px}
-.mid .logo img{height:58px;filter:invert(1) brightness(1.05);display:block}
+.mid .logo img{height:96px;filter:invert(1) brightness(1.05);display:block}
 .mid nav{display:flex;gap:6px 18px;font:600 13px var(--sans);flex-wrap:wrap;justify-content:center;color:var(--soft)}
 .mid nav a{text-decoration:none;white-space:nowrap}
 .mid nav a[aria-current=page]{color:var(--cyan)}
-.h .rechts{justify-self:end;text-align:center;font:600 26px/1 var(--serif)}
-.h .rechts small{display:block;font:500 9px var(--sans);letter-spacing:.14em;color:var(--soft);margin-top:4px}
 
 /* Start */
 .hero{background:var(--n2);position:relative;overflow:hidden}
@@ -192,7 +189,7 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 
 @media (max-width:900px){
   header.h{position:static}
-  header.h .in{grid-template-columns:1fr}.seal,.h .rechts{display:none}.mid .logo img{height:44px}
+  .mid .logo img{height:64px}
   .mid nav{gap:6px 12px;font-size:12px}
   .hero>.in{grid-template-columns:1fr;min-height:0}.hero .copy{padding-block:40px 0}.domo img{height:340px}
   .cg{grid-template-columns:1fr 1fr}.raster{grid-template-columns:1fr 1fr}

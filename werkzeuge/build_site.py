@@ -110,9 +110,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <div class="seg" role="group" aria-label="Preisanzeige"><button type="button" aria-pressed="true" data-modus="privat">Privat</button><button type="button" aria-pressed="false" data-modus="gewerbe">Gewerbe</button></div>
 <a class="korb" href="{u('/warenkorb/')}">Warenkorb <b>0</b></a></div></div></div>
 <header class="h g"><div class="in">
-<svg class="seal" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="#B8C4D4" stroke-width="2"/><circle cx="50" cy="50" r="34" fill="none" stroke="#B8C4D4" stroke-width="1"/><path d="M30 56 L50 40 L70 56" fill="none" stroke="#22C3E6" stroke-width="3"/><text x="50" y="74" text-anchor="middle" font-family="Montserrat" font-size="7" font-weight="600" fill="#B8C4D4">EDELSTAHL</text><text x="50" y="30" text-anchor="middle" font-family="Montserrat" font-size="7" font-weight="600" fill="#B8C4D4">DOMO GASTRO</text></svg>
-<div class="mid"><a class="logo" href="{u('/')}"><img src="{u('/logo.svg')}" alt="Domo Gastro – Zuhause in der Gastronomie" width="380" height="140"></a><nav aria-label="Kategorien">{nav}</nav></div>
-<div class="rechts">Domo<small>GASTRONOMIE</small></div></div></header>
+<div class="mid"><a class="logo" href="{u('/')}"><img src="{u('/logo.svg')}" alt="Domo Gastro – Zuhause in der Gastronomie" width="380" height="140"></a><nav aria-label="Kategorien">{nav}</nav></div></div></header>
 <main>{inhalt}</main>
 <footer class="fuss g"><div class="in"><div class="spalten">
 <div><img src="{u('/logo.svg')}" alt="Domo Gastro"><p>Zuhause in der Gastronomie. Profigeräte, Ausstattung und Zubehör für Gastronomie, Hotellerie und alle, die zu Hause wie Profis kochen.</p><p>{e(CFG['betreiber_zeile'])}</p></div>
