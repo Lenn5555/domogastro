@@ -210,6 +210,12 @@ def startseite(nach_kat):
 <div class="leiste g"><div class="in"><span>Für Restaurants</span><span>Für Hotels</span><span>Für Cafés</span><span>Für Imbisse</span><span>Für Catering</span><span>Für Zuhause</span></div></div>
 <section class="g"><div class="in"><div class="sh"><h2>Ausgewählte Produkte</h2></div><div class="raster">{''.join(karte(p) for p in ausgewaehlt[:10])}</div></div></section>
 <section class="cats g" id="bereiche"><div class="in"><div class="sh"><h2>Nach Bereich einkaufen</h2></div><div class="cg">{kacheln}</div></div></section>
+<section class="bf g" id="stellfuesse"><div class="in"><div class="bf-karte">
+<a class="bf-bild" href="https://beinundfuss.de/" target="_blank" rel="noopener"><img src="{u('/bilder/beinundfuss-fuesse.webp')}" alt="Stellfüße, Edelstahl-Stellbeine und Einschlagfüße von Beinundfuß" width="1344" height="390" loading="lazy"></a>
+<div class="bf-text"><p class="kicker">Unser Spezialshop</p><h2>Stellfüße und Einschlagfüße</h2>
+<p>Auf <b>beinundfuss.de</b> finden Sie Stellfüße, Einschlagfüße, Maschinenfüße und Edelstahl-Stellbeine für Gastro-Geräte, Kühlmöbel, Arbeitstische und Maschinen. Ein Berater findet den passenden Fuß nach Gewinde, Last und Boden, mit festen Nettopreisen für Gewerbekunden.</p>
+<p class="klein">Beinundfuß ist wie Domo Gastro ein Shop der T&amp;S Systemtechnik GmbH.</p>
+<a class="btn pri" href="https://beinundfuss.de/" target="_blank" rel="noopener">Zu beinundfuss.de</a></div></div></div></section>
 <div class="ben g"><div class="in">
 <div><svg viewBox="0 0 34 34" fill="none" stroke="#22C3E6" stroke-width="2" aria-hidden="true"><rect x="6" y="9" width="22" height="18" rx="2"/><path d="M6 14h22M12 9V6h10v3"/></svg><span>Profi-Qualität für Küche und Gastronomie</span></div>
 <div><svg viewBox="0 0 34 34" fill="none" stroke="#22C3E6" stroke-width="2" aria-hidden="true"><path d="M3 10h17v13H3zM20 15h6l5 5v3H20z"/><circle cx="9" cy="25" r="3"/><circle cx="25" cy="25" r="3"/></svg><span>Versandkostenfrei in Deutschland</span></div>
