@@ -21,10 +21,19 @@ jobs:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: worker } }
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       AKTION: ${{ inputs.aktion || 'pruefen' }}
     steps:
       - uses: actions/checkout@v4
+      # Schlüssel bereinigen: beim Einfügen rutschen leicht Zeilenumbrüche oder Leerzeichen mit hinein
+      - name: Cloudflare-Schlüssel vorbereiten
+        if: env.AKTION != 'pruefen'
+        env:
+          ROH: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          T=$(printf '%s' "$ROH" | grep -oE '[A-Za-z0-9_-]{40,}' | head -n1 || true)
+          if [ -z "$T" ]; then echo "::error::CLOUDFLARE_API_TOKEN fehlt oder sieht nicht wie ein Cloudflare-Schlüssel aus."; exit 1; fi
+          echo "::add-mask::$T"
+          echo "CLOUDFLARE_API_TOKEN=$T" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: python3 werkzeuge/build_site.py
