@@ -53,6 +53,13 @@ def u(pfad):
     return f"{BASIS}{pfad}"
 
 
+def uv(pfad):
+    """Wie u(), aber mit Inhalts-Prüfsumme, damit Browser nach Änderungen nicht die alte Datei aus dem Cache nehmen."""
+    import hashlib
+    datei = ROOT / "seite" / pfad.lstrip("/")
+    return f"{u(pfad)}?v={hashlib.sha1(datei.read_bytes()).hexdigest()[:8]}" if datei.exists() else u(pfad)
+
+
 def preise(p):
     if p["varianten"]:
         return [v["preis_netto"] for v in p["varianten"] if v.get("preis_netto")]
@@ -117,8 +124,8 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <link rel="canonical" href="{SITE_URL}{pfad}"><meta name="theme-color" content="#0A1628">
 <meta property="og:title" content="{e(titel)}"><meta property="og:locale" content="de_DE">
 {'' if index and not VORSCHAU else '<meta name="robots" content="noindex">'}
-<link rel="stylesheet" href="{u('/stil.css')}"><link rel="icon" href="{u('/logo.svg')}">
-<script>window.DG={json.dumps(dg)}</script><script src="{u('/shop.js')}" defer></script></head>
+<link rel="stylesheet" href="{uv('/stil.css')}"><link rel="icon" href="{u('/logo.svg')}">
+<script>window.DG={json.dumps(dg)}</script><script src="{uv('/shop.js')}" defer></script></head>
 <body>
 {'<div style="background:#F2B84B;color:#0A1628;text-align:center;font:600 14px/1.4 sans-serif;padding:8px 16px">Vorschau – noch kein echter Shop. Bestellungen werden nicht ausgeführt.</div>' if VORSCHAU else ''}
 <div class="top g"><div class="in">
@@ -225,7 +232,7 @@ def startseite(nach_kat):
 <p class="lead">Profigeräte für Restaurant, Hotel, Café, Imbiss und die Küche zu Hause. Versandkostenfrei in ganz Deutschland, mit Preisen für Privat und Gewerbe.</p>
 <div class="ctas"><a class="btn pri" href="{u('/' + slug(kategorien()[0]) + '/')}">Jetzt entdecken →</a><a class="btn sec" href="#bereiche">Sortiment ansehen</a></div></div>
 <div class="domo"><div class="domo-figur"><img src="{u('/bilder/domo-koch.webp')}" alt="Domo, das Erdmännchen von Domo Gastro, als Koch" width="523" height="1100" fetchpriority="high"><canvas width="523" height="1100" aria-hidden="true"></canvas></div></div>
-<script src="{u('/domo.js')}" defer></script>
+<script src="{uv('/domo.js')}" defer></script>
 </div></div>
 <div class="leiste g"><div class="in"><span>Für Restaurants</span><span>Für Hotels</span><span>Für Cafés</span><span>Für Imbisse</span><span>Für Catering</span><span>Für Zuhause</span></div></div>
 <section class="g"><div class="in"><div class="sh"><h2>Ausgewählte Produkte</h2></div><div class="raster">{''.join(karte(p) for p in ausgewaehlt[:10])}</div></div></section>
@@ -337,7 +344,7 @@ def textseite(titel, datei, pfad, beschreibung=""):
 def verwaltung():
     return f"""<div class="seite g"><div class="in" style="max-width:960px"><h1 class="titel">Verwaltung</h1>
 <p class="klein">Bestellstatus setzen und Bewertungen verwalten. Zugang nur mit dem Verwaltungsschlüssel.</p>
-<div id="verwaltung"></div></div></div><script src="{u('/verwaltung.js')}" defer></script>"""
+<div id="verwaltung"></div></div></div><script src="{uv('/verwaltung.js')}" defer></script>"""
 
 
 def klartext(datei):
