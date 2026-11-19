@@ -12,14 +12,14 @@ test("Deutschland: versandkostenfrei, 19 %", () => {
 });
 test("Österreich privat: Paketpreis; mit OSS 20 %, ohne OSS deutsche 19 %", () => {
   const r = gesamtRechnen({ ...LAENDER, oss: true }, "AT", [klein], 0, false);
-  assert.equal(r.versand, 19.9); assert.equal(r.art, "OSS"); assert.equal(r.brutto, Math.round(119.9 * 1.2 * 100) / 100);
+  assert.equal(r.versand, 9.95); assert.equal(r.art, "OSS"); assert.equal(r.brutto, Math.round(109.95 * 1.2 * 100) / 100);
   const d = gesamtRechnen({ ...LAENDER, oss: false }, "AT", [klein], 0, false);
-  assert.equal(d.satz, 19); assert.equal(d.brutto, Math.round(119.9 * 1.19 * 100) / 100);
+  assert.equal(d.satz, 19); assert.equal(d.brutto, Math.round(109.95 * 1.19 * 100) / 100);
 });
-test("schwere Bestellung: mehrere Pakete, Spedition pauschal", () => {
+test("schwere Bestellung: mehrere Pakete, keine Speditionspauschale", () => {
   assert.equal(gesamtRechnen(LAENDER, "AT", [{ ...klein, menge: 6 }], 0, false).pakete, 2);
   const s = gesamtRechnen(LAENDER, "FR", [klein, gross], 0, false);
-  assert.equal(s.spedition, true); assert.equal(s.versand, 199);
+  assert.equal(s.pakete, 4); assert.equal(s.versand, 55.8);
 });
 test("Unternehmen mit geprüfter USt-IdNr. und Schweiz: 0 %", () => {
   assert.equal(gesamtRechnen(LAENDER, "NL", [klein], 0, true).art, "IG");

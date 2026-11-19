@@ -8,15 +8,14 @@ export function landVon(cfg, c) {
   return null;
 }
 
-// Versand: Deutschland kostenlos. Ausland: Spedition pauschal, sobald ein Speditionsartikel dabei ist, sonst je angefangenes Paket.
+// Versand: Deutschland kostenlos. Ausland: Paketpreis je angefangene paket_kg (geschätztes Gewicht), auch für große Geräte
+// (Lenn 2026-11-19: keine Speditionspauschale; höhere tatsächliche Kosten fordern wir vor dem Versand gesondert an).
 export function versandRechnen(cfg, land, pos) {
-  if (!land || !land.zone) return { versand: 0, pakete: 0, spedition: false };
+  if (!land || !land.zone) return { versand: 0, pakete: 0 };
   var z = cfg.zonen[land.zone];
-  var spedition = pos.some(function (p) { return p.a.sp; });
-  if (spedition) return { versand: z.spedition, pakete: 0, spedition: true };
   var kg = pos.reduce(function (s, p) { return s + (p.a.g || 5) * p.menge; }, 0);
   var pakete = Math.max(1, Math.ceil(kg / cfg.paket_kg));
-  return { versand: r2(pakete * z.paket), pakete: pakete, spedition: false };
+  return { versand: r2(pakete * z.paket), pakete: pakete };
 }
 
 // Steuerart: DE (19 %), OSS (Satz des Lieferlands an Privat), IG (steuerfreie innergemeinschaftliche Lieferung an Unternehmen
@@ -37,6 +36,6 @@ export function gesamtRechnen(cfg, landCode, pos, prozent, ustidGueltig) {
   var netto = r2(warenwert - rabatt + v.versand);
   var mwst = r2(netto * st.satz / 100);
   var gesperrt = land && !land.elektro ? pos.filter(function (p) { return p.a.el; }) : [];
-  return { land: land, warenwert: warenwert, rabatt: rabatt, versand: v.versand, pakete: v.pakete, spedition: v.spedition,
+  return { land: land, warenwert: warenwert, rabatt: rabatt, versand: v.versand, pakete: v.pakete,
     art: st.art, satz: st.satz, netto: netto, mwst: mwst, brutto: r2(netto + mwst), gesperrt: gesperrt };
 }

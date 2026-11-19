@@ -40,8 +40,10 @@ PRODUKTE = _nur_mit_preis(PRODUKTE)
 LAENDER = json.loads((ROOT / "daten/laender.json").read_text(encoding="utf-8"))
 
 # Auslandsversand (Lenn 2026-11-19): Gewichte gibt es noch nicht, deshalb grob aus den Außenmaßen geschätzt
-# (ca. 120 kg je m³ umbauter Raum, Gastro-Geräte aus Edelstahl). Ohne Maße 5 kg. Sehr lange oder schwere Teile gehen per Spedition.
-_ELEKTRO = re.compile(r"\b\d[\d.,]*\s*(W|kW|Watt)\b|\bV\b|Volt|\bHz\b|Motor|elektr|Stecker|Leuchtmittel|\bLED|Akku|Batterie|Automatisch|Sensor|Thermostat", re.I)
+# (ca. 120 kg je m³ umbauter Raum, Gastro-Geräte aus Edelstahl). Ohne Maße 5 kg. Sehr lange oder schwere Teile gehen per Spedition (sp, nur Info).
+_ELEKTRO = re.compile(r"\b\d[\d.,]*\s*(W|kW|Watt)\b|\d\s*V\b|Volt|\bHz\b|Motor|elektr|Stecker|Leuchtmittel|\bLED|Akku|(?<!misch)batterie|Automatisch|Sensor|Thermostat", re.I)
+# Gas- oder Starkstromgerät (Hinweis „nur vom Fachbetrieb anschließen“); „Gastro…“ zählt nicht
+_GAS_STROM = re.compile(r"\bgas(?!tro)|erdgas|flüssiggas|propan|\b400\s*-?\s*v\b|drehstrom|starkstrom", re.I)
 
 
 def versandangaben(p, breite=None):
@@ -68,9 +70,8 @@ def laender_tabelle():
         z = LAENDER["zonen"][l["zone"]]
         f = 1 + l["mwst"] / 100 if LAENDER["oss"] else 1.19
         f = 1 if not l["eu"] else f
-        zeilen.append(f"<tr><td>{e(l['n'])}</td><td>{geld(z['paket'])}<br><span class='klein'>Privat {geld(round(z['paket'] * f, 2))}</span></td>"
-                      f"<td>{geld(z['spedition'])}<br><span class='klein'>Privat {geld(round(z['spedition'] * f, 2))}</span></td></tr>")
-    return ("<div style='overflow-x:auto'><table class='tabelle'><thead><tr><th>Lieferland</th><th>je Paket (bis " + str(LAENDER["paket_kg"]) + " kg)</th><th>Spedition je Bestellung</th></tr></thead><tbody>"
+        zeilen.append(f"<tr><td>{e(l['n'])}</td><td>{geld(z['paket'])}</td><td>{geld(round(z['paket'] * f, 2))}</td></tr>")
+    return ("<div style='overflow-x:auto'><table class='tabelle'><thead><tr><th>Lieferland</th><th>je Paket bis " + str(LAENDER["paket_kg"]) + " kg, netto</th><th>Privat inkl. MwSt.</th></tr></thead><tbody>"
             + "".join(zeilen) + "</tbody></table></div>")
 
 
@@ -214,7 +215,7 @@ def karte(p):
 
 
 def produktseite(p):
-    gas_strom = any(w in (p["name"] + " " + " ".join(p["merkmale"])).lower() for w in ("gas", "400 v", "400v", "400-v", "drehstrom"))
+    gas_strom = bool(_GAS_STROM.search(p["name"] + " " + " ".join(p["merkmale"])))
     if p["varianten"]:
         opts = "".join(
             f'<option value="{e(v["sku"])}" data-netto="{v["preis_netto"] or ""}" data-masse="{e(masse(v["masse_mm"]))}" '
@@ -325,7 +326,7 @@ def warenkorb():
 <p class="klein" id="gast-hinweis">Sie bestellen als Gast. Ein Konto ist nicht nötig. <a href="{u('/konto/')}">Anmelden</a></p>
 <p class="meldung nur-gewerbe" hidden>Sie bestellen als <b>Gewerbekunde</b>. Preise netto zzgl. MwSt.; es gilt kein Widerrufsrecht.</p>
 <label class="lieferland">Lieferland <select name="land" autocomplete="shipping country"><option value="DE">Deutschland</option></select></label>
-<p class="klein" id="land-hinweis" hidden>Versand ins Ausland: feste Paketpreise je Land, große Geräte per Spedition. <a href="{u('/versand/')}">Alle Versandpreise</a></p>
+<p class="klein" id="land-hinweis" hidden>Versand ins Ausland: feste Paketpreise je Land; bei großen Mengen oder schweren Geräten ggf. Nachforderung vor dem Versand. <a href="{u('/versand/')}">Alle Versandpreise</a></p>
 <div class="adressen">
 <fieldset><legend>Rechnungsadresse</legend>
 <label class="nur-gewerbe" hidden>Firma <input type="text" name="firma" autocomplete="billing organization"></label>

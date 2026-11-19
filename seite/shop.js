@@ -245,7 +245,7 @@
         var faktor = g ? 1 : 1 + r.satz / 100;
         var st = String(r.satz).replace(".", ",");
         var de = r.land.c === "DE";
-        var versandText = de ? "Versand (Deutschland)" : "Versand nach " + esc(r.land.n) + (r.spedition ? " (Spedition)" : r.pakete > 1 ? " (" + r.pakete + " Pakete)" : "");
+        var versandText = de ? "Versand (Deutschland)" : "Versand nach " + esc(r.land.n) + (r.pakete > 1 ? " (" + r.pakete + " Pakete)" : "");
         var hinweis = { IG: "Steuerfreie innergemeinschaftliche Lieferung: Ihre USt-IdNr. wurde bei der EU bestätigt.",
           AUSFUHR: "Steuerfreie Ausfuhr. Einfuhrumsatzsteuer, Zoll und Gebühren in " + esc(r.land.n) + " zahlen Sie bei der Zustellung.",
           OSS: "Mit der Umsatzsteuer des Lieferlandes (" + st + " %)." }[r.art] || "";
@@ -257,7 +257,7 @@
           '<div class="gesamt"><span>Gesamtbetrag</span><span>' + eur(r.brutto) + "</span></div>" +
           (hinweis ? '<p class="klein">' + hinweis + "</p>" : "") +
           (r.gesperrt.length ? '<p class="meldung fehler">' + esc(r.gesperrt[0].a.n) + " können wir nach " + esc(r.land.n) + " noch nicht liefern.</p>" : "") +
-          '<p class="klein">' + (de ? "Speditionsware wird bis Bordsteinkante geliefert." : "Paketpreis je Paket bis " + VERSAND.paket_kg + " kg; große Geräte gehen per Spedition (Pauschale je Bestellung). <a href=\"" + B + "/versand/\">Alle Versandpreise</a>") + "</p>";
+          '<p class="klein">' + (de ? "Speditionsware wird bis Bordsteinkante geliefert." : "Paketpreis je angefangene " + VERSAND.paket_kg + " kg. Bei sehr großen Mengen oder schweren und sperrigen Geräten können höhere Versandkosten anfallen. Dann melden wir uns vor dem Versand mit dem Mehrbetrag und einer gesonderten Zahlungsaufforderung; sind Sie nicht einverstanden, können Sie kostenlos stornieren. <a href=\"" + B + "/versand/\">Alle Versandpreise</a>") + "</p>";
         preiseSetzen();
         if (info) zahlungZeigen();
       }

@@ -39,7 +39,7 @@ export function rechnen(positionen, prozent = 0, land = "DE", ustidGueltig = fal
   return {
     positionen: pos.map(({ a, ...x }) => x), warenwert: g.warenwert, rabatt: g.rabatt, versand: g.versand,
     netto: g.netto, mwst: g.mwst, brutto: g.brutto,
-    steuer: { land: g.land.c, landname: g.land.n, art: g.art, satz: g.satz, versand: g.versand, pakete: g.pakete, spedition: g.spedition, warenwert: g.warenwert },
+    steuer: { land: g.land.c, landname: g.land.n, art: g.art, satz: g.satz, versand: g.versand, pakete: g.pakete, warenwert: g.warenwert },
   };
 }
 

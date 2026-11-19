@@ -72,16 +72,18 @@ export function steuerHinweis(st) {
   if (st.art === "OSS") return `Umsatzsteuer des Lieferlandes ${st.landname} (${String(st.satz).replace(".", ",")} %).`;
   return "";
 }
+const MEHRVERSAND = "Bei sehr großen Mengen oder schweren und sperrigen Geräten können höhere Versandkosten anfallen. Dann melden wir uns vor dem Versand mit dem Mehrbetrag und einer gesonderten Zahlungsaufforderung; sind Sie nicht einverstanden, können Sie kostenlos stornieren.";
 function summen(b) {
   const g = b.kunde?.gutschein;
   const st = b.kunde?.steuer;
   const warenwert = st ? st.warenwert : runden(b.netto + (g ? g.rabatt : 0));
   const versand = !st || !st.land || st.land === "DE" ? "Versand (Deutschland): kostenlos"
-    : `Versand nach ${st.landname}${st.spedition ? " (Spedition)" : st.pakete > 1 ? ` (${st.pakete} Pakete)` : ""}: ${euro(st.versand)} netto`;
+    : `Versand nach ${st.landname}${st.pakete > 1 ? ` (${st.pakete} Pakete)` : ""}: ${euro(st.versand)} netto`;
   const satz = st ? String(st.satz).replace(".", ",") : "19";
   const rabatt = g ? `Warenwert netto: ${euro(warenwert)}\nGutschein ${g.code} (${g.prozent} %): −${euro(g.rabatt)}` : `Warenwert netto: ${euro(warenwert)}`;
   const steuer = st && st.satz === 0 ? `Umsatzsteuer: 0,00 € (${steuerHinweis(st)})` : `zzgl. ${satz} % MwSt.: ${euro(b.mwst)}`;
-  return `${rabatt}\n${versand}\n${steuer}\nGesamtbetrag: ${euro(b.brutto)}${st?.art === "OSS" ? `\n${steuerHinweis(st)}` : ""}`;
+  const mehr = st && st.land && st.land !== "DE" ? `\n${MEHRVERSAND}` : "";
+  return `${rabatt}\n${versand}\n${steuer}\nGesamtbetrag: ${euro(b.brutto)}${st?.art === "OSS" ? `\n${steuerHinweis(st)}` : ""}${mehr}`;
 }
 const landZeile = (k) => k.steuer?.landname && k.steuer.land !== "DE" ? k.steuer.landname.replace(/ \(.*\)$/, "").toUpperCase() : "";
 function adresse(k) {
