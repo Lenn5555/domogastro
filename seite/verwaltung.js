@@ -40,7 +40,7 @@
     if (offen(b)) return `<p class="v-aufgabe">⏳ Wartet auf Überweisung von <b>${euro(b.brutto)}</b> (Verwendungszweck ${esc(b.nr)})
       <button class="btn pri" data-schritt="bezahlt" data-nr="${esc(b.nr)}">Zahlung ist eingegangen</button></p>`;
     if (zuVersenden(b)) return `<form class="v-aufgabe v-versand" data-nr="${esc(b.nr)}">📦 Bezahlt, bitte versenden:
-      <input name="sendung" placeholder="Sendungsnummer (optional)"> <button class="btn pri">Als versendet melden</button></form>`;
+      <input name="sendung" placeholder="GLS-Sendungsnummer (optional)"> <button class="btn pri">Als versendet melden</button></form>`;
     if (["versendet", "zugestellt"].includes(b.status)) return `<p class="v-aufgabe">✓ Versendet${b.sendung ? `, Sendung ${esc(b.sendung)}` : ""}. Nichts mehr zu tun.</p>`;
     return `<p class="v-aufgabe">Storniert.</p>`;
   }

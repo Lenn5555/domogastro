@@ -159,10 +159,14 @@ Ihr Domo-Gastro-Team
 Sie erhalten diese einmalige E-Mail, weil Sie beim Bestellen zugestimmt haben. Weitere E-Mails dieser Art bekommen Sie zu dieser Bestellung nicht.`;
 }
 
+// Versand mit GLS (Lenn 2026-11-19)
+export const verfolgen = (sendung) =>
+  /^https?:\/\//.test(sendung) ? sendung : `https://gls-group.com/DE/de/paketverfolgung?match=${encodeURIComponent(sendung)}`;
+
 export function statusmail(env, b) {
   return `Guten Tag ${b.kunde.name},
 
-der Status Ihrer Bestellung ${b.nr} hat sich geändert: ${statusText(b.status)}.${b.sendung ? `\nSendungsverfolgung: ${b.sendung}` : ""}
+der Status Ihrer Bestellung ${b.nr} hat sich geändert: ${statusText(b.status)}.${b.sendung ? `\nSendungsverfolgung (GLS): ${verfolgen(b.sendung)}` : ""}
 
 Details: ${env.SITE_URL}/bestellung/?nr=${encodeURIComponent(b.nr)}&email=${encodeURIComponent(b.email)}
 
