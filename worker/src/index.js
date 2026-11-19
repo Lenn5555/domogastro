@@ -1,7 +1,7 @@
 // Shop-Server für Domo Gastro (Cloudflare Worker + D1).
 // Konto:      POST /konto/registrieren, /konto/anmelden, /konto/abmelden, /konto/passwort-vergessen, /konto/passwort-setzen
 //             GET/PUT/DELETE /konto
-// Bestellung: POST /bestellung, /bestellung/status, /bezahlen/abschluss
+// Bestellung: POST /bestellung (Überweisung), /bestellung/status; Kreditkarte/PayPal: GET /bezahlen, POST /bezahlen/start, /bezahlen/abschluss
 // Bewertung:  GET /bewertungen?produkt=…, POST /bewertungen (danach 5-%-Gutschein per Mail)
 // Gutschein:  POST /gutschein/pruefen
 // Zeitplan:   täglich fällige Bitten um Bewertung verschicken (wrangler.toml [triggers])
@@ -41,7 +41,9 @@ async function verteilen(request, env, ctx) {
     case "DELETE /konto": return konto.loeschen(env, await konto.pflichtKunde(env, request));
     case "POST /bestellung": return shop.bestellen(env, ctx, d, await konto.kundeAusAnfrage(env, request));
     case "POST /bestellung/status": return shop.status(env, d);
-    case "POST /bezahlen/abschluss": return shop.bezahlt(env, ctx, d);
+    case "GET /bezahlen": return shop.bezahlenInfo(env);
+    case "POST /bezahlen/start": return shop.bezahlenStart(env, d, await konto.kundeAusAnfrage(env, request));
+    case "POST /bezahlen/abschluss": return shop.bezahlenAbschluss(env, ctx, d, await konto.kundeAusAnfrage(env, request));
     case "GET /bewertungen": return shop.bewertungenLesen(env, url.searchParams.get("produkt"), await konto.kundeAusAnfrage(env, request));
     case "POST /gutschein/pruefen": return shop.gutscheinPruefen(env, d);
     case "POST /bewertungen": return shop.bewerten(env, ctx, await konto.pflichtKunde(env, request), d);

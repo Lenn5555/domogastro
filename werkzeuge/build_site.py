@@ -303,14 +303,16 @@ def warenkorb():
 <div class="gutschein"><label>Gutscheincode (optional) <input type="text" name="gutschein" autocomplete="off" spellcheck="false" style="text-transform:uppercase"></label><button class="btn sec" type="button" id="gutschein-los">Einlösen</button></div>
 <p class="klein" id="gutschein-status" role="status"></p>
 <fieldset><legend>Zahlungsart</legend>
-<label class="check"><input type="radio" name="zahlart" value="Vorkasse" checked> Vorkasse per Überweisung (Bankverbindung kommt per E-Mail)</label>
-<label class="check"><input type="radio" name="zahlart" value="PayPal"> PayPal oder Kreditkarte über PayPal (Sie werden zu PayPal weitergeleitet)</label></fieldset>
+<label class="check zahlart"><input type="radio" name="zahlart" value="Vorkasse" checked> <span><b>Überweisung (Vorkasse)</b><br><span class="klein">Die Bankverbindung kommt per E-Mail, wir versenden nach Zahlungseingang.</span></span></label>
+<label class="check zahlart sofort-art" hidden><input type="radio" name="zahlart" value="Kreditkarte"> <span><b>Kreditkarte</b><br><span class="klein">Sofort bezahlen mit Visa, Mastercard und weiteren Karten, sicher abgewickelt über PayPal. Ein PayPal-Konto ist nicht nötig.</span></span></label>
+<label class="check zahlart sofort-art" hidden><input type="radio" name="zahlart" value="PayPal"> <span><b>PayPal</b><br><span class="klein">Sofort bezahlen mit Ihrem PayPal-Konto.</span></span></label></fieldset>
 <label class="check"><input type="checkbox" name="konto_anlegen"> Kundenkonto anlegen (Bestellungen verfolgen, Produkte bewerten)</label>
 <label id="pw-feld" hidden>Passwort für Ihr Konto (mind. 10 Zeichen) <input type="password" name="passwort" minlength="10" autocomplete="new-password"></label>
 <label class="check" id="bew-mail" hidden><input type="checkbox" name="bewertungsmail"> Ja, erinnern Sie mich nach der Lieferung einmal per E-Mail daran, die Artikel zu bewerten (freiwillig).</label>
 <label class="check"><input type="checkbox" name="agb" required> Ich habe die <a href="{u('/agb/')}" target="_blank">AGB</a> gelesen und akzeptiere sie. Die <a href="{u('/datenschutz/')}" target="_blank">Datenschutzerklärung</a> habe ich zur Kenntnis genommen.</label>
 <p class="klein nur-privat">Als Verbraucher haben Sie ein gesetzliches Widerrufsrecht. Einzelheiten in der <a href="{u('/widerruf/')}" target="_blank">Widerrufsbelehrung</a>.</p>
 <label class="check nur-gewerbe" hidden><input type="checkbox" name="gewerbe_bestaetigt"> Ich bestelle als Unternehmer (§ 14 BGB) für mein Gewerbe oder meine selbständige Tätigkeit.</label>
+<div id="sofort" class="sofort" hidden><p class="sofort-summe"></p><div id="paypal-knoepfe"></div></div>
 <button class="btn pri" type="submit">Zahlungspflichtig bestellen</button>
 <p class="status" role="status"></p></form></div>
 <aside id="summe" class="summe" hidden></aside></div></div></div>"""

@@ -85,7 +85,7 @@ export function kundenmail(env, b) {
   const privat = b.modus === "privat";
   const zahlung = b.zahlart === "Vorkasse"
     ? `Die Bankverbindung für Ihre Überweisung schicken wir Ihnen gleich in einer eigenen E-Mail. Wir versenden nach Zahlungseingang.`
-    : `Ihre Zahlung über PayPal ist eingegangen. Vielen Dank!`;
+    : `Ihre Zahlung ${b.zahlart === "Kreditkarte" ? "per Kreditkarte (über PayPal)" : "über PayPal"} ist eingegangen. Vielen Dank! Wir versenden Ihre Bestellung jetzt.`;
   return `Guten Tag ${b.kunde.name},
 
 vielen Dank für Ihre Bestellung bei Domo Gastro. Wir haben sie erhalten und prüfen sie jetzt. Diese E-Mail bestätigt den Eingang Ihrer Bestellung; die Annahme erfolgt nach unseren AGB mit der Auftragsbestätigung bzw. dem Versand.
@@ -111,7 +111,7 @@ Im Anhang finden Sie unsere AGB${privat ? " sowie die Widerrufsbelehrung mit Mus
 }
 
 export function vertriebsmail(env, b) {
-  return `Neue Bestellung ${b.nr} (${b.modus === "privat" ? "PRIVAT" : "GEWERBE"}) – ${b.zahlart}${b.status === "bezahlt" ? `, BEZAHLT (PayPal ${b.transaktion})` : ", Zahlung offen"}
+  return `Neue Bestellung ${b.nr} (${b.modus === "privat" ? "PRIVAT" : "GEWERBE"}) – ${b.zahlart}${b.status === "bezahlt" ? `, BEZAHLT (über PayPal, Transaktion ${b.transaktion})` : ", Zahlung offen"}
 
 ${posten(b)}
 

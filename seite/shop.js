@@ -243,6 +243,7 @@
           '<div class="gesamt"><span>Gesamtbetrag</span><span>' + eur(r.brutto) + "</span></div>" +
           '<p class="klein">Lieferung nur innerhalb Deutschlands. Speditionsware wird bis Bordsteinkante geliefert.</p>';
         preiseSetzen();
+        if (info) zahlungZeigen();
       }
       ziel.addEventListener("change", function (e) {
         if (!e.target.matches("input")) return;
@@ -266,11 +267,9 @@
         $("#gast-hinweis").innerHTML = "Sie bestellen als <b>" + esc(k.email) + "</b>. Die Bestellung erscheint in Ihrem Konto.";
       }).catch(function () {});
 
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        var st = $(".status", form), f = new FormData(form), r = rechnen(ix);
-        if (istGewerbe() && !f.get("gewerbe_bestaetigt")) { st.className = "status meldung fehler"; st.textContent = "Bitte bestätigen Sie, dass Sie als Unternehmer bestellen, oder wechseln Sie oben auf „Privat“."; return; }
-        var daten = {
+      function bestelldaten() {
+        var f = new FormData(form), r = rechnen(ix);
+        return {
           modus: modus, positionen: r.pos.map(function (p) { return { sku: p.sku, menge: p.menge }; }),
           kunde: { name: f.get("name"), firma: f.get("firma") || "", ustid: f.get("ustid") || "", strasse: f.get("strasse"), plz: f.get("plz"), ort: f.get("ort"),
                    email: f.get("email"), telefon: f.get("telefon") || "", hinweis: f.get("hinweis") || "",
@@ -278,6 +277,84 @@
           zahlart: f.get("zahlart"), agb: !!f.get("agb"), gesamt_brutto: r.brutto, gutschein: gutschein ? gutschein.code : "",
           konto_anlegen: !!f.get("konto_anlegen"), passwort: f.get("passwort") || "", bewertungsmail: !!f.get("bewertungsmail"),
         };
+      }
+      function gewerbeFehlt() {
+        if (istGewerbe() && !form.elements.gewerbe_bestaetigt.checked) {
+          var st = $(".status", form); st.className = "status meldung fehler"; st.textContent = "Bitte bestätigen Sie, dass Sie als Unternehmer bestellen, oder wechseln Sie oben auf „Privat“.";
+          return true;
+        }
+        return false;
+      }
+      function fertig(d, email) {
+        if (d.sitzung) schreib("dg-sitzung", d.sitzung);
+        korbSpeichern([]);
+        location.href = B + "/bestellung/?nr=" + encodeURIComponent(d.nr) + "&email=" + encodeURIComponent(d.email || email) + "&neu=1";
+      }
+
+      // Kreditkarte und PayPal: wie bei beinundfuss.de erscheinen die PayPal-Knöpfe statt „Zahlungspflichtig bestellen“.
+      // Bestellt und gespeichert wird erst, wenn die Zahlung durch ist.
+      var info = { aktiv: false }, quelle = null, ppSkript = null;
+      function paypalLaden() {
+        if (!ppSkript) ppSkript = new Promise(function (ok, nein) {
+          var sk = document.createElement("script");
+          sk.src = "https://www.paypal.com/sdk/js?client-id=" + encodeURIComponent(info.client_id) +
+            "&currency=EUR&intent=capture&components=buttons&locale=de_DE&enable-funding=card&disable-funding=paylater,sepa";
+          sk.onload = function () { ok(window.paypal); };
+          sk.onerror = function () { ppSkript = null; nein(new Error("PayPal konnte nicht geladen werden.")); };
+          document.head.appendChild(sk);
+        });
+        return ppSkript;
+      }
+      function zahlungZeigen() {
+        var art = (form.querySelector("input[name=zahlart]:checked") || {}).value;
+        var sofort = info.aktiv && (art === "Kreditkarte" || art === "PayPal");
+        var knopf = $("button[type=submit]", form), box = $("#sofort"), feld = $("#paypal-knoepfe");
+        knopf.hidden = sofort; box.hidden = !sofort;
+        if (!sofort) return;
+        $(".sofort-summe", box).innerHTML = "Jetzt zu zahlen: <b>" + eur(rechnen(ix).brutto) + "</b> inkl. MwSt., Versand kostenlos.<br>Mit der Zahlung ist Ihre Bestellung verbindlich.";
+        var neu = art === "Kreditkarte" ? "card" : "paypal";
+        if (quelle === neu) return;
+        quelle = neu; feld.textContent = "PayPal wird geladen …";
+        paypalLaden().then(function (pp) {
+          if (quelle !== neu) return;
+          feld.textContent = "";
+          pp.Buttons({
+            fundingSource: neu === "card" ? pp.FUNDING.CARD : pp.FUNDING.PAYPAL,
+            style: { layout: "vertical", label: "pay" },
+            onClick: function (_, actions) {
+              if (!form.reportValidity() || gewerbeFehlt()) return actions.reject();
+              $(".status", form).textContent = "";
+              return actions.resolve();
+            },
+            createOrder: function () { return api("/bezahlen/start", bestelldaten()).then(function (x) { return x.id; }); },
+            onApprove: function (d) {
+              var st = $(".status", form), x = bestelldaten();
+              st.className = "status meldung"; st.textContent = "Zahlung wird abgeschlossen …";
+              x.paypal_id = d.orderID;
+              return api("/bezahlen/abschluss", x).then(function (r) { fertig(r, x.kunde.email); })
+                .catch(function (err) { st.className = "status meldung fehler"; st.textContent = err.message; });
+            },
+            onCancel: function () { var st = $(".status", form); st.className = "status meldung"; st.textContent = "Zahlung abgebrochen. Es wurde nichts abgebucht."; },
+            onError: function (err) {
+              var st = $(".status", form); st.className = "status meldung fehler";
+              st.textContent = (err && err.message && !/^Fehler$/.test(err.message) ? err.message : "Die Zahlung hat nicht geklappt.") + " Sie können auch „Überweisung (Vorkasse)“ wählen.";
+            },
+          }).render(feld);
+        }).catch(function (err) { feld.textContent = err.message + " Bitte „Überweisung (Vorkasse)“ wählen."; });
+      }
+      form.addEventListener("change", function (e) { if (e.target.name === "zahlart") zahlungZeigen(); });
+      document.addEventListener("dg:modus", zahlungZeigen);
+      if (DG.api) api("/bezahlen").then(function (x) {
+        info = x || { aktiv: false };
+        form.querySelectorAll(".sofort-art").forEach(function (l) { l.hidden = !info.aktiv; });
+        zahlungZeigen();
+      }).catch(function () {});
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var st = $(".status", form), r = rechnen(ix);
+        if (gewerbeFehlt()) return;
+        var daten = bestelldaten();
         var knopf = $("button[type=submit]", form);
         if (!DG.api) {
           // Übergangslösung ohne Server: vorbereitete E-Mail
@@ -289,12 +366,7 @@
           return;
         }
         knopf.disabled = true; st.className = "status meldung"; st.textContent = "Bestellung wird übermittelt …";
-        api("/bestellung", daten).then(function (d) {
-          if (d.sitzung) schreib("dg-sitzung", d.sitzung);
-          if (d.paypal) { schreib("dg-offen", { nr: d.nr, email: daten.kunde.email }); location.href = d.paypal; return; }
-          korbSpeichern([]);
-          location.href = B + "/bestellung/?nr=" + encodeURIComponent(d.nr) + "&email=" + encodeURIComponent(daten.kunde.email) + "&neu=1";
-        }).catch(function (err) { knopf.disabled = false; st.className = "status meldung fehler"; st.textContent = err.message; });
+        api("/bestellung", daten).then(function (d) { fertig(d, daten.kunde.email); }).catch(function (err) { knopf.disabled = false; st.className = "status meldung fehler"; st.textContent = err.message; });
       });
       // Gutscheincode prüfen und Rabatt in der Summe zeigen
       var gs = $("#gutschein-status");
@@ -343,18 +415,8 @@
     function laden(nr, email) {
       api("/bestellung/status", { nr: nr, email: email }).then(function (b) {
         ziel.innerHTML = (q.get("neu") ? '<p class="meldung ok">Vielen Dank! Ihre Bestellung ist eingegangen. Eine Bestätigung kommt per E-Mail.' +
-          (b.zahlart === "Vorkasse" ? " Die Bankverbindung kommt in einer eigenen E-Mail; Verwendungszweck ist Ihre Bestellnummer." : "") + "</p>" : "") + bestellHtml(b);
+          (b.zahlart === "Vorkasse" ? " Die Bankverbindung kommt in einer eigenen E-Mail; Verwendungszweck ist Ihre Bestellnummer." : " Ihre Zahlung ist eingegangen, wir versenden jetzt.") + "</p>" : "") + bestellHtml(b);
       }).catch(function (err) { ziel.innerHTML = '<p class="meldung fehler">' + esc(err.message) + "</p>"; });
-    }
-    // Rückkehr von PayPal
-    if (q.get("token") && q.get("paypal")) {
-      var o = lies("dg-offen", {});
-      ziel.innerHTML = '<p class="meldung">Zahlung wird abgeschlossen …</p>';
-      api("/bezahlen/abschluss", { nr: q.get("paypal"), paypal_id: q.get("token") }).then(function () {
-        korbSpeichern([]); schreib("dg-offen", null);
-        location.replace(B + "/bestellung/?nr=" + encodeURIComponent(q.get("paypal")) + "&email=" + encodeURIComponent(o.email || "") + "&neu=1");
-      }).catch(function (err) { ziel.innerHTML = '<p class="meldung fehler">' + esc(err.message) + "</p>"; });
-      return;
     }
     if (q.get("nr")) { form.elements.nr.value = q.get("nr"); form.elements.email.value = q.get("email") || ""; laden(q.get("nr"), q.get("email")); }
     form.addEventListener("submit", function (e) { e.preventDefault(); laden(form.elements.nr.value.trim(), form.elements.email.value.trim()); });

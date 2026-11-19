@@ -7,7 +7,8 @@ import * as paypal from "./paypal.js";
 
 export const MWST = 0.19;
 export const GUTSCHEIN_PROZENT = 5;
-const ZAHLARTEN = ["Vorkasse", "PayPal"];
+const ZAHLARTEN = ["Vorkasse", "Kreditkarte", "PayPal"];
+const SOFORT = ["Kreditkarte", "PayPal"]; // beide laufen über PayPal
 export const STATI = ["eingegangen", "zahlung_offen", "bezahlt", "in_bearbeitung", "versendet", "zugestellt", "storniert"];
 
 function bestellnummer() {
@@ -52,11 +53,12 @@ function kundendaten(k, modus) {
   return d;
 }
 
-export async function bestellen(env, ctx, d, kunde, abruf = fetch) {
+// Prüft die Bestelldaten und rechnet den Betrag (für Vorkasse und Sofortbezahlen gleich)
+async function vorbereiten(env, d, kunde) {
   const modus = d.modus === "gewerbe" ? "gewerbe" : "privat";
   if (!d.agb) throw new Fehler("Bitte akzeptieren Sie die AGB.");
   if (!ZAHLARTEN.includes(d.zahlart)) throw new Fehler("Bitte eine Zahlungsart wählen.");
-  if (d.zahlart === "PayPal" && !paypal.aktiv(env)) throw new Fehler("PayPal ist gerade nicht verfügbar. Bitte Vorkasse wählen.");
+  if (SOFORT.includes(d.zahlart) && !paypal.aktiv(env)) throw new Fehler("Kreditkarte und PayPal sind gerade nicht verfügbar. Bitte Überweisung wählen.");
   const mail = email(d.kunde?.email);
   const k = kundendaten(d.kunde, modus);
   const code = gutscheinCode(d.gutschein);
@@ -65,7 +67,16 @@ export async function bestellen(env, ctx, d, kunde, abruf = fetch) {
   // Der Browser zeigt den Betrag vor dem Absenden an; weicht er ab (z. B. Preisänderung), lieber neu bestätigen lassen
   if (d.gesamt_brutto != null && Math.abs(Number(d.gesamt_brutto) - r.brutto) > 0.01)
     throw new Fehler("Die Preise haben sich geändert. Bitte laden Sie den Warenkorb neu und prüfen Sie den Betrag.", 409);
+  // Fingerabdruck für PayPal: dieselben Daten beim Start und beim Abschluss
+  const abdruck = await paypal.fingerabdruck([modus, mail, k, r.positionen.map((p) => [p.sku, p.menge]), g?.code || "", d.zahlart,
+    kunde?.id || "", Boolean(d.konto_anlegen), Boolean(d.bewertungsmail)]);
+  return { modus, mail, k, g, r, abdruck };
+}
 
+// Speichert die Bestellung: Konto anlegen (falls gewünscht), Gutschein reservieren, Zeile schreiben.
+// vorZahlung (nur Sofortbezahlen) zieht das Geld ein, nachdem alles geprüft und reserviert ist, und vor dem Speichern.
+async function speichern(env, ctx, d, kunde, v, nr, zahlung = null) {
+  const { modus, mail, k, g, r } = v;
   let kundeId = kunde?.id || null, sitzung = null;
   if (!kundeId && d.konto_anlegen) {
     const neu = await kontoAnlegen(env, { email: mail, passwort: d.passwort, name: k.name, ...k });
@@ -73,28 +84,38 @@ export async function bestellen(env, ctx, d, kunde, abruf = fetch) {
   }
   // Bitte um Bewertung nur mit Konto (Bewerten setzt Anmeldung voraus) und nur mit ausdrücklicher Zustimmung
   k.bewertungsmail = Boolean(d.bewertungsmail && kundeId);
-  const nr = bestellnummer();
   if (g) {
     // Code reservieren, bevor die Bestellung gespeichert wird (gleichzeitige Doppel-Einlösung verhindern)
     const u = await env.DB.prepare("UPDATE gutscheine SET eingeloest_nr = ?, eingeloest_am = ? WHERE code = ? AND eingeloest_nr = ''").bind(nr, jetzt(), g.code).run();
     if (!u.meta.changes) throw new Fehler("Dieser Gutscheincode wurde bereits eingelöst.");
     k.gutschein = { code: g.code, prozent: g.prozent, rabatt: r.rabatt };
   }
+  let bezahlt = null;
+  if (zahlung) {
+    bezahlt = await zahlung();
+    if (bezahlt.fehler) {
+      if (g) await env.DB.prepare("UPDATE gutscheine SET eingeloest_nr = '', eingeloest_am = '' WHERE code = ? AND eingeloest_nr = ?").bind(g.code, nr).run();
+      throw new Fehler(bezahlt.fehler);
+    }
+  }
   const b = {
     nr, kunde_id: kundeId, email: kunde?.email || mail, modus, kunde: k, ...r,
-    zahlart: d.zahlart, status: d.zahlart === "PayPal" ? "zahlung_offen" : "eingegangen", datum: jetzt(),
+    zahlart: d.zahlart, status: bezahlt ? "bezahlt" : "eingegangen", datum: jetzt(),
+    paypal_id: bezahlt ? text(d.paypal_id, 40) : "", transaktion: bezahlt?.transaktion || "",
   };
-  let link = null;
-  if (b.zahlart === "PayPal") {
-    const p = await paypal.anlegen(env, b, abruf);
-    b.paypal_id = p.id; link = p.link;
-  }
-  await env.DB.prepare(`INSERT INTO bestellungen (nr, kunde_id, email, modus, kunde, positionen, netto, mwst, brutto, zahlart, status, paypal_id, datum, aktualisiert)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+  await env.DB.prepare(`INSERT INTO bestellungen (nr, kunde_id, email, modus, kunde, positionen, netto, mwst, brutto, zahlart, status, paypal_id, transaktion, datum, aktualisiert)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .bind(b.nr, b.kunde_id, b.email, b.modus, JSON.stringify(b.kunde), JSON.stringify(b.positionen), b.netto, b.mwst, b.brutto,
-          b.zahlart, b.status, b.paypal_id || "", b.datum, b.datum).run();
-  if (!link) benachrichtigen(env, ctx, b);
-  return { nr: b.nr, paypal: link, sitzung };
+          b.zahlart, b.status, b.paypal_id, b.transaktion, b.datum, b.datum).run();
+  benachrichtigen(env, ctx, b);
+  return { nr: b.nr, email: b.email, sitzung };
+}
+
+// Überweisung (Vorkasse)
+export async function bestellen(env, ctx, d, kunde) {
+  if (SOFORT.includes(d.zahlart)) throw new Fehler("Bitte bezahlen Sie über die Knöpfe unten.");
+  const v = await vorbereiten(env, d, kunde);
+  return speichern(env, ctx, d, kunde, v, bestellnummer());
 }
 
 function benachrichtigen(env, ctx, b) {
@@ -110,16 +131,27 @@ function ausZeile(z) {
   return { ...z, kunde: JSON.parse(z.kunde), positionen: JSON.parse(z.positionen) };
 }
 
-export async function bezahlt(env, ctx, d, abruf = fetch) {
-  const z = await env.DB.prepare("SELECT * FROM bestellungen WHERE nr = ?").bind(text(d.nr, 30)).first();
-  if (!z) throw new Fehler("Bestellung nicht gefunden.", 404);
-  if (z.status !== "zahlung_offen") return { ok: true }; // schon abgeschlossen
-  const b = ausZeile(z);
-  const r = await paypal.abschliessen(env, b, text(d.paypal_id, 40), abruf);
-  if (r.fehler) throw new Fehler(r.fehler);
-  await env.DB.prepare("UPDATE bestellungen SET status = 'bezahlt', transaktion = ?, aktualisiert = ? WHERE nr = ?").bind(r.transaktion, jetzt(), b.nr).run();
-  benachrichtigen(env, ctx, { ...b, status: "bezahlt", transaktion: r.transaktion });
-  return { ok: true };
+/* ---------- Sofortbezahlen: Kreditkarte oder PayPal ---------- */
+export function bezahlenInfo(env) {
+  return paypal.aktiv(env) ? { aktiv: true, client_id: env.PAYPAL_CLIENT_ID } : { aktiv: false };
+}
+
+export async function bezahlenStart(env, d, kunde, abruf = fetch) {
+  if (!SOFORT.includes(d.zahlart)) throw new Fehler("Bitte eine Zahlungsart wählen.");
+  const v = await vorbereiten(env, d, kunde);
+  return paypal.anlegen(env, { nr: bestellnummer(), brutto: v.r.brutto, abdruck: v.abdruck }, abruf);
+}
+
+export async function bezahlenAbschluss(env, ctx, d, kunde, abruf = fetch) {
+  const id = text(d.paypal_id, 40);
+  // Doppelt abgeschickt (z. B. Netzaussetzer): vorhandene Bestellung zurückgeben, nichts doppelt einziehen
+  const da = id && await env.DB.prepare("SELECT nr, email FROM bestellungen WHERE paypal_id = ?").bind(id).first();
+  if (da) return { nr: da.nr, email: da.email };
+  if (!SOFORT.includes(d.zahlart)) throw new Fehler("Bitte eine Zahlungsart wählen.");
+  const v = await vorbereiten(env, d, kunde);
+  const p = await paypal.pruefen(env, id, { brutto: v.r.brutto, abdruck: v.abdruck }, abruf);
+  if (p.fehler) throw new Fehler(p.fehler);
+  return speichern(env, ctx, d, kunde, v, p.nr, () => paypal.einziehen(env, id, abruf));
 }
 
 export async function status(env, d) {
