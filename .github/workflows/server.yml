@@ -4,6 +4,7 @@
 #   pruefen            nur Tests
 #   datenbank-anlegen  legt die D1-Datenbank "domogastro" an (falls noch nicht da) und zeigt ihre ID im Protokoll
 #   veroeffentlichen   Tests, Datenbank-Tabellen anlegen, Server veröffentlichen, Secrets übertragen
+#   testmail           schickt eine Muster-Bestellbestätigung + Zahlungsmail an "an" (leer = Bestell-Adresse)
 # Braucht die GitHub-Secrets CLOUDFLARE_API_TOKEN und VERWALTUNG_SCHLUESSEL,
 # optional RESEND_API_KEY, PAYPAL_CLIENT_ID, PAYPAL_SECRET. Account-ID steht in worker/wrangler.toml.
 name: Shop-Server
@@ -13,8 +14,11 @@ on:
   workflow_dispatch:
     inputs:
       aktion:
-        description: "pruefen / datenbank-anlegen / veroeffentlichen"
+        description: "pruefen / datenbank-anlegen / veroeffentlichen / testmail"
         default: "pruefen"
+      an:
+        description: "nur für testmail: Empfänger (leer = Bestell-Adresse aus wrangler.toml)"
+        required: false
 permissions: { contents: read }
 jobs:
   server:
@@ -26,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
       # Schlüssel bereinigen: beim Einfügen rutschen leicht Zeilenumbrüche oder Leerzeichen mit hinein
       - name: Cloudflare-Schlüssel vorbereiten
-        if: env.AKTION != 'pruefen'
+        if: env.AKTION != 'pruefen' && env.AKTION != 'testmail'
         env:
           ROH: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
@@ -40,7 +44,7 @@ jobs:
         working-directory: .
       - run: npm ci
       - run: npm test
-        if: env.AKTION != 'datenbank-anlegen'
+        if: env.AKTION != 'datenbank-anlegen' && env.AKTION != 'testmail'
 
       - name: Datenbank anlegen
         if: env.AKTION == 'datenbank-anlegen'
@@ -65,3 +69,12 @@ jobs:
           for s in VERWALTUNG_SCHLUESSEL RESEND_API_KEY PAYPAL_CLIENT_ID PAYPAL_SECRET; do
             if [ -n "${!s}" ]; then printf '%s' "${!s}" | npx wrangler secret put "$s"; else echo "$s nicht gesetzt, übersprungen"; fi
           done
+
+      - name: Testmail verschicken
+        if: env.AKTION == 'testmail'
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          TESTMAIL_AN: ${{ inputs.an }}
+        run: |
+          if [ -n "$TESTMAIL_AN" ]; then echo "::add-mask::$TESTMAIL_AN"; fi
+          node werkzeuge/testmail.mjs
