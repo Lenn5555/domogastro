@@ -10,9 +10,11 @@ test("Deutschland: versandkostenfrei, 19 %", () => {
   const r = gesamtRechnen(LAENDER, "DE", [klein], 0, false);
   assert.deepEqual([r.versand, r.satz, r.brutto], [0, 19, 119]);
 });
-test("Österreich privat: Paketpreis und 20 % auf Ware und Versand", () => {
-  const r = gesamtRechnen(LAENDER, "AT", [klein], 0, false);
+test("Österreich privat: Paketpreis; mit OSS 20 %, ohne OSS deutsche 19 %", () => {
+  const r = gesamtRechnen({ ...LAENDER, oss: true }, "AT", [klein], 0, false);
   assert.equal(r.versand, 19.9); assert.equal(r.art, "OSS"); assert.equal(r.brutto, Math.round(119.9 * 1.2 * 100) / 100);
+  const d = gesamtRechnen({ ...LAENDER, oss: false }, "AT", [klein], 0, false);
+  assert.equal(d.satz, 19); assert.equal(d.brutto, Math.round(119.9 * 1.19 * 100) / 100);
 });
 test("schwere Bestellung: mehrere Pakete, Spedition pauschal", () => {
   assert.equal(gesamtRechnen(LAENDER, "AT", [{ ...klein, menge: 6 }], 0, false).pakete, 2);
