@@ -20,6 +20,23 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site"
 CFG = json.loads((ROOT / "daten/site.json").read_text(encoding="utf-8"))
 PRODUKTE = json.loads((ROOT / "daten/produkte.json").read_text(encoding="utf-8"))["produkte"]
+
+
+def _nur_mit_preis(produkte):
+    """Artikel ohne Preis kommen nicht in den Shop (Lenn 2026-11-19). Varianten ohne Preis fallen weg,
+    Produkte ohne bepreiste Variante ganz. Die Daten bleiben in produkte.json, sobald ein Preis da ist, erscheinen sie wieder."""
+    aus = []
+    for p in produkte:
+        if p.get("varianten"):
+            v = [x for x in p["varianten"] if x.get("preis_netto")]
+            if v:
+                aus.append({**p, "varianten": v})
+        elif p.get("preis_netto"):
+            aus.append(p)
+    return aus
+
+
+PRODUKTE = _nur_mit_preis(PRODUKTE)
 RECHT = ROOT / "daten/rechtstexte"
 BASIS = os.environ.get("SITE_BASIS", "").rstrip("/")
 API = (os.environ.get("SITE_API") or CFG.get("api", "")).rstrip("/")
@@ -32,7 +49,7 @@ SEITEN = []
 
 KAT_TEXT = {
     "Lüftung": "Wand-, Kasten- und Deckenhauben nach Maß, Filter und Luftreiniger",
-    "Kochen": "Herde, Pizzaöfen, Grillplatten, Fritteusen und Kessel",
+    "Kochen": "Herde, Pizzaöfen, Grillplatten und Fritteusen",
     "Warmhalten & Ausgabe": "Tellerstapler, Wärmebrücken, Bain Marie und Buffet",
     "Spülen & Wasser": "Handwaschbecken, Armaturen, Gläser- und Flaschenfüller",
     "Hygiene & Waschraum": "Händetrockner, Spender, Abfall und Waschraum",
@@ -424,6 +441,8 @@ def main():
     (worker / "texte.json").write_text(json.dumps({
         "agb_pdf": b64("Allgemeine Geschäftsbedingungen – Domo Gastro", "agb.html"),
         "widerruf_pdf": b64("Widerrufsbelehrung und Muster-Widerrufsformular – Domo Gastro", "widerruf.html"),
+        # Logo für den Mailkopf (weiß auf Navy, 2x), wird als Inline-Bild (cid:logo) mitgeschickt
+        "logo_png": base64.b64encode((ROOT / "werkzeuge" / "logo-mail.png").read_bytes()).decode(),
     }), encoding="utf-8")
 
     heute = date.today().isoformat()
