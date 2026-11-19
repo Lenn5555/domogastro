@@ -437,6 +437,24 @@ def main():
     katalog = {"artikel": {sku: {"n": a["n"], "p": a["p"], "s": a["s"]} for sku, a in artikel.items()},
                "produkte": {x["s"]: x["skus"] for x in liste}}
     (worker / "katalog.json").write_text(json.dumps(katalog, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    # Katalog für den KI-Berater: nur öffentliche Angaben (Name, Kategorie, Hersteller, Merkmale, Maße, Netto-Preis)
+    def merkmalText(p):
+        m = p.get("merkmale") or []
+        m = m if isinstance(m, list) else [f"{k}: {v}" for k, v in m.items()]
+        return "; ".join(str(x) for x in m[:6])[:300]
+    def masse(p):
+        m = p.get("masse_mm") or {}
+        return " × ".join(f"{k[0].upper()} {v}" for k, v in m.items() if v) + " mm" if m else ""
+    berater = []
+    for p in PRODUKTE:
+        if p["varianten"]:
+            w = [v["preis_netto"] for v in p["varianten"]]
+            preis = f'{min(w):.2f} bis {max(w):.2f} € je nach Breite (Breiten: {", ".join(str(v["breite_mm"]) for v in p["varianten"])} mm)'
+        else:
+            preis = f'{p["preis_netto"]:.2f} €'
+        berater.append({"s": p["slug"], "n": p["name"], "k": f'{p["kategorie"]} / {p["unterkategorie"]}', "h": p["hersteller"],
+                        "m": merkmalText(p), "ma": "" if p["varianten"] else masse(p), "p": preis})
+    (worker / "berater.json").write_text(json.dumps(berater, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     # Rechtstexte als PDF-Anhang der Bestellbestätigung (Base64), nicht mehr im Mailtext
     from pdf_text import pdf
     import base64

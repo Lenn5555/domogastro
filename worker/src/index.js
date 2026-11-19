@@ -5,10 +5,13 @@
 // Bewertung:  GET /bewertungen?produkt=…, POST /bewertungen (danach 5-%-Gutschein per Mail)
 // Gutschein:  POST /gutschein/pruefen
 // Zeitplan:   täglich fällige Bitten um Bewertung verschicken (wrangler.toml [triggers])
+// Berater:    GET /beraten (eingerichtet?), POST /beraten (KI-Produktberater mit Claude, Schlüssel ANTHROPIC_API_KEY)
 // Verwaltung: GET /verwaltung, POST /verwaltung/status, /verwaltung/bewertung (Schlüssel VERWALTUNG_SCHLUESSEL)
 import { Fehler, json } from "./hilfe.js";
 import * as konto from "./konto.js";
 import * as shop from "./shop.js";
+import Anthropic from "@anthropic-ai/sdk";
+import * as berater from "./berater.js";
 
 function herkunftVon(env, request) {
   const h = request.headers.get("Origin") || "";
@@ -47,10 +50,29 @@ async function verteilen(request, env, ctx) {
     case "GET /bewertungen": return shop.bewertungenLesen(env, url.searchParams.get("produkt"), await konto.kundeAusAnfrage(env, request));
     case "POST /gutschein/pruefen": return shop.gutscheinPruefen(env, d);
     case "POST /bewertungen": return shop.bewerten(env, ctx, await konto.pflichtKunde(env, request), d);
+    case "GET /beraten": return { aktiv: Boolean(env.ANTHROPIC_API_KEY) };
+    case "POST /beraten": return beratenAnfrage(env, d, request);
     case "GET /verwaltung": await shop.verwaltungPruefen(env, request); return shop.verwaltungListe(env);
     case "POST /verwaltung/status": await shop.verwaltungPruefen(env, request); return shop.verwaltungStatus(env, ctx, d);
     case "POST /verwaltung/bewertung": await shop.verwaltungPruefen(env, request); return shop.verwaltungBewertung(env, d);
     default: throw new Fehler("Nicht gefunden.", 404);
+  }
+}
+
+async function beratenAnfrage(env, d, request) {
+  const verlauf = berater.verlaufPruefen(d);
+  if (!verlauf) throw new Fehler("Bitte eine Frage eingeben.");
+  if (!env.ANTHROPIC_API_KEY) throw new Fehler("Der Berater ist noch nicht eingerichtet.", 503);
+  // eigene, strengere Bremse für den Berater (jede Antwort kostet), zusätzlich zur allgemeinen
+  if (env.BERATER_BREMSE) {
+    const ip = request.headers.get("CF-Connecting-IP") || "unbekannt";
+    if (!(await env.BERATER_BREMSE.limit({ key: `beraten:${ip}` })).success) throw new Fehler("Zu viele Fragen auf einmal. Bitte kurz warten.", 429);
+  }
+  try {
+    return await berater.beraten(berater.neuerClient(env), verlauf, env.MODELL || undefined);
+  } catch (err) {
+    console.error("Berater:", err instanceof Anthropic.APIError ? `${err.status} ${err.message}` : err);
+    throw new Fehler("Der Berater ist gerade nicht erreichbar. Bitte später noch einmal versuchen.", err instanceof Anthropic.RateLimitError ? 429 : 502);
   }
 }
 

@@ -486,6 +486,99 @@
     else reiter("anmelden");
   }
 
+
+  /* ---------- KI-Berater „Frag Domo“ (Server: POST /beraten) ---------- */
+  function berater() {
+    if (!DG.api || /\/verwaltung\//.test(location.pathname)) return;
+    // Knopf nur zeigen, wenn der Server den Berater eingerichtet hat
+    try { if (sessionStorage.getItem("dg-berater-aktiv")) return beraterZeigen(); } catch (e) {}
+    api("/beraten").then(function (d) {
+      if (!d.aktiv) return;
+      try { sessionStorage.setItem("dg-berater-aktiv", "1"); } catch (e) {}
+      beraterZeigen();
+    }).catch(function () {});
+  }
+  function beraterZeigen() {
+    var stand = (function () { try { return JSON.parse(sessionStorage.getItem("dg-berater")) || {}; } catch (e) { return {}; } })();
+    var verlauf = stand.verlauf || [], karten = stand.karten || {}, offen = !!stand.offen;
+    function merken() { try { sessionStorage.setItem("dg-berater", JSON.stringify({ verlauf: verlauf, karten: karten, offen: offen })); } catch (e) {} }
+    var knopf = document.createElement("button");
+    knopf.type = "button"; knopf.className = "ki-knopf"; knopf.setAttribute("aria-expanded", "false"); knopf.setAttribute("aria-controls", "ki-fenster");
+    knopf.innerHTML = '<img src="' + B + '/bilder/domo-koch.webp" alt=""><span>Frag Domo</span>';
+    var fenster = document.createElement("section");
+    fenster.id = "ki-fenster"; fenster.className = "ki-fenster"; fenster.hidden = true; fenster.setAttribute("aria-label", "Produktberater");
+    fenster.innerHTML = '<div class="ki-kopf"><img src="' + B + '/bilder/domo-koch.webp" alt=""><div><b>Domo</b><span>Ihr Produktberater</span></div>' +
+      '<button type="button" class="ki-neu" title="Neues Gespräch">Neu</button><button type="button" class="ki-zu" aria-label="Schließen">×</button></div>' +
+      '<div class="ki-verlauf" aria-live="polite"></div>' +
+      '<form class="ki-form"><label class="sr" for="ki-text">Ihre Frage</label><textarea id="ki-text" rows="2" maxlength="1500" placeholder="Was suchen Sie? z. B. Fritteuse für einen Imbiss, 400 V"></textarea><button>Senden</button></form>' +
+      '<p class="ki-hinweis">KI-Antworten können Fehler enthalten. Verbindlich sind die Produktseiten. Bitte keine persönlichen Daten eingeben. <a href="' + B + '/datenschutz/#ki-berater">Datenschutz</a></p>';
+    document.body.appendChild(knopf); document.body.appendChild(fenster);
+    var box = $(".ki-verlauf", fenster), form = $(".ki-form", fenster), feld = $("#ki-text"), senden = $("button", form);
+    var VORSCHLAEGE = ["Ich eröffne einen Imbiss. Was brauche ich?", "Abzugshaube für 160 cm Gerätebreite", "Pizzaofen für zu Hause", "Etwas zum Warmhalten am Buffet"];
+
+    function blase(rolle, text) {
+      var b = document.createElement("div"); b.className = "ki-blase ki-" + rolle;
+      String(text).split(/\n{2,}/).forEach(function (abs) { var p = document.createElement("p"); p.textContent = abs; b.appendChild(p); });
+      box.appendChild(b); return b;
+    }
+    function produkte(slugs) {
+      if (!slugs || !slugs.length) return;
+      var reihe = document.createElement("div"); reihe.className = "ki-karten";
+      box.appendChild(reihe);
+      index().then(function (ix) {
+        var nach = {}; ix.produkte.forEach(function (p) { nach[p.s] = p; });
+        reihe.innerHTML = slugs.map(function (s) { return nach[s] ? karteHtml(nach[s]) : ""; }).join("");
+        preiseSetzen(); unten();
+      });
+    }
+    function unten() { box.scrollTop = box.scrollHeight; }
+    function begruessen() {
+      blase("berater", "Hallo, ich bin Domo. Sagen Sie mir, was Sie vorhaben oder was Sie suchen, dann suche ich passende Geräte aus dem Shop heraus.");
+      var c = document.createElement("div"); c.className = "ki-chips";
+      VORSCHLAEGE.forEach(function (t) {
+        var x = document.createElement("button"); x.type = "button"; x.textContent = t;
+        x.addEventListener("click", function () { fragen(t); }); c.appendChild(x);
+      });
+      box.appendChild(c);
+    }
+    function zeichnen() {
+      box.innerHTML = "";
+      if (!verlauf.length) begruessen();
+      verlauf.forEach(function (m, i) { blase(m.rolle, m.text); produkte(karten[i]); });
+      unten();
+    }
+    function fragen(text) {
+      text = text.trim(); if (!text || senden.disabled) return;
+      var c = $(".ki-chips", box); if (c) c.remove();
+      verlauf.push({ rolle: "kunde", text: text }); merken();
+      blase("kunde", text); feld.value = "";
+      var warte = blase("berater", "Domo sucht passende Geräte …"); warte.classList.add("ki-warte");
+      senden.disabled = true; unten();
+      api("/beraten", { verlauf: verlauf }).then(function (d) {
+        warte.remove();
+        verlauf.push({ rolle: "berater", text: d.antwort });
+        if (d.produkte && d.produkte.length) karten[verlauf.length - 1] = d.produkte;
+        merken(); blase("berater", d.antwort); produkte(d.produkte);
+      }).catch(function (err) {
+        warte.remove(); verlauf.pop(); merken();
+        var f = blase("berater", err.message === "offline" ? "Der Berater ist noch nicht freigeschaltet." : err.message); f.classList.add("ki-fehler");
+        feld.value = text;
+      }).then(function () { senden.disabled = false; unten(); feld.focus(); });
+    }
+    function auf(o) {
+      offen = o; merken();
+      fenster.hidden = !offen; knopf.hidden = offen; knopf.setAttribute("aria-expanded", String(offen));
+      if (offen) { if (!box.childNodes.length) zeichnen(); feld.focus(); unten(); } else knopf.focus();
+    }
+    knopf.addEventListener("click", function () { auf(true); });
+    $(".ki-zu", fenster).addEventListener("click", function () { auf(false); });
+    $(".ki-neu", fenster).addEventListener("click", function () { verlauf = []; karten = {}; merken(); zeichnen(); feld.focus(); });
+    fenster.addEventListener("keydown", function (e) { if (e.key === "Escape") auf(false); });
+    form.addEventListener("submit", function (e) { e.preventDefault(); fragen(feld.value); });
+    feld.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); fragen(feld.value); } });
+    if (offen) auf(true);
+  }
+
   /* ---------- Start ---------- */
   document.addEventListener("click", function (e) {
     var s = e.target.closest(".seg button");
@@ -494,5 +587,5 @@
     if (a) { e.preventDefault(); inDenKorb(a.dataset.sku, 1); }
   });
   korbZaehler(); kontoKopf(); preiseZeigen();
-  produktseite(); kategorieseite(); suchseite(); kasse(); bestellseite(); kontoseite();
+  produktseite(); kategorieseite(); suchseite(); kasse(); bestellseite(); kontoseite(); berater();
 })();

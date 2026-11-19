@@ -63,10 +63,11 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           PAYPAL_CLIENT_ID: ${{ secrets.PAYPAL_CLIENT_ID }}
           PAYPAL_SECRET: ${{ secrets.PAYPAL_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           npx wrangler d1 execute domogastro --remote --file=schema.sql
           npx wrangler deploy
-          for s in VERWALTUNG_SCHLUESSEL RESEND_API_KEY PAYPAL_CLIENT_ID PAYPAL_SECRET; do
+          for s in VERWALTUNG_SCHLUESSEL RESEND_API_KEY PAYPAL_CLIENT_ID PAYPAL_SECRET ANTHROPIC_API_KEY; do
             if [ -n "${!s}" ]; then printf '%s' "${!s}" | npx wrangler secret put "$s"; else echo "$s nicht gesetzt, übersprungen"; fi
           done
 
