@@ -27,7 +27,7 @@ export function alsHtml(text) {
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:10px">
 <tr><td align="center" style="background:#0A1628;padding:18px 28px;border-radius:10px 10px 0 0;color:#ffffff;font:600 24px Georgia,'Times New Roman',serif"><img src="cid:logo" width="250" height="92" alt="Domo Gastro – Zuhause in der Gastronomie" style="display:block;width:250px;height:auto;border:0;color:#ffffff"></td></tr>
 <tr><td style="padding:28px;font:15px/1.6 Arial,Helvetica,sans-serif;color:#0A1628">${inhalt}</td></tr>
-<tr><td style="padding:16px 28px;background:#F5F7FA;border-radius:0 0 10px 10px;font:12px/1.5 Arial,Helvetica,sans-serif;color:#5A6B80">T&amp;S Systemtechnik GmbH · Am Hintergraben 26 · 64319 Pfungstadt · sales@ts-systec.de</td></tr>
+<tr><td style="padding:16px 28px;background:#F5F7FA;border-radius:0 0 10px 10px;font:12px/1.5 Arial,Helvetica,sans-serif;color:#5A6B80">T&amp;S Systemtechnik GmbH · Am Hintergraben 26 · 64319 Pfungstadt · sales@ts-systec.de · WEEE-Reg.-Nr. DE 43932288</td></tr>
 </table></td></tr></table></body></html>`;
 }
 

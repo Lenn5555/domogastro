@@ -6,5 +6,6 @@
   "betreiber_zeile": "Ein Angebot der T&S Systemtechnik GmbH, Pfungstadt.",
   "api": "https://domogastro-shop.beinundfuss.workers.dev",
   "mwst": 0.19,
-  "standard_modus": "privat"
+  "standard_modus": "privat",
+  "weee": "DE 43932288"
 }
