@@ -397,16 +397,18 @@
   }
 
   /* ---------- Bestellstatus (Gast und Konto) ---------- */
-  var SCHRITTE = [["eingegangen", "Eingegangen"], ["bezahlt", "Bezahlt"], ["in_bearbeitung", "In Bearbeitung"], ["versendet", "Versendet"], ["zugestellt", "Zugestellt"]];
+  // Drei Schritte; „in Bearbeitung“ zählt als bezahlt, „zugestellt“ als versendet (Zustellung zeigt die Sendungsverfolgung)
+  var SCHRITTE = [["eingegangen", "Eingegangen"], ["bezahlt", "Bezahlt"], ["versendet", "Versendet"]];
+  var GLEICH = { zahlung_offen: "eingegangen", in_bearbeitung: "bezahlt", zugestellt: "versendet" };
   function statusHtml(b) {
     if (b.status === "storniert") return '<div class="bestellstatus"><span class="an">Storniert</span></div>';
-    var i = SCHRITTE.map(function (x) { return x[0]; }).indexOf(b.status);
+    var i = SCHRITTE.map(function (x) { return x[0]; }).indexOf(GLEICH[b.status] || b.status);
     return '<div class="bestellstatus">' + SCHRITTE.map(function (x, j) { return '<span class="' + (j <= i ? "an" : "") + '">' + x[1] + "</span>"; }).join("") + "</div>";
   }
   function bestellHtml(b) {
     return '<div class="kasten" style="margin-bottom:14px"><b>Bestellung ' + esc(b.nr) + "</b> vom " + new Date(b.datum).toLocaleDateString("de-DE") + statusHtml(b) +
       "<ul>" + b.positionen.map(function (p) { return "<li>" + p.menge + " × " + esc(p.name) + " (" + esc(p.sku) + ")</li>"; }).join("") + "</ul>" +
-      "<p>Gesamt: <b>" + eur(b.brutto) + "</b> inkl. MwSt. · " + esc(b.zahlart) + (b.sendung ? " · Sendung: " + esc(b.sendung) : "") + "</p></div>";
+      "<p>Gesamt: <b>" + eur(b.brutto) + "</b> inkl. MwSt. · " + esc(b.zahlart) + (b.sendung ? " · Sendung: " + (/^https?:\/\//.test(b.sendung) ? '<a href="' + esc(b.sendung) + '" target="_blank" rel="noopener">verfolgen</a>' : esc(b.sendung)) : "") + "</p></div>";
   }
   function bestellseite() {
     var ziel = $("#bestell-ergebnis"); if (!ziel) return;
