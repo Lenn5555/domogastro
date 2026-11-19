@@ -157,7 +157,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <div><img src="{u('/logo.svg')}" alt="Domo Gastro"><p>Zuhause in der Gastronomie. Profigeräte, Ausstattung und Zubehör für Gastronomie, Hotellerie und alle, die zu Hause wie Profis kochen.</p><p>{e(CFG['betreiber_zeile'])}</p><p class="klein">WEEE-Reg.-Nr. {e(CFG['weee'])}</p></div>
 <div><h3>Shop</h3><ul>{''.join(f'<li><a href="{u("/" + slug(k) + "/")}">{e(k)}</a></li>' for k in kategorien()[:6])}</ul></div>
 <div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li></ul></div>
-<div><h3>Rechtliches</h3><ul><li><a href="{u('/impressum/')}">Impressum</a></li><li><a href="{u('/datenschutz/')}">Datenschutz</a></li><li><a href="{u('/agb/')}">AGB</a></li><li><a href="{u('/widerruf/')}">Widerrufsbelehrung</a></li></ul></div>
+<div><h3>Rechtliches</h3><ul><li><a href="{u('/impressum/')}">Impressum</a></li><li><a href="{u('/datenschutz/')}">Datenschutz</a></li><li><a href="{u('/agb/')}">AGB</a></li><li><a href="{u('/widerruf/')}">Widerrufsbelehrung</a></li><li><a href="{u('/entsorgung/')}">Entsorgung und Batterien</a></li></ul></div>
 </div><p class="steuerhinweis"></p></div></footer>
 </body></html>"""
 
@@ -411,7 +411,8 @@ def main():
     schreib("/verwaltung/", seite("Verwaltung | Domo Gastro", verwaltung(), "/verwaltung/", index=False))
     for pfad, titel, datei in [("/impressum/", "Impressum", "impressum.html"), ("/datenschutz/", "Datenschutzerklärung", "datenschutz.html"),
                                ("/agb/", "Allgemeine Geschäftsbedingungen", "agb.html"), ("/widerruf/", "Widerrufsbelehrung", "widerruf.html"),
-                               ("/versand/", "Versand und Zahlung", "versand.html"), ("/kontakt/", "Kontakt", "kontakt.html")]:
+                               ("/versand/", "Versand und Zahlung", "versand.html"), ("/kontakt/", "Kontakt", "kontakt.html"),
+                               ("/entsorgung/", "Entsorgung von Altgeräten, Batterien und Verpackungen", "entsorgung.html")]:
         schreib(pfad, textseite(titel, datei, pfad))
     (OUT / "404.html").write_text(seite("Seite nicht gefunden | Domo Gastro",
         f'<div class="seite g"><div class="in"><h1 class="titel">Seite nicht gefunden</h1><p><a href="{u("/")}">Zur Startseite</a> oder oben suchen.</p></div></div>', "/404", index=False), encoding="utf-8")
