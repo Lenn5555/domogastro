@@ -15,6 +15,7 @@ SITE_URL = "https://lenn5555.github.io/domogastro"
 BESTELL_EMAIL = "sales@ts-systec.de"
 # Absender muss bei Resend als Domain bestätigt sein (SPF, DKIM, DMARC). Bis dahin werden keine Mails verschickt.
 ABSENDER = "Domo Gastro <bestellung@domogastro.de>"
+RUECKSENDE_ADRESSE = "T&S Systemtechnik GmbH, Am Hintergraben 26, 64319 Pfungstadt"
 BANK_INHABER = "T&S Systemtechnik GmbH"
 BANK_IBAN = "DE17 5084 0005 0610 6090 00"
 # "ja" = PayPal-Testumgebung, "nein" = echtes PayPal (Lenn 2026-11-19: direkt live)

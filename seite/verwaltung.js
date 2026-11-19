@@ -45,6 +45,20 @@
     return `<p class="v-aufgabe">Storniert.</p>`;
   }
 
+  // Widerrufe: eingegangen → „Ware ist zurück“ → „Erstattet“ (Betrag änderbar, z. B. Wertersatz). Das Geld schickt Lenn selbst zurück.
+  function widerrufe(b) {
+    return (b.widerrufe || []).map((w) => {
+      const kopf = `↩︎ <b>Widerruf</b> vom ${esc(w.datum.slice(0, 16).replace("T", " "))}: ${w.positionen.map((p) => `${p.menge} × ${esc(p.name)}`).join(", ")}${w.grund ? ` · „${esc(w.grund)}“` : ""}`;
+      if (w.status === "erstattet") return `<p class="v-widerruf">${kopf}<br>✓ ${euro(w.betrag)} erstattet.</p>`;
+      const wie = b.zahlart === "Vorkasse" ? "per Überweisung an den Kunden" : `in PayPal bei Transaktion ${esc(b.transaktion || "?")} über „Rückzahlung“`;
+      return `<div class="v-widerruf">${kopf}${b.modus === "gewerbe" ? "<br><b>Gewerbekunde:</b> gesetzliches Widerrufsrecht gilt nicht, Kulanz?" : ""}
+        <br>Kaufpreis dieser Artikel: <b>${euro(w.vorschlag)}</b>. Zu erstatten ${wie}, spätestens 14 Tage nach Eingang.
+        ${w.status === "eingegangen" ? `<br><button class="btn sec" data-wid="${w.id}" data-wschritt="zurueck">Ware ist zurück</button>` : "<br>📦 Ware ist zurück."}
+        <form class="v-erstatten" data-wid="${w.id}">Erstattet: <input name="betrag" inputmode="decimal" value="${String(w.vorschlag.toFixed(2)).replace(".", ",")}" style="width:110px"> €
+        <button class="btn pri">Als erstattet melden</button></form></div>`;
+    }).join("");
+  }
+
   async function laden() {
     if (!DG.api) { box.innerHTML = `<p class="hinweis">Der Shop-Server ist noch nicht eingerichtet.</p>`; return; }
     if (!schluessel) return anmelden();
@@ -61,6 +75,7 @@
       ${b.kunde.gutschein ? `<p class="klein">Gutschein ${esc(b.kunde.gutschein.code)}: −${b.kunde.gutschein.prozent} % (−${euro(b.kunde.gutschein.rabatt)} netto)</p>` : ""}
       ${b.kunde.hinweis ? `<p class="klein">Hinweis: ${esc(b.kunde.hinweis)}</p>` : ""}
       ${aufgabe(b)}
+      ${widerrufe(b)}
       <details class="klein"><summary>Status von Hand ändern</summary>
       <form class="v-status" data-nr="${esc(b.nr)}"><select name="status">${Object.entries(STATI).map(([k, t]) => `<option value="${k}"${k === b.status ? " selected" : ""}>${t}</option>`).join("")}</select>
       <input name="sendung" placeholder="Sendungsnummer / Link" value="${esc(b.sendung || "")}">
@@ -73,7 +88,8 @@
       <p>Bestellungen mit Code: <b>${g.alle.anzahl}</b> · Umsatz <b>${euro(g.alle.brutto)}</b> brutto (${euro(g.alle.netto)} netto) · gewährter Rabatt ${euro(g.alle.rabatt)} netto</p>
       <p class="klein">Davon bezahlt: ${g.bezahlt.anzahl} Bestellungen, ${euro(g.bezahlt.brutto)} brutto (${euro(g.bezahlt.netto)} netto). Stornierte Bestellungen zählen nicht mit.</p></div>` : "";
     const nZahlung = d.bestellungen.filter(offen).length, nVersand = d.bestellungen.filter(zuVersenden).length;
-    const todo = `<div class="v-karte"><b>Zu erledigen</b><p>${nZahlung || nVersand ? `${nZahlung} Überweisung${nZahlung === 1 ? "" : "en"} abwarten · ${nVersand} Bestellung${nVersand === 1 ? "" : "en"} versenden` : "Alles erledigt."}</p></div>`;
+    const nWiderruf = d.bestellungen.reduce((n, b) => n + (b.widerrufe || []).filter((w) => w.status !== "erstattet").length, 0);
+    const todo = `<div class="v-karte"><b>Zu erledigen</b><p>${nZahlung || nVersand || nWiderruf ? `${nZahlung} Überweisung${nZahlung === 1 ? "" : "en"} abwarten · ${nVersand} Bestellung${nVersand === 1 ? "" : "en"} versenden${nWiderruf ? ` · <b>${nWiderruf} Widerruf${nWiderruf === 1 ? "" : "e"} erstatten</b>` : ""}` : "Alles erledigt."}</p></div>`;
     box.innerHTML = `${todo}<h2>Gutscheine</h2>${gut}<h2>Neueste Bewertungen (${d.bewertungen.length})</h2>${bew}<h2 id="v-bestellungen">Bestellungen (${d.bestellungen.length})</h2>${best}
       <p><button class="btn sec" id="v-ab">Abmelden</button></p>`;
     box.querySelectorAll("[data-bew]").forEach((k) => k.addEventListener("click", async () => {
@@ -96,6 +112,17 @@
       ev.preventDefault();
       const k = f.querySelector("button"); k.disabled = true;
       try { await rufen("/verwaltung/status", { nr: f.dataset.nr, status: "versendet", sendung: f.sendung.value, benachrichtigen: true }); laden(); } catch (err) { alert(err.message); k.disabled = false; }
+    }));
+    box.querySelectorAll("[data-wschritt]").forEach((k) => k.addEventListener("click", async () => {
+      k.disabled = true;
+      try { await rufen("/verwaltung/widerruf", { id: k.dataset.wid, schritt: k.dataset.wschritt }); laden(); } catch (err) { alert(err.message); k.disabled = false; }
+    }));
+    box.querySelectorAll(".v-erstatten").forEach((f) => f.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const betrag = f.betrag.value.trim();
+      if (!confirm(`Hast du ${betrag} € wirklich schon zurückgezahlt? Der Kunde bekommt jetzt eine Mail.`)) return;
+      const k = f.querySelector("button"); k.disabled = true;
+      try { await rufen("/verwaltung/widerruf", { id: f.dataset.wid, schritt: "erstattet", betrag }); laden(); } catch (err) { alert(err.message); k.disabled = false; }
     }));
     document.getElementById("v-ab").addEventListener("click", () => { schluessel = ""; try { sessionStorage.removeItem("dg-verwaltung"); } catch {} anmelden(); });
   }

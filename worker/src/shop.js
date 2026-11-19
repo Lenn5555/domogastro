@@ -4,6 +4,7 @@ import { Fehler, text, email, jetzt, runden, zufall, sha256, gleich } from "./hi
 import { anlegen as kontoAnlegen, oeffentlich } from "./konto.js";
 import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail, gutscheinmail, zahlungsmail, rechtsAnhaenge } from "./mail.js";
 import * as paypal from "./paypal.js";
+import { widerrufeVon } from "./widerruf.js";
 
 export const MWST = 0.19;
 export const GUTSCHEIN_PROZENT = 5;
@@ -158,7 +159,7 @@ export async function status(env, d) {
   const z = await env.DB.prepare("SELECT * FROM bestellungen WHERE nr = ?").bind(text(d.nr, 30).toUpperCase()).first();
   // Gleiche Meldung bei falscher Nummer und falscher Adresse
   if (!z || !gleich(z.email, String(d.email || "").trim().toLowerCase())) throw new Fehler("Keine Bestellung mit dieser Nummer und E-Mail-Adresse gefunden.", 404);
-  return oeffentlich(z);
+  return { ...oeffentlich(z), widerrufe: await widerrufeVon(env, z.nr) };
 }
 
 /* ---------- Bewertungen ---------- */
@@ -228,7 +229,10 @@ export async function verwaltungPruefen(env, request) {
 export async function verwaltungListe(env) {
   const b = await env.DB.prepare("SELECT * FROM bestellungen ORDER BY datum DESC LIMIT 200").all();
   const r = await env.DB.prepare("SELECT id, produkt, name, sterne, titel, text, datum FROM bewertungen ORDER BY datum DESC LIMIT 100").all();
-  return { bestellungen: b.results.map((z) => ({ ...oeffentlich(z), email: z.email, kunde: JSON.parse(z.kunde), transaktion: z.transaktion })), bewertungen: r.results,
+  const w = await env.DB.prepare("SELECT * FROM widerrufe ORDER BY id DESC LIMIT 300").all();
+  const wNach = {};
+  for (const x of w.results) (wNach[x.nr] ||= []).unshift({ ...x, positionen: JSON.parse(x.positionen) });
+  return { bestellungen: b.results.map((z) => ({ ...oeffentlich(z), email: z.email, kunde: JSON.parse(z.kunde), transaktion: z.transaktion, widerrufe: wNach[z.nr] || [] })), bewertungen: r.results,
     gutscheine: await gutscheinStatistik(env) };
 }
 

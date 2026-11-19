@@ -409,10 +409,19 @@
     var i = SCHRITTE.map(function (x) { return x[0]; }).indexOf(GLEICH[b.status] || b.status);
     return '<div class="bestellstatus">' + SCHRITTE.map(function (x, j) { return '<span class="' + (j <= i ? "an" : "") + '">' + x[1] + "</span>"; }).join("") + "</div>";
   }
-  function bestellHtml(b) {
+  var WSTAND = { eingegangen: "Widerruf eingegangen", zurueck: "Ware ist bei uns, Erstattung folgt", erstattet: "erstattet" };
+  function widerrufHtml(b) {
+    return (b.widerrufe || []).map(function (w) {
+      return '<p class="klein">Widerruf vom ' + new Date(w.datum).toLocaleDateString("de-DE") + ": " + w.positionen.map(function (p) { return p.menge + " × " + esc(p.name); }).join(", ") +
+        " · <b>" + WSTAND[w.status] + (w.status === "erstattet" ? " (" + eur(w.betrag) + ")" : "") + "</b></p>";
+    }).join("");
+  }
+  function bestellHtml(b, email) {
     return '<div class="kasten" style="margin-bottom:14px"><b>Bestellung ' + esc(b.nr) + "</b> vom " + new Date(b.datum).toLocaleDateString("de-DE") + statusHtml(b) +
       "<ul>" + b.positionen.map(function (p) { return "<li>" + p.menge + " × " + esc(p.name) + " (" + esc(p.sku) + ")</li>"; }).join("") + "</ul>" +
-      "<p>Gesamt: <b>" + eur(b.brutto) + "</b> inkl. MwSt. · " + esc(b.zahlart) + (b.sendung ? " · Sendung " + (/^https?:\/\//.test(b.sendung) ? "" : esc(b.sendung) + " ") + '<a href="' + esc(verfolgen(b.sendung)) + '" target="_blank" rel="noopener">bei GLS verfolgen</a>' : "") + "</p></div>";
+      "<p>Gesamt: <b>" + eur(b.brutto) + "</b> inkl. MwSt. · " + esc(b.zahlart) + (b.sendung ? " · Sendung " + (/^https?:\/\//.test(b.sendung) ? "" : esc(b.sendung) + " ") + '<a href="' + esc(verfolgen(b.sendung)) + '" target="_blank" rel="noopener">bei GLS verfolgen</a>' : "") + "</p>" +
+      widerrufHtml(b) +
+      (b.status !== "storniert" ? '<p class="klein"><a href="' + B + "/widerrufen/?nr=" + encodeURIComponent(b.nr) + (email ? "&email=" + encodeURIComponent(email) : "") + '">Vertrag widerrufen</a></p>' : "") + "</div>";
   }
   function bestellseite() {
     var ziel = $("#bestell-ergebnis"); if (!ziel) return;
@@ -421,10 +430,47 @@
     function laden(nr, email) {
       api("/bestellung/status", { nr: nr, email: email }).then(function (b) {
         ziel.innerHTML = (q.get("neu") ? '<p class="meldung ok">Vielen Dank! Ihre Bestellung ist eingegangen. Eine Bestätigung kommt per E-Mail.' +
-          (b.zahlart === "Vorkasse" ? " Die Bankverbindung kommt in einer eigenen E-Mail; Verwendungszweck ist Ihre Bestellnummer." : " Ihre Zahlung ist eingegangen, wir versenden jetzt.") + "</p>" : "") + bestellHtml(b);
+          (b.zahlart === "Vorkasse" ? " Die Bankverbindung kommt in einer eigenen E-Mail; Verwendungszweck ist Ihre Bestellnummer." : " Ihre Zahlung ist eingegangen, wir versenden jetzt.") + "</p>" : "") + bestellHtml(b, email);
       }).catch(function (err) { ziel.innerHTML = '<p class="meldung fehler">' + esc(err.message) + "</p>"; });
     }
     if (q.get("nr")) { form.elements.nr.value = q.get("nr"); form.elements.email.value = q.get("email") || ""; laden(q.get("nr"), q.get("email")); }
+    form.addEventListener("submit", function (e) { e.preventDefault(); laden(form.elements.nr.value.trim(), form.elements.email.value.trim()); });
+  }
+
+  /* ---------- Widerruf (Widerrufsbutton) ---------- */
+  function widerrufseite() {
+    var ziel = $("#widerruf-ergebnis"); if (!ziel) return;
+    var form = $("#widerruf-suche"), q = new URLSearchParams(location.search);
+    if (!DG.api) { ziel.innerHTML = '<p class="meldung">Bitte widerrufen Sie per E-Mail an ' + esc(DG.mail || "") + '.</p>'; form.hidden = true; return; }
+    function laden(nr, email) {
+      ziel.innerHTML = "";
+      api("/bestellung/status", { nr: nr, email: email }).then(function (b) {
+        if (b.status === "storniert") { ziel.innerHTML = '<p class="meldung">Diese Bestellung ist bereits storniert.</p>'; return; }
+        var schon = {};
+        (b.widerrufe || []).forEach(function (w) { w.positionen.forEach(function (p) { schon[p.sku] = (schon[p.sku] || 0) + p.menge; }); });
+        var zeilen = b.positionen.map(function (p) {
+          var rest = p.menge - (schon[p.sku] || 0);
+          return '<div class="w-zeile"><label class="check"><input type="checkbox" name="sku" value="' + esc(p.sku) + '"' + (rest ? " checked" : " disabled") + "> " + esc(p.name) + ' <span class="klein">(' + esc(p.sku) + ")</span></label>" +
+            (rest ? (rest > 1 ? '<label class="klein">Stück <input type="number" name="m-' + esc(p.sku) + '" min="1" max="' + rest + '" value="' + rest + '"></label>' : '<input type="hidden" name="m-' + esc(p.sku) + '" value="1">') : '<span class="klein">bereits widerrufen</span>') + "</div>";
+        }).join("");
+        ziel.innerHTML = widerrufHtml(b) + '<form id="widerruf-form" class="kasten"><p><b>Bestellung ' + esc(b.nr) + "</b> vom " + new Date(b.datum).toLocaleDateString("de-DE") + ". Welche Artikel möchten Sie widerrufen?</p>" + zeilen +
+          '<label>Anmerkung (freiwillig) <textarea name="grund" rows="2" maxlength="1000"></textarea></label>' +
+          '<button class="btn pri">Widerruf bestätigen</button><p class="status"></p></form>';
+        var f = $("#widerruf-form");
+        f.addEventListener("submit", function (e) {
+          e.preventDefault();
+          var pos = $$("input[name=sku]:checked", f).map(function (c) { return { sku: c.value, menge: f.elements["m-" + c.value].value }; });
+          var st = $(".status", f);
+          if (!pos.length) { st.className = "status meldung fehler"; st.textContent = "Bitte wählen Sie mindestens einen Artikel."; return; }
+          var k = $("button", f); k.disabled = true;
+          api("/widerruf", { nr: b.nr, email: email, positionen: pos, grund: f.elements.grund.value }).then(function (d) {
+            ziel.innerHTML = '<p class="meldung ok">Ihr Widerruf ist am ' + new Date(d.datum).toLocaleString("de-DE", { dateStyle: "long", timeStyle: "short" }) +
+              " Uhr bei uns eingegangen. Die Eingangsbestätigung mit der Rücksendeadresse haben wir Ihnen per E-Mail geschickt.</p>";
+          }).catch(function (err) { k.disabled = false; st.className = "status meldung fehler"; st.textContent = err.message; });
+        });
+      }).catch(function (err) { ziel.innerHTML = '<p class="meldung fehler">' + esc(err.message) + "</p>"; });
+    }
+    if (q.get("nr")) { form.elements.nr.value = q.get("nr"); form.elements.email.value = q.get("email") || ""; if (q.get("email")) laden(q.get("nr"), q.get("email")); }
     form.addEventListener("submit", function (e) { e.preventDefault(); laden(form.elements.nr.value.trim(), form.elements.email.value.trim()); });
   }
 
@@ -447,7 +493,7 @@
         $("#konto-name").textContent = k.name || k.email;
         var pf = $("#profil");
         ["name", "firma", "ustid", "strasse", "plz", "ort", "telefon"].forEach(function (f) { if (pf.elements[f]) pf.elements[f].value = k[f] || ""; });
-        $("#meine-bestellungen").innerHTML = d.bestellungen.length ? d.bestellungen.map(bestellHtml).join("") : '<p class="klein">Noch keine Bestellungen.</p>';
+        $("#meine-bestellungen").innerHTML = d.bestellungen.length ? d.bestellungen.map(function (b) { return bestellHtml(b, k.email); }).join("") : '<p class="klein">Noch keine Bestellungen.</p>';
       }).catch(function (err) { meld(err.message); });
     }
     function sitzungSetzen(d) { schreib("dg-sitzung", d.sitzung); kontoKopf(); angemeldet(); }
@@ -587,5 +633,5 @@
     if (a) { e.preventDefault(); inDenKorb(a.dataset.sku, 1); }
   });
   korbZaehler(); kontoKopf(); preiseZeigen();
-  produktseite(); kategorieseite(); suchseite(); kasse(); bestellseite(); kontoseite(); berater();
+  produktseite(); kategorieseite(); suchseite(); kasse(); bestellseite(); widerrufseite(); kontoseite(); berater();
 })();

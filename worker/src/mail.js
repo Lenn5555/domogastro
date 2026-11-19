@@ -173,3 +173,61 @@ Details: ${env.SITE_URL}/bestellung/?nr=${encodeURIComponent(b.nr)}&email=${enco
 Freundliche Grüße
 Ihr Domo-Gastro-Team`;
 }
+
+/* ---------- Widerruf ---------- */
+const stueck = (pos) => pos.map((p) => `  ${p.menge} × ${p.name} (Art.-Nr. ${p.sku})`).join("\n");
+const zeit = (iso) => new Date(iso).toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "long", timeStyle: "short" });
+const zahlweg = (b) => b.zahlart === "Vorkasse" ? "per Überweisung auf Ihr Konto (bitte senden Sie uns dazu Ihre IBAN, falls sie von der Zahlung abweicht)" : `über ${b.zahlart === "Kreditkarte" ? "PayPal zurück auf Ihre Kreditkarte" : "PayPal"}`;
+
+export function widerrufKunde(env, b, w) {
+  return `Guten Tag ${b.kunde.name},
+
+wir haben Ihren Widerruf am ${zeit(w.datum)} Uhr erhalten. Diese E-Mail bestätigt den Eingang.
+
+Bestellnummer: ${b.nr}
+Widerrufene Artikel:
+${stueck(w.positionen)}
+${w.grund ? `\nIhre Anmerkung: ${w.grund}\n` : ""}
+So geht es weiter:
+1. Bitte schicken Sie die Ware innerhalb von 14 Tagen an:
+   ${env.RUECKSENDE_ADRESSE}
+   Legen Sie bitte einen Zettel mit der Bestellnummer ${b.nr} bei. Die Kosten der Rücksendung tragen Sie (siehe Widerrufsbelehrung).
+2. Große Geräte, die per Spedition kamen: Antworten Sie bitte einfach auf diese E-Mail. Wir organisieren die Abholung und sagen Ihnen vorher die Kosten.
+3. Ist die Ware noch gar nicht bei Ihnen angekommen, müssen Sie nichts zurückschicken. Wir halten den Versand an, soweit das noch geht.
+
+Sobald die Ware bei uns ist oder Sie uns den Versand nachweisen, erstatten wir den Kaufpreis ${zahlweg(b)}, spätestens 14 Tage nach Eingang Ihres Widerrufs. Sie bekommen dann eine E-Mail.
+
+Status Ihrer Bestellung: ${env.SITE_URL}/bestellung/?nr=${encodeURIComponent(b.nr)}&email=${encodeURIComponent(b.email)}
+
+Freundliche Grüße
+Ihr Domo-Gastro-Team`;
+}
+
+export function widerrufVertrieb(env, b, w) {
+  const tage = Math.floor((Date.now() - new Date(b.datum).getTime()) / 86400000);
+  return `Widerruf zu Bestellung ${b.nr} (${b.modus === "privat" ? "Privatkunde" : "GEWERBEKUNDE – gesetzliches Widerrufsrecht gilt nicht, bitte prüfen"})
+Eingegangen: ${zeit(w.datum)} Uhr, ${tage} Tage nach der Bestellung${tage > 30 ? " (bitte Frist prüfen: 14 Tage ab Erhalt der Ware)" : ""}
+
+${stueck(w.positionen)}
+${w.grund ? `\nAnmerkung des Kunden: ${w.grund}\n` : ""}
+Anteiliger Kaufpreis (Vorschlag für die Erstattung): ${euro(w.vorschlag)}
+Bezahlt per ${b.zahlart}${b.transaktion ? `, PayPal-Transaktion ${b.transaktion}` : ""}
+Kunde: ${b.kunde.name}, ${b.email}${b.kunde.telefon ? `, ${b.kunde.telefon}` : ""}
+
+Erledigen: ${env.SITE_URL}/verwaltung/
+Erstatten musst du spätestens 14 Tage nach Eingang des Widerrufs; du darfst warten, bis die Ware zurück ist oder der Kunde den Versand nachweist.`;
+}
+
+export function erstattetMail(env, b, w) {
+  return `Guten Tag ${b.kunde.name},
+
+zu Ihrem Widerruf der Bestellung ${b.nr} haben wir ${euro(w.betrag)} ${zahlweg(b).replace(/^per Überweisung auf Ihr Konto.*$/, "per Überweisung auf Ihr Konto")} erstattet.
+${w.betrag < w.vorschlag - 0.005 ? `\nDer Kaufpreis der Artikel betrug ${euro(w.vorschlag)}. Den Unterschied haben wir als Wertersatz bzw. Rücksendekosten abgezogen; bei Fragen antworten Sie einfach auf diese E-Mail.\n` : ""}
+Widerrufene Artikel:
+${stueck(w.positionen)}
+
+Je nach Bank bzw. PayPal kann es einige Tage dauern, bis der Betrag bei Ihnen sichtbar ist.
+
+Freundliche Grüße
+Ihr Domo-Gastro-Team`;
+}

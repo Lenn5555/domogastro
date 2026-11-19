@@ -2,6 +2,7 @@
 // Konto:      POST /konto/registrieren, /konto/anmelden, /konto/abmelden, /konto/passwort-vergessen, /konto/passwort-setzen
 //             GET/PUT/DELETE /konto
 // Bestellung: POST /bestellung (Überweisung), /bestellung/status; Kreditkarte/PayPal: GET /bezahlen, POST /bezahlen/start, /bezahlen/abschluss
+// Widerruf:   POST /widerruf (Widerrufsbutton), Verwaltung: POST /verwaltung/widerruf
 // Bewertung:  GET /bewertungen?produkt=…, POST /bewertungen (danach 5-%-Gutschein per Mail)
 // Gutschein:  POST /gutschein/pruefen
 // Zeitplan:   täglich fällige Bitten um Bewertung verschicken (wrangler.toml [triggers])
@@ -12,6 +13,7 @@ import * as konto from "./konto.js";
 import * as shop from "./shop.js";
 import Anthropic from "@anthropic-ai/sdk";
 import * as berater from "./berater.js";
+import * as widerruf from "./widerruf.js";
 
 function herkunftVon(env, request) {
   const h = request.headers.get("Origin") || "";
@@ -44,6 +46,7 @@ async function verteilen(request, env, ctx) {
     case "DELETE /konto": return konto.loeschen(env, await konto.pflichtKunde(env, request));
     case "POST /bestellung": return shop.bestellen(env, ctx, d, await konto.kundeAusAnfrage(env, request));
     case "POST /bestellung/status": return shop.status(env, d);
+    case "POST /widerruf": return widerruf.widerrufen(env, ctx, d);
     case "GET /bezahlen": return shop.bezahlenInfo(env);
     case "POST /bezahlen/start": return shop.bezahlenStart(env, d, await konto.kundeAusAnfrage(env, request));
     case "POST /bezahlen/abschluss": return shop.bezahlenAbschluss(env, ctx, d, await konto.kundeAusAnfrage(env, request));
@@ -54,6 +57,7 @@ async function verteilen(request, env, ctx) {
     case "POST /beraten": return beratenAnfrage(env, d, request);
     case "GET /verwaltung": await shop.verwaltungPruefen(env, request); return shop.verwaltungListe(env);
     case "POST /verwaltung/status": await shop.verwaltungPruefen(env, request); return shop.verwaltungStatus(env, ctx, d);
+    case "POST /verwaltung/widerruf": await shop.verwaltungPruefen(env, request); return widerruf.verwaltungWiderruf(env, ctx, d);
     case "POST /verwaltung/bewertung": await shop.verwaltungPruefen(env, request); return shop.verwaltungBewertung(env, d);
     default: throw new Fehler("Nicht gefunden.", 404);
   }

@@ -286,3 +286,13 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 .ki-hinweis{margin:0;padding:0 12px 8px;background:var(--n2);font-size:11px;color:var(--mute)}
 .ki-hinweis a{color:var(--soft)}
 @media (max-width:520px){.ki-fenster{right:0;bottom:0;width:100vw;height:100dvh;border-radius:0;border:0}.ki-knopf span{display:none}.ki-knopf{padding:6px}}
+
+/* Widerruf */
+.w-zeile{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:8px 0;border-bottom:1px solid var(--n3)}
+.w-zeile input[type=number]{width:70px;margin-left:6px}
+#widerruf-form textarea{width:100%;margin-top:4px}
+#widerruf-form .btn{margin-top:12px}
+.v-widerruf{margin:12px 0 0;padding:12px 14px;border-left:3px solid var(--warn);background:var(--n1);border-radius:8px;line-height:1.6}
+.v-widerruf .btn{margin:8px 8px 0 0}
+.v-erstatten{margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.v-erstatten input{width:110px}

@@ -156,7 +156,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <footer class="fuss g"><div class="in"><div class="spalten">
 <div><img src="{u('/logo.svg')}" alt="Domo Gastro"><p>Zuhause in der Gastronomie. Profigeräte, Ausstattung und Zubehör für Gastronomie, Hotellerie und alle, die zu Hause wie Profis kochen.</p><p>{e(CFG['betreiber_zeile'])}</p><p class="klein">WEEE-Reg.-Nr. {e(CFG['weee'])}</p></div>
 <div><h3>Shop</h3><ul>{''.join(f'<li><a href="{u("/" + slug(k) + "/")}">{e(k)}</a></li>' for k in kategorien()[:6])}</ul></div>
-<div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li></ul></div>
+<div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/widerrufen/')}">Vertrag widerrufen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li></ul></div>
 <div><h3>Rechtliches</h3><ul><li><a href="{u('/impressum/')}">Impressum</a></li><li><a href="{u('/datenschutz/')}">Datenschutz</a></li><li><a href="{u('/agb/')}">AGB</a></li><li><a href="{u('/widerruf/')}">Widerrufsbelehrung</a></li><li><a href="{u('/entsorgung/')}">Entsorgung und Batterien</a></li></ul></div>
 </div><p class="steuerhinweis"></p></div></footer>
 </body></html>"""
@@ -351,12 +351,20 @@ def bestellung():
 <div id="bestell-ergebnis"></div></div></div>"""
 
 
+def widerrufen():
+    return f"""<div class="seite g"><div class="in" style="max-width:760px"><h1 class="titel">Vertrag widerrufen</h1>
+<p>Als Verbraucher können Sie Ihren Kauf innerhalb von 14 Tagen ab Erhalt der Ware ohne Angabe von Gründen widerrufen. Hier geht das direkt online: Bestellnummer und E-Mail-Adresse aus der Bestellbestätigung eingeben, Artikel wählen, bestätigen. Sie bekommen sofort eine Eingangsbestätigung per E-Mail. Einzelheiten stehen in der <a href="{u('/widerruf/')}">Widerrufsbelehrung</a>.</p>
+<form id="widerruf-suche" class="kasten" style="margin:18px 0"><div class="zwei"><label>Bestellnummer <input type="text" name="nr" required placeholder="DG-…"></label><label>E-Mail <input type="email" name="email" required></label></div><button class="btn pri">Weiter</button></form>
+<div id="widerruf-ergebnis"></div></div></div>"""
+
+
 def suche():
     return """<div class="seite g"><div class="in"><h1 class="titel">Suche</h1><p id="anzahl" class="klein"></p><div class="raster" id="treffer" style="margin-top:20px"></div></div></div>"""
 
 
 def textseite(titel, datei, pfad, beschreibung=""):
     inhalt = (RECHT / datei).read_text(encoding="utf-8") if (RECHT / datei).exists() else "<p class='platzhalter'>Text fehlt – so nicht veröffentlichen.</p>"
+    inhalt = inhalt.replace('href="/', f'href="{BASIS}/')  # Links in Rechtstexten auch unter /domogastro/ (Vorschau)
     return seite(f"{titel} | Domo Gastro", f'<div class="seite g"><div class="in text"><h1 class="titel">{titel}</h1>{inhalt}</div></div>', pfad, beschreibung)
 
 
@@ -407,6 +415,7 @@ def main():
     schreib("/warenkorb/", seite("Warenkorb | Domo Gastro", warenkorb(), "/warenkorb/", index=False))
     schreib("/konto/", seite("Kundenkonto | Domo Gastro", konto(), "/konto/", index=False))
     schreib("/bestellung/", seite("Bestellung verfolgen | Domo Gastro", bestellung(), "/bestellung/", index=False))
+    schreib("/widerrufen/", seite("Vertrag widerrufen | Domo Gastro", widerrufen(), "/widerrufen/", index=False))
     schreib("/suche/", seite("Suche | Domo Gastro", suche(), "/suche/", index=False))
     schreib("/verwaltung/", seite("Verwaltung | Domo Gastro", verwaltung(), "/verwaltung/", index=False))
     for pfad, titel, datei in [("/impressum/", "Impressum", "impressum.html"), ("/datenschutz/", "Datenschutzerklärung", "datenschutz.html"),
@@ -472,7 +481,7 @@ def main():
     if VORSCHAU:
         (OUT / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
     else:
-        (OUT / "robots.txt").write_text(f"User-agent: *\nDisallow: /konto/\nDisallow: /warenkorb/\nDisallow: /bestellung/\nDisallow: /verwaltung/\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
+        (OUT / "robots.txt").write_text(f"User-agent: *\nDisallow: /konto/\nDisallow: /warenkorb/\nDisallow: /bestellung/\nDisallow: /widerrufen/\nDisallow: /verwaltung/\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
     print(f"site/ gebaut: {len(PRODUKTE)} Produktseiten, {len(kategorien())} Kategorien, {len(artikel)} Artikelnummern, API {'an' if API else 'aus'}")
 
 

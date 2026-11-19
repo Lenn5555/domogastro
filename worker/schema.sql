@@ -45,3 +45,15 @@ CREATE TABLE IF NOT EXISTS gutscheine (
 CREATE INDEX IF NOT EXISTS gutscheine_bewertung ON gutscheine(bewertung_id);
 -- Bewertungen erscheinen seit 2026-11-18 sofort (keine Freigabe mehr); ältere wartende einmalig freischalten
 UPDATE bewertungen SET freigegeben = 1 WHERE freigegeben = 0;
+-- Widerrufe (Widerrufsbutton, Lenn 2026-11-19): eingegangen → zurueck (Ware da) → erstattet
+CREATE TABLE IF NOT EXISTS widerrufe (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nr TEXT NOT NULL,
+  positionen TEXT NOT NULL,   -- JSON: sku, name, menge
+  grund TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL,
+  vorschlag REAL NOT NULL,    -- anteiliger Bruttobetrag der widerrufenen Artikel
+  betrag REAL NOT NULL DEFAULT 0,
+  datum TEXT NOT NULL, aktualisiert TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS widerrufe_nr ON widerrufe(nr);
