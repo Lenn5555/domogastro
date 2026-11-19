@@ -9,3 +9,4 @@ worker/.dev.vars
 worker/src/katalog.json
 worker/src/texte.json
 worker/src/berater.json
+seite/rechnen.js

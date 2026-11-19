@@ -64,17 +64,32 @@ export const statusText = (s) => STATUS[s] || s;
 function posten(b) {
   return b.positionen.map((p) => `  ${p.menge} × ${p.name} (Art.-Nr. ${p.sku})  je ${euro(p.netto)} netto`).join("\n");
 }
+// Steuerhinweis je Art (Lenn 2026-11-19, Auslandsversand)
+export function steuerHinweis(st) {
+  if (!st) return "";
+  if (st.art === "IG") return "Steuerfreie innergemeinschaftliche Lieferung (§ 4 Nr. 1 Buchst. b, § 6a UStG). Den Erwerb versteuern Sie als Empfänger in Ihrem Land.";
+  if (st.art === "AUSFUHR") return "Steuerfreie Ausfuhrlieferung (§ 4 Nr. 1 Buchst. a, § 6 UStG). Einfuhrumsatzsteuer, Zölle und Gebühren des Empfängerlandes zahlen Sie bei der Zustellung.";
+  if (st.art === "OSS") return `Umsatzsteuer des Lieferlandes ${st.landname} (${String(st.satz).replace(".", ",")} %).`;
+  return "";
+}
 function summen(b) {
   const g = b.kunde?.gutschein;
-  const rabatt = g ? `Warenwert netto: ${euro(runden(b.netto + g.rabatt))}\nGutschein ${g.code} (${g.prozent} %): −${euro(g.rabatt)}\nnach Gutschein netto: ${euro(b.netto)}` : `Warenwert netto: ${euro(b.netto)}`;
-  return `${rabatt}\nzzgl. 19 % MwSt.: ${euro(b.mwst)}\nVersand (Deutschland): kostenlos\nGesamtbetrag: ${euro(b.brutto)}`;
+  const st = b.kunde?.steuer;
+  const warenwert = st ? st.warenwert : runden(b.netto + (g ? g.rabatt : 0));
+  const versand = !st || !st.land || st.land === "DE" ? "Versand (Deutschland): kostenlos"
+    : `Versand nach ${st.landname}${st.spedition ? " (Spedition)" : st.pakete > 1 ? ` (${st.pakete} Pakete)` : ""}: ${euro(st.versand)} netto`;
+  const satz = st ? String(st.satz).replace(".", ",") : "19";
+  const rabatt = g ? `Warenwert netto: ${euro(warenwert)}\nGutschein ${g.code} (${g.prozent} %): −${euro(g.rabatt)}` : `Warenwert netto: ${euro(warenwert)}`;
+  const steuer = st && st.satz === 0 ? `Umsatzsteuer: 0,00 € (${steuerHinweis(st)})` : `zzgl. ${satz} % MwSt.: ${euro(b.mwst)}`;
+  return `${rabatt}\n${versand}\n${steuer}\nGesamtbetrag: ${euro(b.brutto)}${st?.art === "OSS" ? `\n${steuerHinweis(st)}` : ""}`;
 }
+const landZeile = (k) => k.steuer?.landname && k.steuer.land !== "DE" ? k.steuer.landname.replace(/ \(.*\)$/, "").toUpperCase() : "";
 function adresse(k) {
-  return [k.firma, k.name, k.strasse, `${k.plz} ${k.ort}`, k.telefon && `Tel. ${k.telefon}`, k.ustid && `USt-IdNr. ${k.ustid}`].filter(Boolean).join("\n");
+  return [k.firma, k.name, k.strasse, `${k.plz} ${k.ort}`, k.liefer ? "" : landZeile(k), k.telefon && `Tel. ${k.telefon}`, k.ustid && `USt-IdNr. ${k.ustid}`].filter(Boolean).join("\n");
 }
 function lieferadresse(k) {
   const l = k.liefer;
-  return l ? [l.firma, l.name, l.strasse, `${l.plz} ${l.ort}`].filter(Boolean).join("\n") : "wie Rechnungsadresse";
+  return l ? [l.firma, l.name, l.strasse, `${l.plz} ${l.ort}`, landZeile(k)].filter(Boolean).join("\n") : "wie Rechnungsadresse";
 }
 function adressen(k) {
   return `Rechnungsadresse:\n${adresse(k)}\n\nLieferadresse:\n${lieferadresse(k)}`;
@@ -110,6 +125,16 @@ Ihr Domo-Gastro-Team
 Im Anhang finden Sie unsere AGB${privat ? " sowie die Widerrufsbelehrung mit Muster-Widerrufsformular" : ""} als PDF.`;
 }
 
+function vertriebSteuer(b) {
+  const st = b.kunde?.steuer, u = b.kunde?.ustid_pruefung;
+  if (!st || st.art === "DE") return "";
+  if (st.art === "IG") return `\n\nAUSLAND EU, GEWERBE: steuerfreie innergemeinschaftliche Lieferung nach ${st.landname}.
+USt-IdNr. ${u?.ustid} geprüft bei VIES am ${u?.zeit?.slice(0, 16).replace("T", " ")} (Abfragenummer ${u?.abfrage || "–"}, Name laut VIES: ${u?.name || "–"}).
+Rechnung: Hinweis „Steuerfreie innergemeinschaftliche Lieferung“ + beide USt-IdNrn.; in der Zusammenfassenden Meldung angeben; GLS-Sendungsnachweis aufheben.`;
+  if (st.art === "AUSFUHR") return `\n\nAUSFUHR nach ${st.landname}: steuerfrei, Handelsrechnung/Zollpapiere für GLS beilegen, Ausfuhrnachweis aufheben.`;
+  return `\n\nAUSLAND EU, PRIVAT: ${String(st.satz).replace(".", ",")} % MwSt. ${st.landname} berechnet, über das OSS-Verfahren melden.`;
+}
+
 export function vertriebsmail(env, b) {
   return `Neue Bestellung ${b.nr} (${b.modus === "privat" ? "PRIVAT" : "GEWERBE"}) – ${b.zahlart}${b.status === "bezahlt" ? `, BEZAHLT (über PayPal, Transaktion ${b.transaktion})` : ", Zahlung offen"}
 
@@ -120,7 +145,7 @@ ${summen(b)}
 Kunde (${b.email}${b.kunde_id ? ", mit Konto" : ", Gast"})
 
 ${adressen(b.kunde)}
-${b.kunde.hinweis ? `\nHinweis: ${b.kunde.hinweis}` : ""}
+${b.kunde.hinweis ? `\nHinweis: ${b.kunde.hinweis}` : ""}${vertriebSteuer(b)}
 
 Status ändern: ${env.SITE_URL}/verwaltung/`;
 }

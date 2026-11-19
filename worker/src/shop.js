@@ -5,6 +5,9 @@ import { anlegen as kontoAnlegen, oeffentlich } from "./konto.js";
 import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail, gutscheinmail, zahlungsmail, rechtsAnhaenge } from "./mail.js";
 import * as paypal from "./paypal.js";
 import { widerrufeVon } from "./widerruf.js";
+import LAENDER from "../../daten/laender.json" with { type: "json" };
+import { gesamtRechnen, landVon } from "./steuer.js";
+import { ustidPruefen } from "./ustid.js";
 
 export const MWST = 0.19;
 export const GUTSCHEIN_PROZENT = 5;
@@ -19,21 +22,25 @@ function bestellnummer() {
 }
 
 // Preise kommen nur aus dem Katalog des Servers, nie aus dem Browser. prozent = Gutschein-Rabatt auf den Warenwert.
-export function rechnen(positionen, prozent = 0) {
+// land = Lieferland (daten/laender.json), ustidGueltig = Unternehmer mit geprüfter USt-IdNr. aus einem anderen EU-Land
+export function rechnen(positionen, prozent = 0, land = "DE", ustidGueltig = false) {
   if (!Array.isArray(positionen) || !positionen.length) throw new Fehler("Der Warenkorb ist leer.");
   if (positionen.length > 50) throw new Fehler("Zu viele Positionen.");
+  if (!landVon(LAENDER, land)) throw new Fehler("In dieses Land liefern wir leider nicht. Schreiben Sie uns gern an sales@ts-systec.de.");
   const pos = positionen.map((p) => {
     const a = KATALOG.artikel[String(p.sku)];
     const menge = parseInt(p.menge, 10);
     if (!a || !a.p) throw new Fehler(`Artikel ${text(p.sku, 40)} ist nicht bestellbar.`);
     if (!(menge >= 1 && menge <= 99)) throw new Fehler("Ungültige Menge.");
-    return { sku: String(p.sku), name: a.n, slug: a.s, menge, netto: a.p };
+    return { sku: String(p.sku), name: a.n, slug: a.s, menge, netto: a.p, a };
   });
-  const warenwert = runden(pos.reduce((s, p) => s + p.netto * p.menge, 0));
-  const rabatt = runden(warenwert * prozent / 100);
-  const netto = runden(warenwert - rabatt);
-  const mwst = runden(netto * MWST);
-  return { positionen: pos, warenwert, rabatt, netto, mwst, brutto: runden(netto + mwst) };
+  const g = gesamtRechnen(LAENDER, land, pos, prozent, ustidGueltig);
+  if (g.gesperrt.length) throw new Fehler(`„${g.gesperrt[0].name}“ können wir nach ${g.land.n} noch nicht liefern (Elektrogerät). Bitte entfernen Sie es aus dem Warenkorb oder schreiben Sie uns an sales@ts-systec.de.`);
+  return {
+    positionen: pos.map(({ a, ...x }) => x), warenwert: g.warenwert, rabatt: g.rabatt, versand: g.versand,
+    netto: g.netto, mwst: g.mwst, brutto: g.brutto,
+    steuer: { land: g.land.c, landname: g.land.n, art: g.art, satz: g.satz, versand: g.versand, pakete: g.pakete, spedition: g.spedition, warenwert: g.warenwert },
+  };
 }
 
 function kundendaten(k, modus) {
@@ -46,11 +53,14 @@ function kundendaten(k, modus) {
   // Eigene Lieferadresse nur, wenn der Kunde „gleich wie Rechnungsadresse“ abgewählt hat
   const l = k?.liefer;
   if (l && typeof l === "object") {
-    d.liefer = { firma: text(l.firma, 120), name: text(l.name, 120), strasse: text(l.strasse, 120), plz: text(l.plz, 5), ort: text(l.ort, 80) };
+    d.liefer = { firma: text(l.firma, 120), name: text(l.name, 120), strasse: text(l.strasse, 120), plz: text(l.plz, 10), ort: text(l.ort, 80) };
     if (!d.liefer.name || !d.liefer.strasse || !d.liefer.ort) throw new Fehler("Bitte Name und vollständige Lieferadresse angeben.");
   }
-  if (!/^\d{5}$/.test(d.liefer ? d.liefer.plz : d.plz))
-    throw new Fehler("Bitte eine gültige deutsche Postleitzahl für die Lieferadresse angeben. Wir liefern nur innerhalb Deutschlands.");
+  d.land = landVon(LAENDER, String(k?.land || "DE")) ? String(k?.land || "DE") : "";
+  if (!d.land) throw new Fehler("In dieses Land liefern wir leider nicht. Schreiben Sie uns gern an sales@ts-systec.de.");
+  const plz = d.liefer ? d.liefer.plz : d.plz;
+  if (d.land === "DE" ? !/^\d{5}$/.test(plz) : !/^[A-Za-z0-9][A-Za-z0-9 -]{2,9}$/.test(plz))
+    throw new Fehler(d.land === "DE" ? "Bitte eine gültige deutsche Postleitzahl für die Lieferadresse angeben." : "Bitte eine gültige Postleitzahl für die Lieferadresse angeben.");
   return d;
 }
 
@@ -64,13 +74,23 @@ async function vorbereiten(env, d, kunde) {
   const k = kundendaten(d.kunde, modus);
   const code = gutscheinCode(d.gutschein);
   const g = code ? await gutscheinLesen(env, code) : null;
-  const r = rechnen(d.positionen, g ? g.prozent : 0);
+  // Unternehmer aus einem anderen EU-Land mit gültiger USt-IdNr.: steuerfreie innergemeinschaftliche Lieferung (Prüfung bei der EU, VIES)
+  const land = landVon(LAENDER, k.land);
+  let ust = null;
+  if (modus === "gewerbe" && land.eu && land.c !== "DE" && k.ustid) {
+    ust = await ustidPruefen(env, k.ustid, land);
+    if (!ust.gueltig) throw new Fehler(ust.fehler || "Die USt-IdNr. ist laut EU-Prüfung (VIES) nicht gültig. Bitte prüfen Sie sie oder bestellen Sie ohne USt-IdNr. mit Umsatzsteuer.");
+  }
+  const r = rechnen(d.positionen, g ? g.prozent : 0, k.land, Boolean(ust?.gueltig));
   // Der Browser zeigt den Betrag vor dem Absenden an; weicht er ab (z. B. Preisänderung), lieber neu bestätigen lassen
   if (d.gesamt_brutto != null && Math.abs(Number(d.gesamt_brutto) - r.brutto) > 0.01)
     throw new Fehler("Die Preise haben sich geändert. Bitte laden Sie den Warenkorb neu und prüfen Sie den Betrag.", 409);
   // Fingerabdruck für PayPal: dieselben Daten beim Start und beim Abschluss
   const abdruck = await paypal.fingerabdruck([modus, mail, k, r.positionen.map((p) => [p.sku, p.menge]), g?.code || "", d.zahlart,
     kunde?.id || "", Boolean(d.konto_anlegen), Boolean(d.bewertungsmail)]);
+  // erst nach dem Fingerabdruck: Prüfnachweis enthält eine Uhrzeit
+  k.steuer = r.steuer;
+  if (ust) k.ustid_pruefung = ust.nachweis;
   return { modus, mail, k, g, r, abdruck };
 }
 
@@ -133,6 +153,13 @@ function ausZeile(z) {
 }
 
 /* ---------- Sofortbezahlen: Kreditkarte oder PayPal ---------- */
+export async function ustidAnfrage(env, d) {
+  const land = landVon(LAENDER, String(d.land || ""));
+  if (!land || !land.eu || land.c === "DE") return { gueltig: false, fehler: "Steuerfrei nur bei Lieferung in ein anderes EU-Land." };
+  const u = await ustidPruefen(env, text(d.ustid, 30), land);
+  return { gueltig: u.gueltig, name: u.nachweis?.name || "", fehler: u.fehler || "" };
+}
+
 export function bezahlenInfo(env) {
   return paypal.aktiv(env) ? { aktiv: true, client_id: env.PAYPAL_CLIENT_ID } : { aktiv: false };
 }

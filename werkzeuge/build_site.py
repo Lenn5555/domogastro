@@ -37,6 +37,48 @@ def _nur_mit_preis(produkte):
 
 
 PRODUKTE = _nur_mit_preis(PRODUKTE)
+LAENDER = json.loads((ROOT / "daten/laender.json").read_text(encoding="utf-8"))
+
+# Auslandsversand (Lenn 2026-11-19): Gewichte gibt es noch nicht, deshalb grob aus den Außenmaßen geschätzt
+# (ca. 120 kg je m³ umbauter Raum, Gastro-Geräte aus Edelstahl). Ohne Maße 5 kg. Sehr lange oder schwere Teile gehen per Spedition.
+_ELEKTRO = re.compile(r"\b\d[\d.,]*\s*(W|kW|Watt)\b|\bV\b|Volt|\bHz\b|Motor|elektr|Stecker|Leuchtmittel|\bLED|Akku|Batterie|Automatisch|Sensor|Thermostat", re.I)
+
+
+def versandangaben(p, breite=None):
+    m = p.get("masse_mm") or {}
+    seiten = [x for x in (breite or m.get("breite"), m.get("tiefe"), m.get("hoehe")) if x]
+    if len(seiten) == 3:
+        kg = max(0.3, round(seiten[0] * seiten[1] * seiten[2] / 1e6 * 0.12, 1))
+    else:
+        kg = 5.0
+    lang = max(seiten) if seiten else 0
+    sp = bool(p.get("spedition")) or kg > 31.5 or lang > 1200
+    text = " ".join(p.get("merkmale") or []) + " " + p["name"] + " " + (p.get("text") or "")
+    return {"g": kg, "sp": sp, "el": bool(_ELEKTRO.search(text))}
+
+
+def laender_tabelle():
+    """Versandpreise je Land für die Seite „Versand und Zahlung“ (netto und für Privatkunden mit MwSt. des Lieferlandes)."""
+    def geld(x):
+        return f"{x:,.2f} €".replace(",", "X").replace(".", ",").replace("X", ".")
+    zeilen = []
+    for l in LAENDER["laender"]:
+        if not l["zone"]:
+            continue
+        z = LAENDER["zonen"][l["zone"]]
+        f = 1 + l["mwst"] / 100 if LAENDER["oss"] else 1.19
+        f = 1 if not l["eu"] else f
+        zeilen.append(f"<tr><td>{e(l['n'])}</td><td>{geld(z['paket'])}<br><span class='klein'>Privat {geld(round(z['paket'] * f, 2))}</span></td>"
+                      f"<td>{geld(z['spedition'])}<br><span class='klein'>Privat {geld(round(z['spedition'] * f, 2))}</span></td></tr>")
+    return ("<div style='overflow-x:auto'><table class='tabelle'><thead><tr><th>Lieferland</th><th>je Paket (bis " + str(LAENDER["paket_kg"]) + " kg)</th><th>Spedition je Bestellung</th></tr></thead><tbody>"
+            + "".join(zeilen) + "</tbody></table></div>")
+
+
+def rechnen_js():
+    """seite/rechnen.js für den Browser aus worker/src/steuer.js (gleiche Rechnung wie auf dem Server)."""
+    q = (ROOT / "worker/src/steuer.js").read_text(encoding="utf-8").replace("export function", "function")
+    namen = re.findall(r"^function (\w+)", q, re.M)
+    (ROOT / "seite/rechnen.js").write_text(f"/* erzeugt von build_site.py aus worker/src/steuer.js, nicht von Hand ändern */\nwindow.DGR = (function () {{\n{q}\nreturn {{ {', '.join(namen)} }};\n}})();\n", encoding="utf-8")
 RECHT = ROOT / "daten/rechtstexte"
 BASIS = os.environ.get("SITE_BASIS", "").rstrip("/")
 API = (os.environ.get("SITE_API") or CFG.get("api", "")).rstrip("/")
@@ -134,7 +176,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
         SEITEN.append(pfad)
     nav = "".join(f'<a href="{u("/" + slug(k) + "/")}"{" aria-current=page" if k == aktiv else ""}>{e(k)}</a>' for k in kategorien())
     nav += f'<a href="{u("/stellfuesse/")}"{" aria-current=page" if aktiv == BF_TITEL else ""}>{e(BF_TITEL)}</a>'
-    dg = {"mwst": CFG["mwst"], "modus": CFG["standard_modus"], "api": API, "mail": CFG["anfrage_email"], "basis": BASIS}
+    dg = {"mwst": CFG["mwst"], "modus": CFG["standard_modus"], "api": API, "mail": CFG["anfrage_email"], "basis": BASIS, "versand": LAENDER}
     return f"""<!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(titel)}</title><meta name="description" content="{e((beschreibung or CFG['claim'])[:160])}">
@@ -142,7 +184,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <meta property="og:title" content="{e(titel)}"><meta property="og:locale" content="de_DE">
 {'' if index and not VORSCHAU else '<meta name="robots" content="noindex">'}
 <link rel="stylesheet" href="{uv('/stil.css')}"><link rel="icon" href="{u('/logo.svg')}">
-<script>window.DG={json.dumps(dg)}</script><script src="{uv('/shop.js')}" defer></script></head>
+<script>window.DG={json.dumps(dg)}</script><script src="{uv('/rechnen.js')}" defer></script><script src="{uv('/shop.js')}" defer></script></head>
 <body>
 {'<div style="background:#F2B84B;color:#0A1628;text-align:center;font:600 14px/1.4 sans-serif;padding:8px 16px">Vorschau – noch kein echter Shop. Bestellungen werden nicht ausgeführt.</div>' if VORSCHAU else ''}
 <div class="top g"><div class="in">
@@ -282,15 +324,18 @@ def warenkorb():
 <form id="bestellung" hidden style="margin-top:28px">
 <p class="klein" id="gast-hinweis">Sie bestellen als Gast. Ein Konto ist nicht nötig. <a href="{u('/konto/')}">Anmelden</a></p>
 <p class="meldung nur-gewerbe" hidden>Sie bestellen als <b>Gewerbekunde</b>. Preise netto zzgl. MwSt.; es gilt kein Widerrufsrecht.</p>
+<label class="lieferland">Lieferland <select name="land" autocomplete="shipping country"><option value="DE">Deutschland</option></select></label>
+<p class="klein" id="land-hinweis" hidden>Versand ins Ausland: feste Paketpreise je Land, große Geräte per Spedition. <a href="{u('/versand/')}">Alle Versandpreise</a></p>
 <div class="adressen">
 <fieldset><legend>Rechnungsadresse</legend>
 <label class="nur-gewerbe" hidden>Firma <input type="text" name="firma" autocomplete="billing organization"></label>
-<label class="nur-gewerbe" hidden>USt-IdNr. (optional) <input type="text" name="ustid"></label>
+<label class="nur-gewerbe" hidden>USt-IdNr. (optional; im EU-Ausland für Lieferung ohne MwSt.) <input type="text" name="ustid" autocomplete="off" spellcheck="false"></label>
+<p class="klein nur-gewerbe" id="ustid-status" role="status" hidden></p>
 <label>Vor- und Nachname <input type="text" name="name" required autocomplete="billing name"></label>
 <label>Straße und Hausnummer <input type="text" name="strasse" required autocomplete="billing street-address"></label>
 <div class="zwei"><label>PLZ <input type="text" name="plz" required pattern="[0-9]{{5}}" autocomplete="billing postal-code" inputmode="numeric"></label><label>Ort <input type="text" name="ort" required autocomplete="billing address-level2"></label></div>
 <label>E-Mail (Pflicht, für die Bestellbestätigung) <input type="email" name="email" required autocomplete="email"></label>
-<label>Telefon (für die Spedition) <input type="tel" name="telefon" autocomplete="tel"></label></fieldset>
+<label>Telefon (für Spedition und Paketdienst) <input type="tel" name="telefon" autocomplete="tel"></label></fieldset>
 <fieldset><legend>Lieferadresse</legend>
 <label class="check"><input type="checkbox" name="gleich" checked> Lieferadresse ist gleich Rechnungsadresse</label>
 <div id="liefer" class="liefer" hidden>
@@ -298,7 +343,7 @@ def warenkorb():
 <label>Vor- und Nachname <input type="text" name="l_name" autocomplete="shipping name"></label>
 <label>Straße und Hausnummer <input type="text" name="l_strasse" autocomplete="shipping street-address"></label>
 <div class="zwei"><label>PLZ <input type="text" name="l_plz" pattern="[0-9]{{5}}" autocomplete="shipping postal-code" inputmode="numeric"></label><label>Ort <input type="text" name="l_ort" autocomplete="shipping address-level2"></label></div></div>
-<p class="klein">Wir liefern nur innerhalb Deutschlands.</p></fieldset></div>
+</fieldset></div>
 <label style="display:block;margin-top:14px">Hinweis zur Bestellung (optional) <textarea name="hinweis" rows="2" maxlength="1000"></textarea></label>
 <div class="gutschein"><label>Gutscheincode (optional) <input type="text" name="gutschein" autocomplete="off" spellcheck="false" style="text-transform:uppercase"></label><button class="btn sec" type="button" id="gutschein-los">Einlösen</button></div>
 <p class="klein" id="gutschein-status" role="status"></p>
@@ -364,7 +409,8 @@ def suche():
 
 def textseite(titel, datei, pfad, beschreibung=""):
     inhalt = (RECHT / datei).read_text(encoding="utf-8") if (RECHT / datei).exists() else "<p class='platzhalter'>Text fehlt – so nicht veröffentlichen.</p>"
-    inhalt = inhalt.replace('href="/', f'href="{BASIS}/')  # Links in Rechtstexten auch unter /domogastro/ (Vorschau)
+    inhalt = inhalt.replace('href="/', f'href="{BASIS}/')
+    inhalt = inhalt.replace("<!--LAENDER-->", laender_tabelle())  # Links in Rechtstexten auch unter /domogastro/ (Vorschau)
     return seite(f"{titel} | Domo Gastro", f'<div class="seite g"><div class="in text"><h1 class="titel">{titel}</h1>{inhalt}</div></div>', pfad, beschreibung)
 
 
@@ -397,6 +443,7 @@ def schreib(pfad, text):
 def main():
     if OUT.exists():
         shutil.rmtree(OUT)
+    rechnen_js()
     shutil.copytree(ROOT / "seite", OUT)
     if CNAME:
         (OUT / "CNAME").write_text(CNAME + "\n", encoding="utf-8")
@@ -433,17 +480,17 @@ def main():
         if p["varianten"]:
             for v in p["varianten"]:
                 artikel[v["sku"]] = {"n": f'{p["name"]}, Breite {v["breite_mm"]} mm', "p": v["preis_netto"], "s": p["slug"], "b": b,
-                                     "l": lieferzeit(v.get("lieferzeit_tage")).replace("Lieferzeit ", ""), "sp": p.get("spedition", False)}
+                                     "l": lieferzeit(v.get("lieferzeit_tage")).replace("Lieferzeit ", ""), **versandangaben(p, v.get("breite_mm"))}
         else:
             artikel[p["sku"]] = {"n": p["name"], "p": p.get("preis_netto"), "s": p["slug"], "b": b,
-                                 "l": lieferzeit(p.get("lieferzeit_tage")).replace("Lieferzeit ", ""), "sp": p.get("spedition", False)}
+                                 "l": lieferzeit(p.get("lieferzeit_tage")).replace("Lieferzeit ", ""), **versandangaben(p)}
         liste.append({"s": p["slug"], "n": p["name"], "k": p["kategorie"], "u": p["unterkategorie"], "h": p["hersteller"], "p": ab_preis(p),
                       "ab": len(set(preise(p))) > 1, "b": b, "skus": [v["sku"] for v in p["varianten"]] or [p["sku"]]})
     (OUT / "produkte-index.json").write_text(json.dumps({"artikel": artikel, "produkte": liste}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
     # Katalog für den Shop-Server: Preise prüft der Server selbst, nie der Browser
     worker = ROOT / "worker/src"
-    katalog = {"artikel": {sku: {"n": a["n"], "p": a["p"], "s": a["s"]} for sku, a in artikel.items()},
+    katalog = {"artikel": {sku: {"n": a["n"], "p": a["p"], "s": a["s"], "g": a["g"], "sp": a["sp"], "el": a["el"]} for sku, a in artikel.items()},
                "produkte": {x["s"]: x["skus"] for x in liste}}
     (worker / "katalog.json").write_text(json.dumps(katalog, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     # Katalog für den KI-Berater: nur öffentliche Angaben (Name, Kategorie, Hersteller, Merkmale, Maße, Netto-Preis)

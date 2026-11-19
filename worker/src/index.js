@@ -4,7 +4,7 @@
 // Bestellung: POST /bestellung (Überweisung), /bestellung/status; Kreditkarte/PayPal: GET /bezahlen, POST /bezahlen/start, /bezahlen/abschluss
 // Widerruf:   POST /widerruf (Widerrufsbutton), Verwaltung: POST /verwaltung/widerruf
 // Bewertung:  GET /bewertungen?produkt=…, POST /bewertungen (danach 5-%-Gutschein per Mail)
-// Gutschein:  POST /gutschein/pruefen
+// Gutschein:  POST /gutschein/pruefen; USt-IdNr.: POST /ustid/pruefen (EU-Abfrage VIES)
 // Zeitplan:   täglich fällige Bitten um Bewertung verschicken (wrangler.toml [triggers])
 // Berater:    GET /beraten (eingerichtet?), POST /beraten (KI-Produktberater mit Claude, Schlüssel ANTHROPIC_API_KEY)
 // Verwaltung: GET /verwaltung, POST /verwaltung/status, /verwaltung/bewertung (Schlüssel VERWALTUNG_SCHLUESSEL)
@@ -52,6 +52,7 @@ async function verteilen(request, env, ctx) {
     case "POST /bezahlen/abschluss": return shop.bezahlenAbschluss(env, ctx, d, await konto.kundeAusAnfrage(env, request));
     case "GET /bewertungen": return shop.bewertungenLesen(env, url.searchParams.get("produkt"), await konto.kundeAusAnfrage(env, request));
     case "POST /gutschein/pruefen": return shop.gutscheinPruefen(env, d);
+    case "POST /ustid/pruefen": return shop.ustidAnfrage(env, d);
     case "POST /bewertungen": return shop.bewerten(env, ctx, await konto.pflichtKunde(env, request), d);
     case "GET /beraten": return { aktiv: Boolean(env.ANTHROPIC_API_KEY) };
     case "POST /beraten": return beratenAnfrage(env, d, request);

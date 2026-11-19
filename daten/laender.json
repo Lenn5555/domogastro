@@ -1,0 +1,242 @@
+{
+  "hinweis": "Auslandsversand (Lenn 2026-11-19): feste Preise je Paket (bis paket_kg geschätztes Gewicht) bzw. Speditionspauschale je Bestellung, netto. Abgeleitet aus den GLS-Preisen von Beinundfuß (Stand 22.10.2026), Stufe 15-20 kg, gerundet. Speditionspauschalen sind Schätzungen. MwSt.-Sätze: Normalsatz, Stand 2026 nach bestem Wissen, vor dem Start prüfen. elektro=false sperrt Elektrogeräte für ein Land. Lenn hat am 2026-11-19 entschieden, alles freizuschalten, obwohl die WEEE-Registrierung in den EU-Zielländern fehlt (Risiko benannt).",
+  "oss": true,
+  "paket_kg": 20,
+  "zonen": {
+    "1": {
+      "paket": 19.9,
+      "spedition": 149
+    },
+    "2": {
+      "paket": 27.9,
+      "spedition": 199
+    },
+    "3": {
+      "paket": 39.9,
+      "spedition": 279
+    },
+    "ch": {
+      "paket": 34.9,
+      "spedition": 249
+    }
+  },
+  "laender": [
+    {
+      "c": "DE",
+      "n": "Deutschland",
+      "eu": true,
+      "mwst": 19,
+      "zone": null,
+      "elektro": true
+    },
+    {
+      "c": "AT",
+      "n": "Österreich",
+      "eu": true,
+      "mwst": 20,
+      "zone": "1",
+      "elektro": true
+    },
+    {
+      "c": "BE",
+      "n": "Belgien",
+      "eu": true,
+      "mwst": 21,
+      "zone": "1",
+      "elektro": true
+    },
+    {
+      "c": "BG",
+      "n": "Bulgarien",
+      "eu": true,
+      "mwst": 20,
+      "zone": "3",
+      "elektro": true
+    },
+    {
+      "c": "DK",
+      "n": "Dänemark",
+      "eu": true,
+      "mwst": 25,
+      "zone": "1",
+      "elektro": true
+    },
+    {
+      "c": "EE",
+      "n": "Estland",
+      "eu": true,
+      "mwst": 24,
+      "zone": "2",
+      "elektro": true
+    },
+    {
+      "c": "FI",
+      "n": "Finnland",
+      "eu": true,
+      "mwst": 25.5,
+      "zone": "3",
+      "elektro": true
+    },
+    {
+      "c": "FR",
+      "n": "Frankreich (Festland)",
+      "eu": true,
+      "mwst": 20,
+      "zone": "2",
+      "elektro": true
+    },
+    {
+      "c": "GR",
+      "n": "Griechenland (Festland)",
+      "eu": true,
+      "mwst": 24,
+      "zone": "3",
+      "elektro": true,
+      "vies": "EL"
+    },
+    {
+      "c": "IE",
+      "n": "Irland",
+      "eu": true,
+      "mwst": 23,
+      "zone": "3",
+      "elektro": true
+    },
+    {
+      "c": "IT",
+      "n": "Italien (Festland)",
+      "eu": true,
+      "mwst": 22,
+      "zone": "2",
+      "elektro": true
+    },
+    {
+      "c": "HR",
+      "n": "Kroatien",
+      "eu": true,
+      "mwst": 25,
+      "zone": "2",
+      "elektro": true
+    },
+    {
+      "c": "LV",
+      "n": "Lettland",
+      "eu": true,
+      "mwst": 21,
+      "zone": "2",
+      "elektro": true
+    },
+    {
+      "c": "LT",
+      "n": "Litauen",
+      "eu": true,
+      "mwst": 21,
+      "zone": "2",
+      "elektro": true
+    },
+    {
+      "c": "LU",
+      "n": "Luxemburg",
+      "eu": true,
+      "mwst": 17,
+      "zone": "1",
+      "elektro": true
+    },
+    {
+      "c": "NL",
+      "n": "Niederlande",
+      "eu": true,
+      "mwst": 21,
+      "zone": "1",
+      "elektro": true
+    },
+    {
+      "c": "PL",
+      "n": "Polen",
+      "eu": true,
+      "mwst": 23,
+      "zone": "1",
+      "elektro": true
+    },
+    {
+      "c": "PT",
+      "n": "Portugal (Festland)",
+      "eu": true,
+      "mwst": 23,
+      "zone": "3",
+      "elektro": true
+    },
+    {
+      "c": "RO",
+      "n": "Rumänien",
+      "eu": true,
+      "mwst": 21,
+      "zone": "2",
+      "elektro": true
+    },
+    {
+      "c": "SE",
+      "n": "Schweden",
+      "eu": true,
+      "mwst": 25,
+      "zone": "3",
+      "elektro": true
+    },
+    {
+      "c": "SK",
+      "n": "Slowakei",
+      "eu": true,
+      "mwst": 23,
+      "zone": "2",
+      "elektro": true
+    },
+    {
+      "c": "SI",
+      "n": "Slowenien",
+      "eu": true,
+      "mwst": 22,
+      "zone": "2",
+      "elektro": true
+    },
+    {
+      "c": "ES",
+      "n": "Spanien (Festland)",
+      "eu": true,
+      "mwst": 21,
+      "zone": "3",
+      "elektro": true
+    },
+    {
+      "c": "CZ",
+      "n": "Tschechien",
+      "eu": true,
+      "mwst": 21,
+      "zone": "1",
+      "elektro": true
+    },
+    {
+      "c": "HU",
+      "n": "Ungarn",
+      "eu": true,
+      "mwst": 27,
+      "zone": "2",
+      "elektro": true
+    },
+    {
+      "c": "CH",
+      "n": "Schweiz",
+      "eu": false,
+      "mwst": 0,
+      "zone": "ch",
+      "elektro": true
+    },
+    {
+      "c": "LI",
+      "n": "Liechtenstein",
+      "eu": false,
+      "mwst": 0,
+      "zone": "ch",
+      "elektro": true
+    }
+  ]
+}

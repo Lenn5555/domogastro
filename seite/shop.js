@@ -14,13 +14,22 @@
   function schreib(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function eur(v) { return v.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €"; }
-  function brutto(n) { return Math.round(n * (1 + MWST) * 100) / 100; }
+  // Lieferland (Auslandsversand, Lenn 2026-11-19): Privatpreise zeigen die MwSt. des Lieferlandes (OSS) bzw. 0 % bei Ausfuhr
+  var VERSAND = DG.versand || { laender: [{ c: "DE", n: "Deutschland", eu: true, mwst: 19, zone: null, elektro: true }], zonen: {}, paket_kg: 20, oss: true };
+  var landCode = lies("dg-land", "DE");
+  if (!window.DGR || !DGR.landVon(VERSAND, landCode)) landCode = "DE";
+  function satz() { return window.DGR ? DGR.steuerArt(VERSAND, DGR.landVon(VERSAND, landCode), false).satz : 19; }
+  function satzText() { return String(satz()).replace(".", ","); }
+  function brutto(n) { return Math.round(n * (1 + satz() / 100) * 100) / 100; }
 
   /* ---------- Privat / Gewerbe ---------- */
   var modus = lies("dg-modus", DG.modus || "privat");
   function istGewerbe() { return modus === "gewerbe"; }
   function preisText(netto) { return eur(istGewerbe() ? netto : brutto(netto)); }
-  function steuerText() { return istGewerbe() ? "zzgl. 19 % MwSt." : "inkl. 19 % MwSt."; }
+  function steuerText() {
+    if (satz() === 0) return istGewerbe() ? "netto, steuerfreie Ausfuhr" : "ohne MwSt. (Ausfuhr), zzgl. Einfuhrabgaben";
+    return (istGewerbe() ? "zzgl. " : "inkl. ") + satzText() + " % MwSt.";
+  }
   // Nur Anzeige aktualisieren, ohne Ereignis (Seiten rufen das in ihrem eigenen Neuzeichnen auf)
   function preiseSetzen() {
     $$(".pr[data-netto]").forEach(function (e) {
@@ -28,14 +37,13 @@
       if (isNaN(n)) return;
       e.textContent = (e.dataset.ab ? "ab " : "") + preisText(n);
     });
-    $$(".steuer").forEach(function (e) { e.textContent = steuerText() + (e.dataset.zusatz || ""); });
+    $$(".steuer").forEach(function (e) { e.textContent = steuerText() + (landCode === "DE" ? (e.dataset.zusatz || "") : ", zzgl. Versand"); });
     $$(".seg button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.modus === modus)); });
     $$(".nur-gewerbe").forEach(function (e) { e.hidden = !istGewerbe(); });
     $$(".nur-privat").forEach(function (e) { e.hidden = istGewerbe(); });
     var f = $(".fuss .steuerhinweis");
-    if (f) f.textContent = istGewerbe()
-      ? "Preisanzeige für Gewerbekunden: alle Preise netto zzgl. 19 % MwSt. Versandkostenfrei innerhalb Deutschlands."
-      : "Alle Preise inkl. 19 % MwSt. Versandkostenfrei innerhalb Deutschlands.";
+    var ausland = landCode !== "DE" ? " Preise für Lieferung nach " + DGR.landVon(VERSAND, landCode).n + ", Versandkosten siehe Warenkorb." : " Versandkostenfrei innerhalb Deutschlands.";
+    if (f) f.textContent = (istGewerbe() ? "Preisanzeige für Gewerbekunden: alle Preise netto " + steuerText() + "." : "Alle Preise " + steuerText() + ".") + ausland;
   }
   function preiseZeigen() { preiseSetzen(); document.dispatchEvent(new CustomEvent("dg:modus")); }
 
@@ -209,14 +217,13 @@
 
   /* ---------- Warenkorb und Kasse ---------- */
   var gutschein = null;  // { code, prozent } nach erfolgreicher Prüfung
+  var ustidOk = false;   // Unternehmer mit von der EU bestätigter USt-IdNr. (steuerfreie innergemeinschaftliche Lieferung)
   function r2(x) { return Math.round(x * 100) / 100; }
   function rechnen(ix) {
     var pos = korb().map(function (p) { var a = ix.artikel[p.sku]; return a && a.p ? { sku: p.sku, menge: p.menge, a: a } : null; }).filter(Boolean);
-    var warenwert = r2(pos.reduce(function (s, p) { return s + p.a.p * p.menge; }, 0));
-    var rabatt = gutschein ? r2(warenwert * gutschein.prozent / 100) : 0;
-    var netto = r2(warenwert - rabatt);
-    var mwst = r2(netto * MWST);
-    return { pos: pos, warenwert: warenwert, rabatt: rabatt, netto: netto, mwst: mwst, brutto: r2(netto + mwst) };
+    var g = DGR.gesamtRechnen(VERSAND, landCode, pos, gutschein ? gutschein.prozent : 0, istGewerbe() && ustidOk);
+    g.pos = pos;
+    return g;
   }
   function kasse() {
     var ziel = $("#korb-liste"); if (!ziel) return;
@@ -235,13 +242,22 @@
             '<div><span class="pr" data-netto="' + (p.a.p * p.menge).toFixed(2) + '"></span></div></div>';
         }).join("");
         var g = istGewerbe();
-        var faktor = g ? 1 : 1 + MWST;
-        sum.innerHTML = "<div><span>Warenwert " + (g ? "netto" : "inkl. MwSt.") + "</span><b>" + eur(r2(r.warenwert * faktor)) + "</b></div>" +
-          (gutschein ? "<div><span>Gutschein " + esc(gutschein.code) + " (" + gutschein.prozent + " %)</span><b>−" + eur(r2(r.warenwert * faktor) - (g ? r.netto : r.brutto)) + "</b></div>" : "") +
-          "<div><span>Versand (Deutschland)</span><b>kostenlos</b></div>" +
-          (g ? "<div><span>zzgl. 19 % MwSt.</span><b>" + eur(r.mwst) + "</b></div>" : "<div><span>darin 19 % MwSt.</span><b>" + eur(r.mwst) + "</b></div>") +
+        var faktor = g ? 1 : 1 + r.satz / 100;
+        var st = String(r.satz).replace(".", ",");
+        var de = r.land.c === "DE";
+        var versandText = de ? "Versand (Deutschland)" : "Versand nach " + esc(r.land.n) + (r.spedition ? " (Spedition)" : r.pakete > 1 ? " (" + r.pakete + " Pakete)" : "");
+        var hinweis = { IG: "Steuerfreie innergemeinschaftliche Lieferung: Ihre USt-IdNr. wurde bei der EU bestätigt.",
+          AUSFUHR: "Steuerfreie Ausfuhr. Einfuhrumsatzsteuer, Zoll und Gebühren in " + esc(r.land.n) + " zahlen Sie bei der Zustellung.",
+          OSS: "Mit der Umsatzsteuer des Lieferlandes (" + st + " %)." }[r.art] || "";
+        sum.innerHTML = "<div><span>Warenwert " + (g || r.satz === 0 ? "netto" : "inkl. MwSt.") + "</span><b>" + eur(r2(r.warenwert * faktor)) + "</b></div>" +
+          (gutschein ? "<div><span>Gutschein " + esc(gutschein.code) + " (" + gutschein.prozent + " %)</span><b>−" + eur(r2(r.rabatt * faktor)) + "</b></div>" : "") +
+          "<div><span>" + versandText + "</span><b>" + (r.versand ? eur(r2(r.versand * faktor)) : "kostenlos") + "</b></div>" +
+          (r.satz === 0 ? "<div><span>Umsatzsteuer</span><b>0,00 €</b></div>" :
+            g ? "<div><span>zzgl. " + st + " % MwSt.</span><b>" + eur(r.mwst) + "</b></div>" : "<div><span>darin " + st + " % MwSt.</span><b>" + eur(r.mwst) + "</b></div>") +
           '<div class="gesamt"><span>Gesamtbetrag</span><span>' + eur(r.brutto) + "</span></div>" +
-          '<p class="klein">Lieferung nur innerhalb Deutschlands. Speditionsware wird bis Bordsteinkante geliefert.</p>';
+          (hinweis ? '<p class="klein">' + hinweis + "</p>" : "") +
+          (r.gesperrt.length ? '<p class="meldung fehler">' + esc(r.gesperrt[0].a.n) + " können wir nach " + esc(r.land.n) + " noch nicht liefern.</p>" : "") +
+          '<p class="klein">' + (de ? "Speditionsware wird bis Bordsteinkante geliefert." : "Paketpreis je Paket bis " + VERSAND.paket_kg + " kg; große Geräte gehen per Spedition (Pauschale je Bestellung). <a href=\"" + B + "/versand/\">Alle Versandpreise</a>") + "</p>";
         preiseSetzen();
         if (info) zahlungZeigen();
       }
@@ -271,7 +287,7 @@
         var f = new FormData(form), r = rechnen(ix);
         return {
           modus: modus, positionen: r.pos.map(function (p) { return { sku: p.sku, menge: p.menge }; }),
-          kunde: { name: f.get("name"), firma: f.get("firma") || "", ustid: f.get("ustid") || "", strasse: f.get("strasse"), plz: f.get("plz"), ort: f.get("ort"),
+          kunde: { land: landCode, name: f.get("name"), firma: f.get("firma") || "", ustid: f.get("ustid") || "", strasse: f.get("strasse"), plz: f.get("plz"), ort: f.get("ort"),
                    email: f.get("email"), telefon: f.get("telefon") || "", hinweis: f.get("hinweis") || "",
                    liefer: f.get("gleich") ? null : { firma: f.get("l_firma") || "", name: f.get("l_name"), strasse: f.get("l_strasse"), plz: f.get("l_plz"), ort: f.get("l_ort") } },
           zahlart: f.get("zahlart"), agb: !!f.get("agb"), gesamt_brutto: r.brutto, gutschein: gutschein ? gutschein.code : "",
@@ -311,7 +327,7 @@
         var knopf = $("button[type=submit]", form), box = $("#sofort"), feld = $("#paypal-knoepfe");
         knopf.hidden = sofort; box.hidden = !sofort;
         if (!sofort) return;
-        $(".sofort-summe", box).innerHTML = "Jetzt zu zahlen: <b>" + eur(rechnen(ix).brutto) + "</b> inkl. MwSt., Versand kostenlos.<br>Mit der Zahlung ist Ihre Bestellung verbindlich.";
+        $(".sofort-summe", box).innerHTML = "Jetzt zu zahlen: <b>" + eur(rechnen(ix).brutto) + "</b>" + (rechnen(ix).satz ? " inkl. MwSt." : "") + (rechnen(ix).versand ? " inkl. Versand." : ", Versand kostenlos.") + "<br>Mit der Zahlung ist Ihre Bestellung verbindlich.";
         var neu = art === "Kreditkarte" ? "card" : "paypal";
         if (quelle === neu) return;
         quelle = neu; feld.textContent = "PayPal wird geladen …";
@@ -378,15 +394,43 @@
         }).catch(function (err) { gutschein = null; gs.className = "klein fehler"; gs.textContent = err.message; zeichnen(); });
       });
       form.elements.gutschein.addEventListener("input", function () { if (gutschein) { gutschein = null; gs.textContent = ""; zeichnen(); } });
-      // Lieferadresse: nur wenn „gleich wie Rechnungsadresse“ abgewählt ist; dann darf die Rechnungsadresse auch im Ausland liegen
+      // Lieferland: bestimmt Versand, Steuer und PLZ-Format; gemerkt für die Preisanzeige auf allen Seiten
+      var landWahl = form.elements.land;
+      landWahl.innerHTML = VERSAND.laender.map(function (l) { return '<option value="' + l.c + '"' + (l.c === landCode ? " selected" : "") + ">" + esc(l.n) + "</option>"; }).join("");
       var gl = form.elements.gleich;
+      function plzMuster() { return landCode === "DE" ? "[0-9]{5}" : "[A-Za-z0-9][A-Za-z0-9 \\-]{2,9}"; }
       function lieferUmschalten() {
         var eigen = !gl.checked;
         $("#liefer").hidden = !eigen;
         ["l_name", "l_strasse", "l_plz", "l_ort"].forEach(function (n) { form.elements[n].required = eigen; });
-        if (eigen) form.elements.plz.removeAttribute("pattern"); else form.elements.plz.setAttribute("pattern", "[0-9]{5}");
+        form.elements.l_plz.setAttribute("pattern", plzMuster());
+        if (eigen) form.elements.plz.removeAttribute("pattern"); else form.elements.plz.setAttribute("pattern", plzMuster());
+        form.elements.plz.inputMode = form.elements.l_plz.inputMode = landCode === "DE" ? "numeric" : "text";
       }
-      gl.addEventListener("change", lieferUmschalten); lieferUmschalten();
+      gl.addEventListener("change", lieferUmschalten);
+      // USt-IdNr. (Gewerbe, EU-Ausland): bei der EU prüfen, dann ohne MwSt. rechnen
+      var us = $("#ustid-status");
+      function ustidPruefen() {
+        var l = DGR.landVon(VERSAND, landCode), wert = form.elements.ustid.value.trim();
+        ustidOk = false; us.textContent = "";
+        if (!istGewerbe() || !wert || !l.eu || l.c === "DE" || !DG.api) { zeichnen(); return; }
+        us.className = "klein"; us.textContent = "USt-IdNr. wird bei der EU geprüft …";
+        api("/ustid/pruefen", { ustid: wert, land: l.c }).then(function (d) {
+          ustidOk = !!d.gueltig;
+          us.className = "klein " + (d.gueltig ? "ok" : "fehler");
+          us.textContent = d.gueltig ? "USt-IdNr. bestätigt" + (d.name && d.name !== "---" ? " (" + d.name + ")" : "") + ": Lieferung ohne MwSt. (innergemeinschaftlich)." : d.fehler;
+          zeichnen();
+        }).catch(function (err) { us.className = "klein fehler"; us.textContent = err.message; zeichnen(); });
+      }
+      form.elements.ustid.addEventListener("change", ustidPruefen);
+      landWahl.addEventListener("change", function () {
+        landCode = landWahl.value; schreib("dg-land", landCode);
+        $("#land-hinweis").hidden = landCode === "DE";
+        lieferUmschalten(); preiseSetzen(); ustidPruefen();
+      });
+      document.addEventListener("dg:modus", function () { if (form.elements.ustid.value) ustidPruefen(); });
+      $("#land-hinweis").hidden = landCode === "DE";
+      lieferUmschalten();
       var ka = form.elements.konto_anlegen;
       // Bitte um Bewertung nur mit Konto anbieten
       function bewMail() { $("#bew-mail").hidden = !(s || (ka && ka.checked)); if ($("#bew-mail").hidden) form.elements.bewertungsmail.checked = false; }

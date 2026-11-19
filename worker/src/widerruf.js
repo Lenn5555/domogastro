@@ -27,7 +27,8 @@ function schonWiderrufen(liste) {
 // Anteiliger Bruttobetrag; sind danach alle Artikel widerrufen, der Rest bis zum Gesamtbetrag (keine Rundungscents übrig)
 export function vorschlagRechnen(b, pos, vorher) {
   const prozent = b.kunde?.gutschein?.prozent || 0;
-  const anteil = (liste) => runden(liste.reduce((s, p) => s + (b.positionen.find((x) => x.sku === p.sku)?.netto || 0) * p.menge, 0) * (1 - prozent / 100) * 1.19);
+  const satz = b.kunde?.steuer ? b.kunde.steuer.satz : 19;
+  const anteil = (liste) => runden(liste.reduce((s, p) => s + (b.positionen.find((x) => x.sku === p.sku)?.netto || 0) * p.menge, 0) * (1 - prozent / 100) * (1 + satz / 100));
   const danach = schonWiderrufen([...vorher, { positionen: pos }]);
   const alles = b.positionen.every((p) => (danach[p.sku] || 0) >= p.menge);
   return alles ? runden(b.brutto - vorher.reduce((s, w) => s + w.vorschlag, 0)) : anteil(pos);
