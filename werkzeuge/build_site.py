@@ -224,7 +224,7 @@ def startseite(nach_kat):
 <h1>Alles für Profis mit <em>Geschmack.</em></h1>
 <p class="lead">Profigeräte für Restaurant, Hotel, Café, Imbiss und die Küche zu Hause. Versandkostenfrei in ganz Deutschland, mit Preisen für Privat und Gewerbe.</p>
 <div class="ctas"><a class="btn pri" href="{u('/' + slug(kategorien()[0]) + '/')}">Jetzt entdecken →</a><a class="btn sec" href="#bereiche">Sortiment ansehen</a></div></div>
-<div class="domo"><div class="domo-figur"><img src="{u('/bilder/domo-koch.webp')}" alt="Domo, das Erdmännchen von Domo Gastro, als Koch" width="523" height="1100" fetchpriority="high"><canvas width="523" height="1100" aria-hidden="true"></canvas><div class="domo-blase" aria-live="polite"></div></div></div>
+<div class="domo"><div class="domo-figur"><img src="{u('/bilder/domo-koch.webp')}" alt="Domo, das Erdmännchen von Domo Gastro, als Koch" width="523" height="1100" fetchpriority="high"><canvas width="523" height="1100" aria-hidden="true"></canvas></div></div>
 <script src="{u('/domo.js')}" defer></script>
 </div></div>
 <div class="leiste g"><div class="in"><span>Für Restaurants</span><span>Für Hotels</span><span>Für Cafés</span><span>Für Imbisse</span><span>Für Catering</span><span>Für Zuhause</span></div></div>

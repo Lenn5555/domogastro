@@ -4,7 +4,7 @@
   "use strict";
   var figur = document.querySelector(".domo-figur");
   if (!figur) return;
-  var bild = figur.querySelector("img"), leinwand = figur.querySelector("canvas"), blase = figur.querySelector(".domo-blase");
+  var bild = figur.querySelector("img"), leinwand = figur.querySelector("canvas");
   var hero = figur.closest(".hero") || document.body;
   var W = 523, H = 1100;
   var ruhig = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -18,16 +18,16 @@
 
   // Stellen zum Anklicken (Bildkoordinaten), von oben nach unten geprüft
   var STELLEN = [
-    { name: "nase", x0: 270, x1: 335, y0: 200, y1: 255, text: "Hatschi!", art: "nies" },
-    { name: "augen", x0: 180, x1: 345, y0: 160, y1: 240, text: "Hey, nicht in die Augen!", art: "zuck" },
-    { name: "muetze", x0: 40, x1: 345, y0: 0, y1: 170, text: "Finger weg von meiner Mütze!", art: "kipp" },
-    { name: "gesicht", x0: 100, x1: 400, y0: 150, y1: 330, text: "Hihi!", art: "wackel" },
-    { name: "hand", x0: 140, x1: 250, y0: 600, y1: 700, text: "High five!", art: "hops" },
-    { name: "hand", x0: 400, x1: 480, y0: 600, y1: 690, text: "High five!", art: "hops" },
-    { name: "bauch", x0: 140, x1: 470, y0: 330, y1: 900, text: "Hihi, das kitzelt!", art: "kitzel" },
-    { name: "schwanz", x0: 0, x1: 170, y0: 880, y1: 1100, text: "Mein Schwanz!", art: "hops" },
-    { name: "fuss", x0: 150, x1: 470, y0: 980, y1: 1100, text: "Autsch, mein Fuß!", art: "hops" },
-    { name: "rest", x0: 0, x1: W, y0: 0, y1: H, text: "Hallo! Ich bin Domo.", art: "wackel" },
+    { name: "nase", x0: 270, x1: 335, y0: 200, y1: 255, art: "nies" },
+    { name: "augen", x0: 180, x1: 345, y0: 160, y1: 240, art: "zuck" },
+    { name: "muetze", x0: 40, x1: 345, y0: 0, y1: 170, art: "kipp" },
+    { name: "gesicht", x0: 100, x1: 400, y0: 150, y1: 330, art: "wackel" },
+    { name: "hand", x0: 140, x1: 250, y0: 600, y1: 700, art: "hops" },
+    { name: "hand", x0: 400, x1: 480, y0: 600, y1: 690, art: "hops" },
+    { name: "bauch", x0: 140, x1: 470, y0: 330, y1: 900, art: "kitzel" },
+    { name: "schwanz", x0: 0, x1: 170, y0: 880, y1: 1100, art: "hops" },
+    { name: "fuss", x0: 150, x1: 470, y0: 980, y1: 1100, art: "hops" },
+    { name: "rest", x0: 0, x1: W, y0: 0, y1: H, art: "wackel" },
   ];
 
   // Bild einmal in eine unsichtbare Leinwand kopieren: für die Iris-Ausschnitte und um zu prüfen, ob ein Klick Domo trifft
@@ -85,11 +85,6 @@
   }
   requestAnimationFrame(schleife);
 
-  var blasenZeit;
-  function sagen(text) {
-    blase.textContent = text; blase.classList.add("an");
-    clearTimeout(blasenZeit); blasenZeit = setTimeout(function () { blase.classList.remove("an"); }, 1800);
-  }
   function reagieren(art) {
     if (ruhig) return;
     bild.classList.remove("nies", "zuck", "kipp", "wackel", "hops", "kitzel");
@@ -107,9 +102,9 @@
     var p = zuBild(e.clientX, e.clientY);
     if (trifftDomo(p)) {
       var s = STELLEN.find(function (s) { return p.x >= s.x0 && p.x < s.x1 && p.y >= s.y0 && p.y < s.y1; });
-      sagen(s.text); reagieren(s.art);
+      reagieren(s.art);
     } else if (!ruhig) {
-      maus = e.clientX; sagen("Ich krieg dich!"); jagd = { bis: performance.now() + 3500 };
+      maus = e.clientX; jagd = { bis: performance.now() + 3500 };
     }
   });
   figur.style.cursor = "pointer";
