@@ -76,6 +76,80 @@ def laender_tabelle():
             + "".join(zeilen) + "</tbody></table></div>")
 
 
+
+def shopping_feed():
+    """Produktdaten für Google Merchant Center (Google Shopping), Lenn 2026-11-20: site/google-shopping.xml.
+    Preise brutto inkl. 19 % (Deutschland), während einer Preisaktion zusätzlich sale_price mit Zeitraum.
+    Varianten (Haubenbreiten) als eigene Artikel mit item_group_id; der Link wählt die Variante vor (?v=SKU)."""
+    from datetime import datetime, timedelta, timezone
+    from xml.sax.saxutils import escape as x
+    mwst = CFG["mwst"]
+    bis = AKTION.get("bis")
+    aktion = AKTION.get("prozent") and bis and datetime.fromisoformat(bis.replace("Z", "+00:00")) > datetime.now(timezone.utc)
+
+    def r2(v):
+        return float(f"{v + 1e-9:.2f}")
+
+    def brutto(n):
+        return f"{r2(n * (1 + mwst)):.2f} EUR"
+
+    def textfeld(t):
+        return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", t or "")).strip()[:4900]
+
+    def marke(h):
+        return "T&S Systemtechnik" if h.startswith("T&S") else h
+
+    def eintrag(p, sku, name, netto, bestand, lz, bilder, gtin, gruppe=None):
+        if not netto or not bilder:
+            return ""
+        link = f"{SITE_URL}/produkt/{p['slug']}/" + (f"?v={sku}" if gruppe else "")
+        if bestand:
+            verf = "<g:availability>in_stock</g:availability>"
+        else:
+            tage = max(lz) if isinstance(lz, list) and lz else 14
+            ab = (date.today() + timedelta(days=int(tage))).isoformat()
+            verf = f"<g:availability>backorder</g:availability><g:availability_date>{ab}T12:00:00+01:00</g:availability_date>"
+        t = [f"<g:id>{x(sku)}</g:id>", f"<title>{x(name[:150])}</title>",
+             f"<description>{x(textfeld(p.get('text')) or name)}</description>",
+             f"<link>{x(link)}</link>", f"<g:image_link>{x(bilder[0])}</g:image_link>",
+             *[f"<g:additional_image_link>{x(b)}</g:additional_image_link>" for b in bilder[1:10]],
+             verf, f"<g:price>{brutto(netto)}</g:price>", "<g:condition>new</g:condition>",
+             f"<g:brand>{x(marke(p['hersteller']))}</g:brand>",
+             f"<g:product_type>{x(p['kategorie'] + ' > ' + p['unterkategorie'])}</g:product_type>"]
+        if aktion:
+            neu = r2(netto * (100 - AKTION["prozent"]) / 100)
+            t += [f"<g:sale_price>{brutto(neu)}</g:sale_price>",
+                  f"<g:sale_price_effective_date>{AKTION['von']}/{AKTION['bis']}</g:sale_price_effective_date>"]
+        if gtin and str(gtin) not in ("None", ""):
+            t.append(f"<g:gtin>{x(str(gtin))}</g:gtin>")
+        else:
+            t.append("<g:identifier_exists>no</g:identifier_exists>")
+        if gruppe:
+            t.append(f"<g:item_group_id>{x(gruppe)}</g:item_group_id>")
+        if p.get("spedition"):
+            t.append("<g:shipping_label>spedition</g:shipping_label>")
+        return "<item>" + "".join(t) + "</item>"
+
+    items = []
+    for p in PRODUKTE:
+        if p["varianten"]:
+            for v in p["varianten"]:
+                items.append(eintrag(p, v["sku"], f'{p["name"]}, Breite {v["breite_mm"]} mm', v.get("preis_netto"), v.get("bestand"),
+                                     v.get("lieferzeit_tage"), v.get("bilder") or p["bilder"], None, gruppe=p["sku"]))
+        else:
+            items.append(eintrag(p, p["sku"], p["name"], p.get("preis_netto"), p.get("bestand"), p.get("lieferzeit_tage"), p["bilder"], p.get("gtin")))
+    gesehen, eindeutig = set(), []  # manche Artikelnummern stehen in zwei Produkten: nur einmal melden
+    for i in items:
+        k = re.search(r"<g:id>(.*?)</g:id>", i)
+        if k and k.group(1) not in gesehen:
+            gesehen.add(k.group(1)); eindeutig.append(i)
+    items = eindeutig
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel>'
+           f'<title>{x(CFG["name"])}</title><link>{SITE_URL}/</link><description>{x(CFG["claim"])}</description>\n'
+           + "\n".join(items) + "\n</channel></rss>\n")
+    (OUT / "google-shopping.xml").write_text(xml, encoding="utf-8")
+    return len(items)
+
 def rechnen_js():
     """seite/rechnen.js für den Browser aus worker/src/steuer.js (gleiche Rechnung wie auf dem Server)."""
     q = (ROOT / "worker/src/steuer.js").read_text(encoding="utf-8").replace("export function", "function")
@@ -527,6 +601,7 @@ def main():
     }), encoding="utf-8")
 
     heute = date.today().isoformat()
+    print(f"google-shopping.xml: {shopping_feed()} Artikel")
     (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
         "".join(f"<url><loc>{SITE_URL}{p}</loc><lastmod>{heute}</lastmod></url>\n" for p in SEITEN) + "</urlset>\n", encoding="utf-8")
     if VORSCHAU:

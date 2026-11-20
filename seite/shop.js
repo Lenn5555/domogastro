@@ -226,7 +226,12 @@
       $(".kaufen", art).dataset.sku = o.value;
       preiseSetzen();
     }
-    if (wahl) { wahl.addEventListener("change", zeigen); zeigen(); }
+    if (wahl) {
+      // Link aus Google Shopping: ?v=SKU wählt die Variante vor
+      var vor = new URLSearchParams(location.search).get("v");
+      if (vor) for (var i = 0; i < wahl.options.length; i++) if (wahl.options[i].value === vor) wahl.selectedIndex = i;
+      wahl.addEventListener("change", zeigen); zeigen();
+    }
     $$(".daumen button", art).forEach(function (b) {
       b.addEventListener("click", function () {
         $(".gross img", art).src = b.dataset.bild;
