@@ -1,19 +1,19 @@
 {
-  "hinweis": "Auslandsversand (Lenn 2026-11-19): fester Preis je Bestellung und Zone, netto, unabhängig von Gewicht und Menge (Lenn 2026-11-20; paket_kg wird nicht mehr genutzt). Abgeleitet aus den GLS-Preisen von Beinundfuß (Stand 22.10.2026), Stufe 15-20 kg; am 2026-11-19 auf Lenns Wunsch halbiert und Speditionspauschale gestrichen. Höhere tatsächliche Kosten (große Mengen, schwere Geräte) fordern wir vor dem Versand gesondert an, Kunde kann stornieren. MwSt.-Sätze: Normalsatz, Stand 2026 nach bestem Wissen, vor dem Start prüfen. elektro=false sperrt Elektrogeräte für ein Land. Lenn hat am 2026-11-19 entschieden, alles freizuschalten, obwohl die WEEE-Registrierung in den EU-Zielländern fehlt (Risiko benannt). oss=false (Lenn 2026-11-19): EU-Privatumsatz ins Ausland deutlich unter 10.000 €/Jahr, daher deutsche 19 %. Bei Überschreiten der Schwelle sofort auf true stellen und OSS beim BZSt registrieren.",
+  "hinweis": "Auslandsversand (Lenn 2026-11-19): fester Preis je Bestellung und Zone, netto, unabhängig von Gewicht und Menge (Lenn 2026-11-20, danach verdoppelt auf 19,90/27,90/39,90/34,90; paket_kg wird nicht mehr genutzt). Abgeleitet aus den GLS-Preisen von Beinundfuß (Stand 22.10.2026), Stufe 15-20 kg; am 2026-11-19 auf Lenns Wunsch halbiert und Speditionspauschale gestrichen. Höhere tatsächliche Kosten (große Mengen, schwere Geräte) fordern wir vor dem Versand gesondert an, Kunde kann stornieren. MwSt.-Sätze: Normalsatz, Stand 2026 nach bestem Wissen, vor dem Start prüfen. elektro=false sperrt Elektrogeräte für ein Land. Lenn hat am 2026-11-19 entschieden, alles freizuschalten, obwohl die WEEE-Registrierung in den EU-Zielländern fehlt (Risiko benannt). oss=false (Lenn 2026-11-19): EU-Privatumsatz ins Ausland deutlich unter 10.000 €/Jahr, daher deutsche 19 %. Bei Überschreiten der Schwelle sofort auf true stellen und OSS beim BZSt registrieren.",
   "oss": false,
   "paket_kg": 20,
   "zonen": {
     "1": {
-      "paket": 9.95
+      "paket": 19.9
     },
     "2": {
-      "paket": 13.95
+      "paket": 27.9
     },
     "3": {
-      "paket": 19.95
+      "paket": 39.9
     },
     "ch": {
-      "paket": 17.45
+      "paket": 34.9
     }
   },
   "laender": [
