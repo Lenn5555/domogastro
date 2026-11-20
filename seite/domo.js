@@ -178,21 +178,14 @@
     var b = bild.getBoundingClientRect();
     return clientX > b.left + b.width * 0.15 && clientX < b.right - b.width * 0.15 && clientY > b.top && clientY < b.bottom;
   }
-  var klickWarten = null;
   hero.addEventListener("click", function (e) {
     if (e.target.closest("a, button, input, label")) return;
     if (ruhig || zustand !== "ruhe") return;
     if (trifftDomo(e.clientX, e.clientY)) {
-      if (C.ruhe && C.ruhe.v.paused) abspielen(C.ruhe);  // falls der Browser erst nach einem Klick abspielt
-      // Einfacher Klick: winken. Doppelklick: Domo feiert (Fenster mit Ton). Deshalb kurz auf einen zweiten Klick warten.
-      if (klickWarten) { clearTimeout(klickWarten); klickWarten = null; if (window.domoFeiert) window.domoFeiert(true); return; }
-      klickWarten = setTimeout(function () {
-        klickWarten = null;
-        if (zustand === "ruhe" && C.winken && aktiv !== C.winken && bereit(C.winken)) {
-          clearTimeout(zurueck); zustand = "winken";
-          abspielen(C.winken, true); wechseln(C.winken);
-        }
-      }, 280);
+      if (C.winken && aktiv !== C.winken && bereit(C.winken)) {
+        clearTimeout(zurueck); zustand = "winken";
+        abspielen(C.winken, true); wechseln(C.winken);
+      } else if (C.ruhe && C.ruhe.v.paused) abspielen(C.ruhe);  // falls der Browser erst nach einem Klick abspielt
     } else {
       maus = e.clientX; losrennen(false);
     }

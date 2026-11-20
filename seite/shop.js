@@ -519,32 +519,6 @@
       widerrufHtml(b) +
       (b.status !== "storniert" ? '<p class="klein"><a href="' + B + "/widerrufen/?nr=" + encodeURIComponent(b.nr) + (email ? "&email=" + encodeURIComponent(email) : "") + '">Vertrag widerrufen</a></p>' : "") + "</div>";
   }
-  // Domo feiert (Lenn 2026-11-20): Clip mit Küchen-Hintergrund, deshalb als kleines Video-Fenster.
-  // Doppelklick auf Domo (mit Ton, weil durch einen Klick ausgelöst) und einmal nach einer neuen Bestellung (stumm, Ton per Knopf).
-  function domoFeiert(mitTon) {
-    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if ($(".domo-party")) return;
-    var box = document.createElement("div");
-    box.className = "domo-party"; box.setAttribute("role", "dialog"); box.setAttribute("aria-label", "Domo feiert");
-    box.innerHTML = '<div class="fenster"><video playsinline preload="auto" poster="' + B + '/bilder/domo-party.jpg" src="' + B + '/bilder/domo-party.mp4"></video>' +
-      '<button type="button" class="zu" aria-label="Schließen">×</button><button type="button" class="ton"></button></div>';
-    document.body.appendChild(box);
-    var v = $("video", box), ton = $(".ton", box);
-    function tonText() { ton.textContent = v.muted ? "🔇 Ton an" : "🔊 Ton aus"; }
-    function zu() { document.removeEventListener("keydown", taste); box.classList.remove("an"); setTimeout(function () { box.remove(); }, 250); }
-    function taste(e) { if (e.key === "Escape") zu(); }
-    v.muted = !mitTon; tonText();
-    ton.addEventListener("click", function () { v.muted = !v.muted; tonText(); if (v.paused) v.play(); });
-    $(".zu", box).addEventListener("click", zu);
-    box.addEventListener("click", function (e) { if (e.target === box) zu(); });
-    document.addEventListener("keydown", taste);
-    v.addEventListener("ended", function () { setTimeout(zu, 800); });
-    requestAnimationFrame(function () { box.classList.add("an"); });
-    var p = v.play();
-    if (p && p.catch) p.catch(function () { v.muted = true; tonText(); v.play().catch(function () {}); });
-  }
-  window.domoFeiert = domoFeiert;
-
   function bestellseite() {
     var ziel = $("#bestell-ergebnis"); if (!ziel) return;
     var form = $("#bestell-suche"), q = new URLSearchParams(location.search);
@@ -553,11 +527,6 @@
       api("/bestellung/status", { nr: nr, email: email }).then(function (b) {
         ziel.innerHTML = (q.get("neu") ? '<p class="meldung ok">Vielen Dank! Ihre Bestellung ist eingegangen. Eine Bestätigung kommt per E-Mail.' +
           (b.zahlart === "Vorkasse" ? " Die Bankverbindung kommt in einer eigenen E-Mail; Verwendungszweck ist Ihre Bestellnummer." : " Ihre Zahlung ist eingegangen, wir versenden jetzt.") + "</p>" : "") + bestellHtml(b, email);
-        // Nach einer neuen Bestellung feiert Domo einmal (nicht bei jedem Neuladen)
-        if (q.get("neu")) {
-          var schon = false; try { schon = sessionStorage.getItem("dg-gefeiert-" + b.nr); sessionStorage.setItem("dg-gefeiert-" + b.nr, "1"); } catch (e) {}
-          if (!schon) setTimeout(function () { domoFeiert(false); }, 600);
-        }
       }).catch(function (err) { ziel.innerHTML = '<p class="meldung fehler">' + esc(err.message) + "</p>"; });
     }
     if (q.get("nr")) { form.elements.nr.value = q.get("nr"); form.elements.email.value = q.get("email") || ""; laden(q.get("nr"), q.get("email")); }
