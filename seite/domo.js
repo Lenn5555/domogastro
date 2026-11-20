@@ -1,74 +1,85 @@
-// Domo, das Erdmännchen auf der Startseite: Augen folgen der Maus, reagiert auf Klicks je nach Stelle,
-// jagt die Maus, wenn man neben ihn klickt. Koordinaten beziehen sich auf das Bild domo-koch.webp (523 × 1100).
+// Domo, das Erdmännchen auf der Startseite (Lenn 2026-11-20: Animation aus Kling-Clips).
+// Zwei MP4-Clips (Ruhe als Schleife, Winken beim Anklicken). Jeder Clip enthält oben das Bild und unten die Transparenz
+// als Graustufen; WebGL setzt beides zusammen. So ist Domo freigestellt und es läuft überall, auch auf dem iPhone.
+// Ohne WebGL, bei „Bewegung reduzieren“ oder wenn das Video nicht startet, bleibt das stehende Bild.
+// Klick neben Domo: er jagt kurz der Maus hinterher.
 (function () {
   "use strict";
   var figur = document.querySelector(".domo-figur");
   if (!figur) return;
   var bild = figur.querySelector("img"), leinwand = figur.querySelector("canvas");
   var hero = figur.closest(".hero") || document.body;
-  var W = 523, H = 1100;
   var ruhig = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Augen: Öffnung (Ellipse, in der gezeichnet wird) und Iris (Kreis, der verschoben wird)
-  var AUGEN = [
-    { cx: 215, cy: 215, rx: 23, ry: 18, ix: 216, iy: 214, ir: 21 },
-    { cx: 318, cy: 181, rx: 19, ry: 15, ix: 316, iy: 180, ir: 17 },
-  ];
-  var MAX = 5;  // maximale Verschiebung der Iris in Bildpixeln
+  // --- WebGL: Bild (obere Hälfte) mal Transparenz (untere Hälfte) ---
+  var gl = null;
+  try { gl = leinwand.getContext("webgl", { premultipliedAlpha: true, alpha: true, preserveDrawingBuffer: true, antialias: false }); } catch (e) { gl = null; }
+  function shader(art, quelle) {
+    var s = gl.createShader(art); gl.shaderSource(s, quelle); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  if (gl) {
+    try {
+      var prog = gl.createProgram();
+      gl.attachShader(prog, shader(gl.VERTEX_SHADER,
+        "attribute vec2 p;varying vec2 uv;void main(){uv=vec2((p.x+1.)*.5,(1.-p.y)*.5);gl_Position=vec4(p,0.,1.);}"));
+      gl.attachShader(prog, shader(gl.FRAGMENT_SHADER,
+        "precision mediump float;uniform sampler2D t;varying vec2 uv;void main(){" +
+        "vec3 c=texture2D(t,vec2(uv.x,uv.y*.5)).rgb;float a=texture2D(t,vec2(uv.x,.5+uv.y*.5)).r;" +
+        "a=clamp((a-.03)/.94,0.,1.);gl_FragColor=vec4(c*a,a);}"));
+      gl.linkProgram(prog); gl.useProgram(prog);
+      var puffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, puffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      var loc = gl.getAttribLocation(prog, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      var tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+      [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(function (k) { gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE); });
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.clearColor(0, 0, 0, 0);
+    } catch (e) { console.warn("Domo:", e.message); gl = null; }
+  }
 
-  // Stellen zum Anklicken (Bildkoordinaten), von oben nach unten geprüft
-  var STELLEN = [
-    { name: "nase", x0: 270, x1: 335, y0: 200, y1: 255, art: "nies" },
-    { name: "augen", x0: 180, x1: 345, y0: 160, y1: 240, art: "zuck" },
-    { name: "muetze", x0: 40, x1: 345, y0: 0, y1: 170, art: "kipp" },
-    { name: "gesicht", x0: 100, x1: 400, y0: 150, y1: 330, art: "wackel" },
-    { name: "hand", x0: 140, x1: 250, y0: 600, y1: 700, art: "hops" },
-    { name: "hand", x0: 400, x1: 480, y0: 600, y1: 690, art: "hops" },
-    { name: "bauch", x0: 140, x1: 470, y0: 330, y1: 900, art: "kitzel" },
-    { name: "schwanz", x0: 0, x1: 170, y0: 880, y1: 1100, art: "hops" },
-    { name: "fuss", x0: 150, x1: 470, y0: 980, y1: 1100, art: "hops" },
-    { name: "rest", x0: 0, x1: W, y0: 0, y1: H, art: "wackel" },
-  ];
-
-  // Bild einmal in eine unsichtbare Leinwand kopieren: für die Iris-Ausschnitte und um zu prüfen, ob ein Klick Domo trifft
-  var quelle = document.createElement("canvas"); quelle.width = W; quelle.height = H;
-  var qctx = quelle.getContext("2d", { willReadFrequently: true });
-  var ctx = leinwand.getContext("2d");
-  var bereit = false;
-  var blick = { x: 0, y: 0 }, ziel = { x: 0, y: 0 };
-  function laden() { qctx.drawImage(bild, 0, 0, W, H); bereit = true; zeichnen(); }
-  if (bild.complete && bild.naturalWidth) laden(); else bild.addEventListener("load", laden);
-
+  function clip(src, schleife) {
+    var v = document.createElement("video");
+    v.muted = true; v.defaultMuted = true; v.playsInline = true; v.loop = schleife; v.preload = "auto";
+    v.setAttribute("muted", ""); v.setAttribute("playsinline", ""); v.setAttribute("aria-hidden", "true");
+    v.src = src; figur.appendChild(v);
+    return v;
+  }
+  var ruhe = null, winken = null, aktiv = null, sichtbar = true;
   function zeichnen() {
-    if (!bereit) return;
-    ctx.clearRect(0, 0, W, H);
-    AUGEN.forEach(function (a) {
-      ctx.save();
-      ctx.beginPath(); ctx.ellipse(a.cx, a.cy, a.rx, a.ry, 0, 0, Math.PI * 2); ctx.clip();
-      // Grund: dunkler Augenrand, darüber die verschobene Iris aus dem Originalbild
-      ctx.fillStyle = "#2A170B"; ctx.fill();
-      ctx.beginPath(); ctx.arc(a.ix + blick.x, a.iy + blick.y, a.ir, 0, Math.PI * 2); ctx.clip();
-      ctx.drawImage(quelle, a.ix - a.ir, a.iy - a.ir, a.ir * 2, a.ir * 2, a.ix - a.ir + blick.x, a.iy - a.ir + blick.y, a.ir * 2, a.ir * 2);
-      ctx.restore();
-    });
+    if (!gl || !aktiv || aktiv.readyState < 2) return false;
+    try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, aktiv); } catch (e) { return false; }
+    gl.viewport(0, 0, leinwand.width, leinwand.height);
+    gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    return true;
   }
-  function zuBild(clientX, clientY) {
-    var r = bild.getBoundingClientRect(), gespiegelt = figur.classList.contains("links");
-    var x = (clientX - r.left) / r.width * W;
-    return { x: gespiegelt ? W - x : x, y: (clientY - r.top) / r.height * H };
+  function abspielen(v) {
+    var p = v.play();
+    if (p && p.catch) p.catch(function () { /* z. B. Stromsparmodus: stehendes Bild bleibt */ });
   }
-  function schauen(clientX, clientY) {
-    var p = zuBild(clientX, clientY);
-    var dx = p.x - 265, dy = p.y - 200, d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 400);
-    ziel.x = dx / d * MAX * k; ziel.y = dy / d * MAX * 0.7 * k;
+  if (gl && !ruhig && figur.dataset.ruhe) {
+    ruhe = clip(figur.dataset.ruhe, true); aktiv = ruhe;
+    ruhe.addEventListener("playing", function () { if (zeichnen()) figur.classList.add("laeuft"); });
+    abspielen(ruhe);
+    // Winken erst laden, wenn die Ruhe-Schleife läuft
+    ruhe.addEventListener("playing", function () {
+      if (winken) return;
+      winken = clip(figur.dataset.winken, false);
+      winken.addEventListener("ended", function () { ruhe.currentTime = 0; aktiv = ruhe; abspielen(ruhe); });
+    }, { once: true });
+    // Außer Sicht anhalten (spart Akku)
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (e) {
+      sichtbar = e[0].isIntersecting;
+      if (!sichtbar) { ruhe.pause(); if (winken) winken.pause(); } else abspielen(aktiv);
+    }).observe(figur);
   }
-  window.addEventListener("pointermove", function (e) { schauen(e.clientX, e.clientY); }, { passive: true });
 
-  // Kleine Schleife: Blick weich nachziehen, beim Jagen hinterherhüpfen
+  // --- Schleife: Video zeichnen, beim Jagen hinterherhüpfen ---
   var jagd = null, pos = 0, maus = null;
   window.addEventListener("pointermove", function (e) { maus = e.clientX; }, { passive: true });
   function schleife(t) {
-    blick.x += (ziel.x - blick.x) * 0.2; blick.y += (ziel.y - blick.y) * 0.2;
+    if (aktiv && sichtbar) zeichnen();
     if (jagd) {
       var heim = t > jagd.bis, r = figur.getBoundingClientRect(), mitte = r.left + r.width / 2 - pos;
       var hr = hero.getBoundingClientRect();
@@ -80,29 +91,29 @@
       figur.style.transform = "translate(" + pos.toFixed(1) + "px," + (-hopser).toFixed(1) + "px)";
       if (heim && Math.abs(pos) < 1) { pos = 0; jagd = null; figur.style.transform = ""; figur.classList.remove("links"); }
     }
-    zeichnen();
     requestAnimationFrame(schleife);
   }
   requestAnimationFrame(schleife);
 
-  function reagieren(art) {
-    if (ruhig) return;
-    bild.classList.remove("nies", "zuck", "kipp", "wackel", "hops", "kitzel");
-    void bild.offsetWidth;  // Animation neu starten
-    bild.classList.add(art);
-  }
-  bild.addEventListener("animationend", function () { bild.className = ""; });
-
-  function trifftDomo(p) {
-    if (!bereit || p.x < 0 || p.y < 0 || p.x >= W || p.y >= H) return false;
-    return qctx.getImageData(Math.floor(p.x), Math.floor(p.y), 1, 1).data[3] > 40;
+  // Trifft ein Klick Domo? Mit Video: Transparenz des aktuellen Bildes, sonst grob die Mitte des Bildes
+  function trifftDomo(clientX, clientY) {
+    var r = bild.getBoundingClientRect();
+    var x = (clientX - r.left) / r.width, y = (clientY - r.top) / r.height;
+    if (figur.classList.contains("links")) x = 1 - x;
+    if (x < 0 || y < 0 || x >= 1 || y >= 1) return false;
+    if (gl && figur.classList.contains("laeuft")) {
+      var px = new Uint8Array(4);
+      gl.readPixels(Math.floor(x * leinwand.width), Math.floor((1 - y) * leinwand.height), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      return px[3] > 40;
+    }
+    return x > 0.15 && x < 0.85;
   }
   hero.addEventListener("click", function (e) {
     if (e.target.closest("a, button, input, label")) return;
-    var p = zuBild(e.clientX, e.clientY);
-    if (trifftDomo(p)) {
-      var s = STELLEN.find(function (s) { return p.x >= s.x0 && p.x < s.x1 && p.y >= s.y0 && p.y < s.y1; });
-      reagieren(s.art);
+    if (trifftDomo(e.clientX, e.clientY)) {
+      if (winken && aktiv !== winken) {
+        winken.currentTime = 0; aktiv = winken; abspielen(winken);
+      } else if (ruhe && ruhe.paused) abspielen(ruhe);  // falls der Browser das Abspielen erst nach einem Klick erlaubt
     } else if (!ruhig) {
       maus = e.clientX; jagd = { bis: performance.now() + 3500 };
     }
