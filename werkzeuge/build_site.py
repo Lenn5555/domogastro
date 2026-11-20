@@ -291,7 +291,7 @@ def startseite(nach_kat):
 <h1>Alles für Profis mit <em>Geschmack.</em></h1>
 <p class="lead">Profigeräte für Restaurant, Hotel, Café, Imbiss und die Küche zu Hause. Versandkostenfrei in ganz Deutschland, mit Preisen für Privat und Gewerbe.</p>
 <div class="ctas"><a class="btn pri" href="{u('/' + slug(kategorien()[0]) + '/')}">Jetzt entdecken →</a><a class="btn sec" href="#bereiche">Sortiment ansehen</a></div></div>
-<div class="domo"><div class="domo-figur" data-ruhe="{u('/bilder/domo-ruhe.mp4')}" data-winken="{u('/bilder/domo-winken.mp4')}"><img src="{u('/bilder/domo-start.webp')}" alt="Domo, das Erdmännchen von Domo Gastro, als Koch" width="552" height="1000" fetchpriority="high"><canvas width="552" height="1000" aria-hidden="true"></canvas></div></div>
+<div class="domo"><div class="domo-figur" data-ruhe="{u('/bilder/domo-ruhe.mp4')}" data-winken="{u('/bilder/domo-winken.mp4')}" data-lauf-start="{u('/bilder/domo-lauf-start.mp4')}" data-lauf="{u('/bilder/domo-lauf.mp4')}" data-lauf-ende="{u('/bilder/domo-lauf-ende.mp4')}"><img src="{u('/bilder/domo-start.webp')}" alt="Domo, das Erdmännchen von Domo Gastro, als Koch" width="552" height="1000" fetchpriority="high"><canvas width="1700" height="1000" aria-hidden="true"></canvas></div></div>
 <script src="{uv('/domo.js')}" defer></script>
 </div></div>
 <div class="leiste g"><div class="in"><span>Für Restaurants</span><span>Für Hotels</span><span>Für Cafés</span><span>Für Imbisse</span><span>Für Catering</span><span>Für Zuhause</span></div></div>
