@@ -38,6 +38,7 @@ def _nur_mit_preis(produkte):
 
 PRODUKTE = _nur_mit_preis(PRODUKTE)
 LAENDER = json.loads((ROOT / "daten/laender.json").read_text(encoding="utf-8"))
+AKTION = {k: v for k, v in json.loads((ROOT / "daten/aktion.json").read_text(encoding="utf-8")).items() if k != "hinweis"}  # Preisaktion (Black Week)
 
 # Auslandsversand (Lenn 2026-11-19): Gewichte gibt es noch nicht, deshalb grob aus den Außenmaßen geschätzt
 # (ca. 120 kg je m³ umbauter Raum, Gastro-Geräte aus Edelstahl). Ohne Maße 5 kg. Sehr lange oder schwere Teile gehen per Spedition (sp, nur Info).
@@ -177,7 +178,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
         SEITEN.append(pfad)
     nav = "".join(f'<a href="{u("/" + slug(k) + "/")}"{" aria-current=page" if k == aktiv else ""}>{e(k)}</a>' for k in kategorien())
     nav += f'<a href="{u("/stellfuesse/")}"{" aria-current=page" if aktiv == BF_TITEL else ""}>{e(BF_TITEL)}</a>'
-    dg = {"mwst": CFG["mwst"], "modus": CFG["standard_modus"], "api": API, "mail": CFG["anfrage_email"], "basis": BASIS, "versand": LAENDER, "ads": CFG.get("google_ads_id", ""), "adsKauf": CFG.get("google_ads_kauf_label", "")}
+    dg = {"mwst": CFG["mwst"], "modus": CFG["standard_modus"], "api": API, "mail": CFG["anfrage_email"], "basis": BASIS, "versand": LAENDER, "ads": CFG.get("google_ads_id", ""), "adsKauf": CFG.get("google_ads_kauf_label", ""), "aktion": AKTION}
     return f"""<!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(titel)}</title><meta name="description" content="{e((beschreibung or CFG['claim'])[:160])}">
@@ -188,6 +189,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <script>window.DG={json.dumps(dg)}</script><script src="{uv('/rechnen.js')}" defer></script><script src="{uv('/shop.js')}" defer></script></head>
 <body>
 {'<div style="background:#F2B84B;color:#0A1628;text-align:center;font:600 14px/1.4 sans-serif;padding:8px 16px">Vorschau – noch kein echter Shop. Bestellungen werden nicht ausgeführt.</div>' if VORSCHAU else ''}
+<p class="aktion-band aktion-hinweis" hidden></p>
 <div class="top g"><div class="in">
 <form class="suche" action="{u('/suche/')}" role="search"><label class="sr" for="q">Suche</label><input id="q" name="q" placeholder="Suche nach Artikel, Artikelnummer oder Kategorie"><button>Suchen</button></form>
 <div class="r"><a class="konto-link" href="{u('/konto/')}">Anmelden | Konto anlegen</a>
@@ -227,7 +229,7 @@ def produktseite(p):
     else:
         wahl, netto, m, sku, lz = "", p.get("preis_netto"), masse(p["masse_mm"]), p["sku"], lieferzeit(p.get("lieferzeit_tage"), p.get("bestand"))
     preis = (f'<div class="preis-gross"><span class="pr" data-netto="{netto or 0:.2f}"{"" if netto else " hidden"}></span><span class="steuer" data-zusatz=", versandkostenfrei (DE)"{"" if netto else " hidden"}></span>'
-             f'<span class="anfrage"{" hidden" if netto else ""}>Preis auf Anfrage</span></div>')
+             f'<span class="anfrage"{" hidden" if netto else ""}>Preis auf Anfrage</span></div><p class="klein aktion-hinweis" hidden></p>')
     kauf = (f'<div class="kauf"><label class="sr" for="menge">Menge</label><input id="menge" type="number" min="1" max="99" value="1">'
             f'<button class="btn pri kaufen" type="button" data-sku="{e(sku)}"{"" if netto else " disabled"}>In den Warenkorb</button>'
             f'<a class="btn sec" href="mailto:{CFG["anfrage_email"]}?subject={e("Anfrage " + p["name"])}">Anfrage stellen</a></div>')

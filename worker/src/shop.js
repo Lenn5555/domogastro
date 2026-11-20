@@ -6,7 +6,8 @@ import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail, gutschei
 import * as paypal from "./paypal.js";
 import { widerrufeVon } from "./widerruf.js";
 import LAENDER from "../../daten/laender.json" with { type: "json" };
-import { gesamtRechnen, landVon } from "./steuer.js";
+import AKTION from "../../daten/aktion.json" with { type: "json" };
+import { gesamtRechnen, landVon, aktionAktiv, stueckpreis } from "./steuer.js";
 import { ustidPruefen } from "./ustid.js";
 
 export const MWST = 0.19;
@@ -27,19 +28,21 @@ export function rechnen(positionen, prozent = 0, land = "DE", ustidGueltig = fal
   if (!Array.isArray(positionen) || !positionen.length) throw new Fehler("Der Warenkorb ist leer.");
   if (positionen.length > 50) throw new Fehler("Zu viele Positionen.");
   if (!landVon(LAENDER, land)) throw new Fehler("In dieses Land liefern wir leider nicht. Schreiben Sie uns gern an sales@ts-systec.de.");
+  const jetzt = Date.now(), akt = aktionAktiv(AKTION, jetzt);  // Preisaktion (Black Week): reduzierter Stückpreis
   const pos = positionen.map((p) => {
     const a = KATALOG.artikel[String(p.sku)];
     const menge = parseInt(p.menge, 10);
     if (!a || !a.p) throw new Fehler(`Artikel ${text(p.sku, 40)} ist nicht bestellbar.`);
     if (!(menge >= 1 && menge <= 99)) throw new Fehler("Ungültige Menge.");
-    return { sku: String(p.sku), name: a.n, slug: a.s, menge, netto: a.p, a };
+    return { sku: String(p.sku), name: a.n, slug: a.s, menge, netto: stueckpreis(AKTION, a.p, jetzt), ...(akt ? { netto_vorher: a.p } : {}), a };
   });
-  const g = gesamtRechnen(LAENDER, land, pos, prozent, ustidGueltig);
+  const g = gesamtRechnen(LAENDER, land, pos, prozent, ustidGueltig, AKTION, jetzt);
   if (g.gesperrt.length) throw new Fehler(`„${g.gesperrt[0].name}“ können wir nach ${g.land.n} noch nicht liefern (Elektrogerät). Bitte entfernen Sie es aus dem Warenkorb oder schreiben Sie uns an sales@ts-systec.de.`);
   return {
     positionen: pos.map(({ a, ...x }) => x), warenwert: g.warenwert, rabatt: g.rabatt, versand: g.versand,
     netto: g.netto, mwst: g.mwst, brutto: g.brutto,
-    steuer: { land: g.land.c, landname: g.land.n, art: g.art, satz: g.satz, versand: g.versand, pakete: g.pakete, warenwert: g.warenwert },
+    steuer: { land: g.land.c, landname: g.land.n, art: g.art, satz: g.satz, versand: g.versand, pakete: g.pakete, warenwert: g.warenwert,
+      ...(akt ? { aktion: { name: akt.name, prozent: akt.prozent } } : {}) },
   };
 }
 

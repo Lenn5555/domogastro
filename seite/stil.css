@@ -295,3 +295,8 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 .einw-zeile b{display:block}.einw-zeile span{color:var(--soft)}.einw-zeile b{color:var(--ink)}
 .einw-knoepfe{display:flex;flex-wrap:wrap;gap:10px}.einw-knoepfe .btn{flex:1 1 160px}
 @media (max-width:600px){.einw{left:8px;right:8px;bottom:8px}.einw-in{padding:14px;font-size:13px}.einw-in p b{font-size:15px}.einw-knoepfe .btn{flex:1 1 120px;padding-block:10px}}
+
+/* Preisaktion (Black Week, Lenn 2026-11-20): nur sichtbar, solange sie läuft (shop.js) */
+.aktion-band{margin:0;background:var(--warn);color:var(--n0);text-align:center;font-weight:700;font-size:14px;line-height:1.4;padding:8px 16px}
+.pr s.vorher{font-weight:500;opacity:.7;font-size:.78em;margin-right:2px}
+.pr .minus{display:inline-block;background:var(--warn);color:var(--n0);border-radius:6px;padding:1px 6px;font-size:.62em;line-height:1.5;vertical-align:middle}

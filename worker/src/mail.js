@@ -62,7 +62,7 @@ const STATUS = {
 export const statusText = (s) => STATUS[s] || s;
 
 function posten(b) {
-  return b.positionen.map((p) => `  ${p.menge} × ${p.name} (Art.-Nr. ${p.sku})  je ${euro(p.netto)} netto`).join("\n");
+  return b.positionen.map((p) => `  ${p.menge} × ${p.name} (Art.-Nr. ${p.sku})  je ${euro(p.netto)} netto${p.netto_vorher ? ` (statt ${euro(p.netto_vorher)}, ${b.steuer?.aktion?.name || "Aktion"} −${b.steuer?.aktion?.prozent || ""} %)` : ""}`).join("\n");
 }
 // Steuerhinweis je Art (Lenn 2026-11-19, Auslandsversand)
 export function steuerHinweis(st) {

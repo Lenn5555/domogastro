@@ -32,10 +32,19 @@
   }
   // Nur Anzeige aktualisieren, ohne Ereignis (Seiten rufen das in ihrem eigenen Neuzeichnen auf)
   function preiseSetzen() {
+    var akt = window.DGR && DGR.aktionAktiv(DG.aktion);
     $$(".pr[data-netto]").forEach(function (e) {
       var n = parseFloat(e.dataset.netto);
       if (isNaN(n)) return;
-      e.textContent = (e.dataset.ab ? "ab " : "") + preisText(n);
+      var ab = e.dataset.ab ? "ab " : "";
+      // Preisaktion (Black Week): bisheriger Preis durchgestrichen = niedrigster Preis der letzten 30 Tage (§ 11 PAngV)
+      var neu = e.dataset.neu ? parseFloat(e.dataset.neu) : (akt ? DGR.stueckpreis(akt, n) : n);
+      if (akt && neu < n) e.innerHTML = '<s class="vorher" title="Niedrigster Preis der letzten 30 Tage">' + esc(preisText(n)) + '</s> <span class="neu">' + esc(ab + preisText(neu)) + '</span> <span class="minus">−' + akt.prozent + ' %</span>';
+      else e.textContent = ab + preisText(n);
+    });
+    $$(".aktion-hinweis").forEach(function (e) {
+      e.hidden = !akt;
+      if (akt) e.textContent = akt.name + ": " + akt.prozent + " % auf alles, ohne Code, bis " + (akt.bis_text || new Date(akt.bis).toLocaleString("de-DE")) + ". Durchgestrichen: niedrigster Preis der letzten 30 Tage.";
     });
     $$(".steuer").forEach(function (e) { e.textContent = steuerText() + (landCode === "DE" ? (e.dataset.zusatz || "") : ", zzgl. Versand"); });
     $$(".seg button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.modus === modus)); });
@@ -328,7 +337,7 @@
   function r2(x) { return Math.round(x * 100) / 100; }
   function rechnen(ix) {
     var pos = korb().map(function (p) { var a = ix.artikel[p.sku]; return a && a.p ? { sku: p.sku, menge: p.menge, a: a } : null; }).filter(Boolean);
-    var g = DGR.gesamtRechnen(VERSAND, landCode, pos, gutschein ? gutschein.prozent : 0, istGewerbe() && ustidOk);
+    var g = DGR.gesamtRechnen(VERSAND, landCode, pos, gutschein ? gutschein.prozent : 0, istGewerbe() && ustidOk, DG.aktion);
     g.pos = pos;
     return g;
   }
@@ -346,7 +355,7 @@
           return '<div class="posten" data-sku="' + esc(p.sku) + '">' + (p.a.b ? '<img src="' + esc(p.a.b) + '" alt="">' : "<span></span>") +
             '<div><a href="' + B + "/produkt/" + p.a.s + '/">' + esc(p.a.n) + '</a><div class="klein">Art.-Nr. ' + esc(p.sku) + " · Lieferzeit " + esc(p.a.l || "auf Anfrage") + (p.a.sp ? " · Spedition" : "") +
             '</div><div class="menge"><label class="sr" for="m-' + esc(p.sku) + '">Menge</label><input id="m-' + esc(p.sku) + '" type="number" min="1" max="99" value="' + p.menge + '"><button class="weg" type="button">Entfernen</button></div></div>' +
-            '<div><span class="pr" data-netto="' + (p.a.p * p.menge).toFixed(2) + '"></span></div></div>';
+            '<div><span class="pr" data-netto="' + (p.a.p * p.menge).toFixed(2) + '" data-neu="' + (DGR.stueckpreis(DG.aktion, p.a.p) * p.menge).toFixed(2) + '"></span></div></div>';
         }).join("");
         var g = istGewerbe();
         var faktor = g ? 1 : 1 + r.satz / 100;

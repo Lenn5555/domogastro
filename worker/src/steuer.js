@@ -25,9 +25,21 @@ export function steuerArt(cfg, land, ustidGueltig) {
   return cfg.oss ? { art: "OSS", satz: land.mwst } : { art: "DE", satz: 19 };
 }
 
-export function gesamtRechnen(cfg, landCode, pos, prozent, ustidGueltig) {
+// Preisaktion (z. B. Black Week, Lenn 2026-11-20): daten/aktion.json { name, prozent, von, bis } (ISO-Zeiten).
+// Gilt nur im Zeitraum, für alle Artikel, auf den Netto-Stückpreis (nicht auf Versand). jetzt = Millisekunden.
+export function aktionAktiv(aktion, jetzt) {
+  if (!aktion || !aktion.prozent) return null;
+  var t = jetzt == null ? Date.now() : jetzt;
+  return t >= Date.parse(aktion.von) && t <= Date.parse(aktion.bis) ? aktion : null;
+}
+export function stueckpreis(aktion, netto, jetzt) {
+  var a = aktionAktiv(aktion, jetzt);
+  return a ? r2(netto * (100 - a.prozent) / 100) : netto;
+}
+
+export function gesamtRechnen(cfg, landCode, pos, prozent, ustidGueltig, aktion, jetzt) {
   var land = landVon(cfg, landCode || "DE");
-  var warenwert = r2(pos.reduce(function (s, p) { return s + p.a.p * p.menge; }, 0));
+  var warenwert = r2(pos.reduce(function (s, p) { return s + stueckpreis(aktion, p.a.p, jetzt) * p.menge; }, 0));
   var rabatt = r2(warenwert * (prozent || 0) / 100);
   var v = versandRechnen(cfg, land, pos);
   var st = steuerArt(cfg, land, ustidGueltig);

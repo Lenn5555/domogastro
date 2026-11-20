@@ -1,0 +1,8 @@
+{
+  "hinweis": "Preisaktion für den ganzen Shop (Lenn 2026-11-20: Black Week, 15 % auf alles, ohne Code, an jedem Produkt sichtbar). Gilt automatisch nur zwischen von und bis (UTC), für alle Artikel auf den Stückpreis, nicht auf Versand. Durchgestrichen wird der bisherige Preis = niedrigster Preis der letzten 30 Tage (§ 11 PAngV): Preise vor und während der Aktion nicht erhöhen. Aus: prozent auf 0 setzen.",
+  "name": "Black Week",
+  "prozent": 15,
+  "von": "2026-11-20T15:00:00Z",
+  "bis": "2026-11-30T22:59:59Z",
+  "bis_text": "Montag, 30.11., 23:59 Uhr"
+}
