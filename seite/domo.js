@@ -2,7 +2,7 @@
 // Zwei MP4-Clips (Ruhe als Schleife, Winken beim Anklicken). Jeder Clip enthält oben das Bild und unten die Transparenz
 // als Graustufen; WebGL setzt beides zusammen. So ist Domo freigestellt und es läuft überall, auch auf dem iPhone.
 // Ohne WebGL, bei „Bewegung reduzieren“ oder wenn das Video nicht startet, bleibt das stehende Bild.
-// Klick neben Domo: er jagt kurz der Maus hinterher.
+// Das Hinterherjagen ist aus, bis es einen Lauf-Clip gibt (Lenn 2026-11-20: kein Hoppeln).
 (function () {
   "use strict";
   var figur = document.querySelector(".domo-figur");
@@ -25,16 +25,22 @@
       gl.attachShader(prog, shader(gl.VERTEX_SHADER,
         "attribute vec2 p;varying vec2 uv;void main(){uv=vec2((p.x+1.)*.5,(1.-p.y)*.5);gl_Position=vec4(p,0.,1.);}"));
       gl.attachShader(prog, shader(gl.FRAGMENT_SHADER,
-        "precision mediump float;uniform sampler2D t;varying vec2 uv;void main(){" +
-        "vec3 c=texture2D(t,vec2(uv.x,uv.y*.5)).rgb;float a=texture2D(t,vec2(uv.x,.5+uv.y*.5)).r;" +
-        "a=clamp((a-.03)/.94,0.,1.);gl_FragColor=vec4(c*a,a);}"));
+        "precision mediump float;uniform sampler2D t0;uniform sampler2D t1;uniform float m;varying vec2 uv;" +
+        "vec4 px(sampler2D t){vec3 c=texture2D(t,vec2(uv.x,uv.y*.5)).rgb;float a=texture2D(t,vec2(uv.x,.5+uv.y*.5)).r;" +
+        "a=clamp((a-.03)/.94,0.,1.);return vec4(c*a,a);}" +
+        "void main(){gl_FragColor=mix(px(t0),px(t1),m);}"));
       gl.linkProgram(prog); gl.useProgram(prog);
       var puffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, puffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
       var loc = gl.getAttribLocation(prog, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-      var tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
-      [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(function (k) { gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE); });
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      var texturen = [0, 1].map(function (i) {
+        var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, t);
+        [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(function (k) { gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE); });
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.uniform1i(gl.getUniformLocation(prog, "t" + i), i);
+        return t;
+      });
+      var mixOrt = gl.getUniformLocation(prog, "m");
       gl.clearColor(0, 0, 0, 0);
     } catch (e) { console.warn("Domo:", e.message); gl = null; }
   }
@@ -47,9 +53,21 @@
     return v;
   }
   var ruhe = null, winken = null, aktiv = null, sichtbar = true;
+  // Wechsel zwischen den Clips weich überblenden (0,35 s), damit Domo nicht springt
+  var vorher = null, wechselAb = 0, BLENDE = 350;
+  function wechseln(v) { if (v === aktiv) return; vorher = aktiv; wechselAb = performance.now(); aktiv = v; }
+  function hochladen(i, v) {
+    gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, texturen[i]);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, v);
+  }
   function zeichnen() {
     if (!gl || !aktiv || aktiv.readyState < 2) return false;
-    try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, aktiv); } catch (e) { return false; }
+    var m = vorher ? Math.min(1, (performance.now() - wechselAb) / BLENDE) : 1;
+    try {
+      hochladen(1, aktiv);
+      if (m < 1 && vorher.readyState >= 2) hochladen(0, vorher); else { m = 1; vorher = null; }
+    } catch (e) { return false; }
+    gl.uniform1f(mixOrt, m * m * (3 - 2 * m));
     gl.viewport(0, 0, leinwand.width, leinwand.height);
     gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     return true;
@@ -66,7 +84,10 @@
     ruhe.addEventListener("playing", function () {
       if (winken) return;
       winken = clip(figur.dataset.winken, false);
-      winken.addEventListener("ended", function () { ruhe.currentTime = 0; aktiv = ruhe; abspielen(ruhe); });
+      // Kurz vor Schluss zurück in die Ruhe-Schleife überblenden (sie läuft im Hintergrund weiter)
+      winken.addEventListener("timeupdate", function () {
+        if (aktiv === winken && winken.duration && winken.currentTime > winken.duration - BLENDE / 1000) wechseln(ruhe);
+      });
     }, { once: true });
     // Außer Sicht anhalten (spart Akku)
     if ("IntersectionObserver" in window) new IntersectionObserver(function (e) {
@@ -112,10 +133,8 @@
     if (e.target.closest("a, button, input, label")) return;
     if (trifftDomo(e.clientX, e.clientY)) {
       if (winken && aktiv !== winken) {
-        winken.currentTime = 0; aktiv = winken; abspielen(winken);
+        winken.currentTime = 0; abspielen(winken); wechseln(winken);
       } else if (ruhe && ruhe.paused) abspielen(ruhe);  // falls der Browser das Abspielen erst nach einem Klick erlaubt
-    } else if (!ruhig) {
-      maus = e.clientX; jagd = { bis: performance.now() + 3500 };
     }
   });
   figur.style.cursor = "pointer";
