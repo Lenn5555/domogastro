@@ -1,5 +1,5 @@
 {
-  "_hinweis": "Einstellungen der Domogastro-Website. anfrage_email: Empfänger für Bestellungen/Anfragen. api: URL des Cloudflare-Workers (oder Umgebungsvariable SITE_API), leer = Bestellung öffnet vorbereitete E-Mail. mwst: Steuersatz. standard_modus: privat oder gewerbe.",
+  "_hinweis": "Einstellungen der Domogastro-Website. anfrage_email: Empfänger für Bestellungen/Anfragen. api: URL des Cloudflare-Workers (oder Umgebungsvariable SITE_API), leer = Bestellung öffnet vorbereitete E-Mail. mwst: Steuersatz. standard_modus: privat oder gewerbe. google_ads_id (z. B. AW-123456789) und google_ads_kauf_label: Google-Ads-Conversion-Messung, lädt nur nach Einwilligung „Marketing“; leer = aus und keine Marketing-Kategorie im Banner.",
   "name": "Domo Gastro",
   "claim": "Zuhause in der Gastronomie",
   "anfrage_email": "sales@ts-systec.de",
@@ -7,5 +7,7 @@
   "api": "https://domogastro-shop.beinundfuss.workers.dev",
   "mwst": 0.19,
   "standard_modus": "privat",
-  "weee": "DE 43932288"
+  "weee": "DE 43932288",
+  "google_ads_id": "",
+  "google_ads_kauf_label": ""
 }

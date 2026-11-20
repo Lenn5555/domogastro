@@ -213,7 +213,7 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
   .mid nav{gap:6px 12px;font-size:12px}
   .hero>.in{grid-template-columns:1fr;min-height:0}.hero .copy{padding-block:40px 0}.domo img{height:340px}
   .cg{grid-template-columns:1fr 1fr}.raster{grid-template-columns:1fr 1fr}
-  .ben .in{grid-template-columns:1fr 1fr}
+  .ben .in{grid-template-columns:repeat(2,minmax(0,1fr))}.ben span{min-width:0;hyphens:auto;overflow-wrap:anywhere}
   .produkt,.kasse,.zwei,.adressen{grid-template-columns:1fr}
   footer .spalten{grid-template-columns:1fr 1fr}
   .summe{position:static}
@@ -285,3 +285,13 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 .v-erstatten{margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .v-erstatten input{width:110px}
 .verlauf-weg{display:inline-block;margin-left:14px;padding:0;border:0;background:none;color:inherit;opacity:.7;font:500 13px/1 var(--sans);text-decoration:underline;cursor:pointer;vertical-align:middle}.verlauf-weg:hover{opacity:1}
+
+/* Einwilligungs-Banner: Akzeptieren und Ablehnen gleich gestaltet */
+.einw{position:fixed;left:16px;right:16px;bottom:16px;z-index:150;display:flex;justify-content:center;pointer-events:none}
+.einw-in{pointer-events:auto;width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:18px 20px;border-radius:16px;background:var(--n2);color:var(--ink);border:1px solid var(--n3);box-shadow:0 18px 48px #000a;font-size:14px;line-height:1.5}
+.einw-in p{margin:0 0 12px}.einw-in p b{display:block;margin-bottom:4px;font-size:16px}.einw-in a{color:var(--cyan)}
+.einw-wahl{display:grid;gap:10px;margin:0 0 14px}
+.einw-zeile{display:flex;gap:10px;align-items:flex-start}.einw-zeile input{margin-top:3px;width:18px;height:18px;flex:none}
+.einw-zeile b{display:block}.einw-zeile span{color:var(--soft)}.einw-zeile b{color:var(--ink)}
+.einw-knoepfe{display:flex;flex-wrap:wrap;gap:10px}.einw-knoepfe .btn{flex:1 1 160px}
+@media (max-width:600px){.einw{left:8px;right:8px;bottom:8px}.einw-in{padding:14px;font-size:13px}.einw-in p b{font-size:15px}.einw-knoepfe .btn{flex:1 1 120px;padding-block:10px}}

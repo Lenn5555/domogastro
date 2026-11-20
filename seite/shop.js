@@ -61,9 +61,77 @@
     var c = $(".korb"); if (c) { c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
   }
 
-  // Verlauf nur im Browser (localStorage), geht nie an den Server. Abschaltbar über „Verlauf löschen“ auf der Startseite.
+  /* ---------- Einwilligung (Cookie-Banner, Lenn 2026-11-20) ----------
+     Notwendig (Warenkorb, Anmeldung, Preisanzeige) braucht keine Einwilligung. Komfort = Verlauf für „Für Sie ausgewählt“.
+     Marketing = Google Ads, nur wenn in site.json eine google_ads_id steht; Google lädt erst nach Zustimmung (kein Laden vorher). */
+  var EINW_VERSION = 1;
+  function einwilligung() { var e = lies("dg-einwilligung", null); return e && e.v === EINW_VERSION ? e : null; }
+  function darf(k) { var e = einwilligung(); return !!(e && e[k]); }
+  function einwilligungSetzen(komfort, marketing) {
+    var vorher = einwilligung();
+    schreib("dg-einwilligung", { v: EINW_VERSION, komfort: !!komfort, marketing: !!(marketing && DG.ads), zeit: new Date().toISOString() });
+    if (!komfort) { schreib("dg-gesehen", null); schreib("dg-gekauft", null); }
+    if (vorher && vorher.marketing && !marketing) {
+      // Google-Cookies löschen und neu laden, damit nichts mehr läuft
+      document.cookie.split(";").forEach(function (c) {
+        var n = c.split("=")[0].trim();
+        if (/^(_gcl|_ga|_gid|_gac)/.test(n)) ["", "; domain=" + location.hostname, "; domain=." + location.hostname.replace(/^www\./, "")].forEach(function (dm) {
+          document.cookie = n + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/" + dm;
+        });
+      });
+      location.reload(); return;
+    }
+    googleLaden();
+    if ($("#auswahl")) startseiteAuswahl();
+  }
+  function googleLaden() {
+    if (!DG.ads || !darf("marketing") || window.gtag) return;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    gtag("consent", "default", { ad_storage: "granted", ad_user_data: "granted", ad_personalization: "granted", analytics_storage: "denied" });
+    gtag("js", new Date()); gtag("config", DG.ads);
+    var s = document.createElement("script"); s.async = true; s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(DG.ads);
+    document.head.appendChild(s);
+  }
+  function banner(mitEinstellungen) {
+    var alt = $(".einw"); if (alt) alt.remove();
+    var e = einwilligung() || {};
+    var box = document.createElement("div");
+    box.className = "einw"; box.setAttribute("role", "dialog"); box.setAttribute("aria-label", "Cookie-Einstellungen");
+    function zeile(name, titel, text, an, fest) {
+      return '<label class="einw-zeile"><input type="checkbox" name="' + name + '"' + (an ? " checked" : "") + (fest ? " disabled" : "") + '><span><b>' + titel + "</b>" + text + "</span></label>";
+    }
+    box.innerHTML = '<div class="einw-in"><p><b>Cookies und Speicher</b> Wir speichern in Ihrem Browser nur, was der Shop braucht (Warenkorb, Anmeldung, Preisanzeige). ' +
+      "Mit Ihrer Zustimmung merken wir uns zusätzlich, welche Produkte Sie angesehen und gekauft haben, um sie Ihnen auf der Startseite wieder zu zeigen" +
+      (DG.ads ? ", und messen mit Google Ads, ob Käufe über unsere Anzeigen kamen" : "") + '. Sie können das jederzeit unter „Cookie-Einstellungen“ unten auf der Seite ändern. ' +
+      '<a href="' + B + '/datenschutz/">Datenschutz</a></p>' +
+      '<div class="einw-wahl"' + (mitEinstellungen ? "" : " hidden") + ">" +
+      zeile("noetig", "Notwendig", "Warenkorb, Anmeldung, Privat/Gewerbe, Lieferland. Immer aktiv.", true, true) +
+      zeile("komfort", "Komfort", "Zuletzt angesehene und gekaufte Produkte auf der Startseite. Bleibt nur in Ihrem Browser.", e.komfort) +
+      (DG.ads ? zeile("marketing", "Marketing", "Google Ads Conversion-Messung (Google Ireland Ltd.; Übermittlung in die USA möglich).", e.marketing) : "") +
+      "</div>" +
+      '<div class="einw-knoepfe"><button type="button" class="btn sec" data-a="alle">Alle akzeptieren</button>' +
+      '<button type="button" class="btn sec" data-a="noetig">Nur notwendige</button>' +
+      '<button type="button" class="btn sec" data-a="' + (mitEinstellungen ? "speichern" : "einst") + '">' + (mitEinstellungen ? "Auswahl speichern" : "Einstellungen") + "</button></div></div>";
+    document.body.appendChild(box);
+    box.addEventListener("click", function (ev) {
+      var k = ev.target.closest("button[data-a]"); if (!k) return;
+      var a = k.dataset.a;
+      if (a === "einst") { $(".einw-wahl", box).hidden = false; k.dataset.a = "speichern"; k.textContent = "Auswahl speichern"; return; }
+      var f = function (n) { var i = $('input[name="' + n + '"]', box); return !!(i && i.checked); };
+      box.remove();
+      if (a === "alle") einwilligungSetzen(true, true);
+      else if (a === "noetig") einwilligungSetzen(false, false);
+      else einwilligungSetzen(f("komfort"), f("marketing"));
+    });
+  }
+  document.addEventListener("click", function (ev) {
+    if (ev.target.closest(".einw-oeffnen")) { ev.preventDefault(); banner(true); }
+  });
+
+  // Verlauf nur im Browser (localStorage), geht nie an den Server; nur mit Einwilligung „Komfort“.
   function verlaufMerken(schluessel, slug) {
-    if (lies("dg-verlauf-aus", false)) return;
+    if (!darf("komfort")) return;
     var l = lies(schluessel, []).filter(function (s) { return s !== slug; });
     l.unshift(slug); schreib(schluessel, l.slice(0, 30));
   }
@@ -75,7 +143,7 @@
       var nachSlug = {};
       ix.produkte.forEach(function (p) { if (p.p && p.b) nachSlug[p.s] = p; });
       var eigene = [], drin = {};
-      lies("dg-gekauft", []).concat(lies("dg-gesehen", [])).forEach(function (s) {
+      (darf("komfort") ? lies("dg-gekauft", []).concat(lies("dg-gesehen", [])) : []).forEach(function (s) {
         if (nachSlug[s] && !drin[s] && eigene.length < ANZAHL) { eigene.push(nachSlug[s]); drin[s] = 1; }
       });
       var rest = Object.keys(nachSlug).filter(function (s) { return !drin[s]; });
@@ -90,8 +158,8 @@
       if (eigene.length) {
         titel.innerHTML = 'Für Sie ausgewählt <button type="button" class="verlauf-weg klein">Verlauf löschen</button>';
         $(".verlauf-weg", titel).addEventListener("click", function () {
-          schreib("dg-gesehen", null); schreib("dg-gekauft", null); schreib("dg-verlauf-aus", true);
-          startseiteAuswahl();
+          var e = einwilligung() || {};
+          einwilligungSetzen(false, !!e.marketing);
         });
       } else titel.textContent = "Ausgewählte Produkte";
       preiseSetzen();
@@ -525,6 +593,10 @@
     if (!DG.api) { offlineHinweis(ziel); form.hidden = true; return; }
     function laden(nr, email) {
       api("/bestellung/status", { nr: nr, email: email }).then(function (b) {
+        if (q.get("neu") && window.gtag && DG.ads && DG.adsKauf) {
+          var gemeldet = false; try { gemeldet = sessionStorage.getItem("dg-conv-" + b.nr); sessionStorage.setItem("dg-conv-" + b.nr, "1"); } catch (e) {}
+          if (!gemeldet) gtag("event", "conversion", { send_to: DG.ads + "/" + DG.adsKauf, value: b.netto || 0, currency: "EUR", transaction_id: b.nr });
+        }
         ziel.innerHTML = (q.get("neu") ? '<p class="meldung ok">Vielen Dank! Ihre Bestellung ist eingegangen. Eine Bestätigung kommt per E-Mail.' +
           (b.zahlart === "Vorkasse" ? " Die Bankverbindung kommt in einer eigenen E-Mail; Verwendungszweck ist Ihre Bestellnummer." : " Ihre Zahlung ist eingegangen, wir versenden jetzt.") + "</p>" : "") + bestellHtml(b, email);
       }).catch(function (err) { ziel.innerHTML = '<p class="meldung fehler">' + esc(err.message) + "</p>"; });
@@ -729,5 +801,6 @@
     if (a) { e.preventDefault(); inDenKorb(a.dataset.sku, 1); }
   });
   korbZaehler(); kontoKopf(); preiseZeigen();
+  if (!einwilligung()) banner(false); else googleLaden();
   produktseite(); startseiteAuswahl(); kategorieseite(); suchseite(); kasse(); bestellseite(); widerrufseite(); kontoseite(); berater();
 })();
