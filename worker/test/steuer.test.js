@@ -16,10 +16,10 @@ test("Österreich privat: Paketpreis; mit OSS 20 %, ohne OSS deutsche 19 %", () 
   const d = gesamtRechnen({ ...LAENDER, oss: false }, "AT", [klein], 0, false);
   assert.equal(d.satz, 19); assert.equal(d.brutto, Math.round(109.95 * 1.19 * 100) / 100);
 });
-test("schwere Bestellung: mehrere Pakete, keine Speditionspauschale", () => {
-  assert.equal(gesamtRechnen(LAENDER, "AT", [{ ...klein, menge: 6 }], 0, false).pakete, 2);
-  const s = gesamtRechnen(LAENDER, "FR", [klein, gross], 0, false);
-  assert.equal(s.pakete, 4); assert.equal(s.versand, 55.8);
+test("feste Versandkosten je Bestellung, egal wie schwer oder wie viele", () => {
+  assert.equal(gesamtRechnen(LAENDER, "AT", [{ ...klein, menge: 6 }], 0, false).versand, 9.95);
+  const s = gesamtRechnen(LAENDER, "FR", [klein, { ...gross, menge: 3 }], 0, false);
+  assert.equal(s.versand, 13.95);
 });
 test("Unternehmen mit geprüfter USt-IdNr. und Schweiz: 0 %", () => {
   assert.equal(gesamtRechnen(LAENDER, "NL", [klein], 0, true).art, "IG");

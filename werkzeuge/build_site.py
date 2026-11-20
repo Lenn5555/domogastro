@@ -71,7 +71,7 @@ def laender_tabelle():
         f = 1 + l["mwst"] / 100 if LAENDER["oss"] else 1.19
         f = 1 if not l["eu"] else f
         zeilen.append(f"<tr><td>{e(l['n'])}</td><td>{geld(z['paket'])}</td><td>{geld(round(z['paket'] * f, 2))}</td></tr>")
-    return ("<div style='overflow-x:auto'><table class='tabelle'><thead><tr><th>Lieferland</th><th>je Paket bis " + str(LAENDER["paket_kg"]) + " kg, netto</th><th>Privat inkl. MwSt.</th></tr></thead><tbody>"
+    return ("<div style='overflow-x:auto'><table class='tabelle'><thead><tr><th>Lieferland</th><th>je Bestellung, netto</th><th>Privat inkl. MwSt.</th></tr></thead><tbody>"
             + "".join(zeilen) + "</tbody></table></div>")
 
 

@@ -78,7 +78,7 @@ function summen(b) {
   const st = b.kunde?.steuer;
   const warenwert = st ? st.warenwert : runden(b.netto + (g ? g.rabatt : 0));
   const versand = !st || !st.land || st.land === "DE" ? "Versand (Deutschland): kostenlos"
-    : `Versand nach ${st.landname}${st.pakete > 1 ? ` (${st.pakete} Pakete)` : ""}: ${euro(st.versand)} netto`;
+    : `Versand nach ${st.landname}: ${euro(st.versand)} netto`;
   const satz = st ? String(st.satz).replace(".", ",") : "19";
   const rabatt = g ? `Warenwert netto: ${euro(warenwert)}\nGutschein ${g.code} (${g.prozent} %): −${euro(g.rabatt)}` : `Warenwert netto: ${euro(warenwert)}`;
   const steuer = st && st.satz === 0 ? `Umsatzsteuer: 0,00 € (${steuerHinweis(st)})` : `zzgl. ${satz} % MwSt.: ${euro(b.mwst)}`;

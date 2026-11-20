@@ -8,14 +8,12 @@ export function landVon(cfg, c) {
   return null;
 }
 
-// Versand: Deutschland kostenlos. Ausland: Paketpreis je angefangene paket_kg (geschätztes Gewicht), auch für große Geräte
+// Versand: Deutschland kostenlos. Ausland: ein fester Preis je Bestellung und Zone, unabhängig von Gewicht und Menge (Lenn 2026-11-20)
 // (Lenn 2026-11-19: keine Speditionspauschale; höhere tatsächliche Kosten fordern wir vor dem Versand gesondert an).
 export function versandRechnen(cfg, land, pos) {
   if (!land || !land.zone) return { versand: 0, pakete: 0 };
   var z = cfg.zonen[land.zone];
-  var kg = pos.reduce(function (s, p) { return s + (p.a.g || 5) * p.menge; }, 0);
-  var pakete = Math.max(1, Math.ceil(kg / cfg.paket_kg));
-  return { versand: r2(pakete * z.paket), pakete: pakete };
+  return { versand: r2(z.paket), pakete: 1 };
 }
 
 // Steuerart: DE (19 %), OSS (Satz des Lieferlands an Privat), IG (steuerfreie innergemeinschaftliche Lieferung an Unternehmen
