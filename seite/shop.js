@@ -423,13 +423,24 @@
         }).catch(function (err) { us.className = "klein fehler"; us.textContent = err.message; zeichnen(); });
       }
       form.elements.ustid.addEventListener("change", ustidPruefen);
+      // Hinweis für Unternehmen im EU-Ausland, die noch im Privat-Modus sind: USt-IdNr. gibt es nur unter „Gewerbe“
+      function auslandHinweise() {
+        var l = DGR.landVon(VERSAND, landCode);
+        $("#land-hinweis").hidden = landCode === "DE";
+        $("#gewerbe-tipp").hidden = !(l && l.eu && l.c !== "DE" && !istGewerbe());
+      }
+      $("#gewerbe-wechsel").addEventListener("click", function () {
+        var k = $('.seg button[data-modus="gewerbe"]');
+        if (k) k.click();
+        setTimeout(function () { if (form.elements.firma) form.elements.firma.focus(); }, 50);
+      });
       landWahl.addEventListener("change", function () {
         landCode = landWahl.value; schreib("dg-land", landCode);
-        $("#land-hinweis").hidden = landCode === "DE";
+        auslandHinweise();
         lieferUmschalten(); preiseSetzen(); ustidPruefen();
       });
-      document.addEventListener("dg:modus", function () { if (form.elements.ustid.value) ustidPruefen(); });
-      $("#land-hinweis").hidden = landCode === "DE";
+      document.addEventListener("dg:modus", function () { auslandHinweise(); if (form.elements.ustid.value) ustidPruefen(); });
+      auslandHinweise();
       lieferUmschalten();
       var ka = form.elements.konto_anlegen;
       // Bitte um Bewertung nur mit Konto anbieten

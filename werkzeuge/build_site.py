@@ -326,7 +326,8 @@ def warenkorb():
 <p class="klein" id="gast-hinweis">Sie bestellen als Gast. Ein Konto ist nicht nötig. <a href="{u('/konto/')}">Anmelden</a></p>
 <p class="meldung nur-gewerbe" hidden>Sie bestellen als <b>Gewerbekunde</b>. Preise netto zzgl. MwSt.; es gilt kein Widerrufsrecht.</p>
 <label class="lieferland">Lieferland <select name="land" autocomplete="shipping country"><option value="DE">Deutschland</option></select></label>
-<p class="klein" id="land-hinweis" hidden>Versand ins Ausland: feste Paketpreise je Land; bei großen Mengen oder schweren Geräten ggf. Nachforderung vor dem Versand. <a href="{u('/versand/')}">Alle Versandpreise</a></p>
+<p class="klein" id="land-hinweis" hidden>Versand ins Ausland: fester Versandpreis je Bestellung und Land. <a href="{u('/versand/')}">Alle Versandpreise</a></p>
+<div class="meldung" id="gewerbe-tipp" hidden><p><strong>Bestellen Sie als Unternehmen?</strong> Mit einer gültigen USt-IdNr. aus dem Lieferland liefern wir ohne Umsatzsteuer (steuerfreie innergemeinschaftliche Lieferung). Schalten Sie dazu auf Gewerbe und geben Sie Firma und USt-IdNr. ein; wir prüfen die Nummer sofort bei der EU.</p><button class="btn sec" type="button" id="gewerbe-wechsel">Als Unternehmen bestellen</button></div>
 <div class="adressen">
 <fieldset><legend>Rechnungsadresse</legend>
 <label class="nur-gewerbe" hidden>Firma <input type="text" name="firma" autocomplete="billing organization"></label>
