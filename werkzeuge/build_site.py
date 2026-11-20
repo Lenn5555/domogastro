@@ -295,7 +295,7 @@ def startseite(nach_kat):
 <script src="{uv('/domo.js')}" defer></script>
 </div></div>
 <div class="leiste g"><div class="in"><span>Für Restaurants</span><span>Für Hotels</span><span>Für Cafés</span><span>Für Imbisse</span><span>Für Catering</span><span>Für Zuhause</span></div></div>
-<section class="g"><div class="in"><div class="sh"><h2>Ausgewählte Produkte</h2></div><div class="raster">{''.join(karte(p) for p in ausgewaehlt[:10])}</div></div></section>
+<section class="g" id="auswahl"><div class="in"><div class="sh"><h2>Ausgewählte Produkte</h2></div><div class="raster">{''.join(karte(p) for p in ausgewaehlt[:10])}</div></div></section>
 <section class="cats g" id="bereiche"><div class="in"><div class="sh"><h2>Nach Bereich einkaufen</h2></div><div class="cg">{kacheln}</div></div></section>
 <div class="ben g"><div class="in">
 <div><svg viewBox="0 0 34 34" fill="none" stroke="#22C3E6" stroke-width="2" aria-hidden="true"><rect x="6" y="9" width="22" height="18" rx="2"/><path d="M6 14h22M12 9V6h10v3"/></svg><span>Profi-Qualität für Küche und Gastronomie</span></div>

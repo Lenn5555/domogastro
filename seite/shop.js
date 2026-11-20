@@ -61,6 +61,43 @@
     var c = $(".korb"); if (c) { c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
   }
 
+  // Verlauf nur im Browser (localStorage), geht nie an den Server. Abschaltbar über „Verlauf löschen“ auf der Startseite.
+  function verlaufMerken(schluessel, slug) {
+    if (lies("dg-verlauf-aus", false)) return;
+    var l = lies(schluessel, []).filter(function (s) { return s !== slug; });
+    l.unshift(slug); schreib(schluessel, l.slice(0, 30));
+  }
+  // Startseite „Ausgewählte Produkte“ (Lenn 2026-11-20): zuerst Gekauftes, dann zuletzt Angesehenes, Rest zufällig
+  function startseiteAuswahl() {
+    var sek = $("#auswahl"); if (!sek) return;
+    var raster = $(".raster", sek), titel = $("h2", sek), ANZAHL = 10;
+    index().then(function (ix) {
+      var nachSlug = {};
+      ix.produkte.forEach(function (p) { if (p.p && p.b) nachSlug[p.s] = p; });
+      var eigene = [], drin = {};
+      lies("dg-gekauft", []).concat(lies("dg-gesehen", [])).forEach(function (s) {
+        if (nachSlug[s] && !drin[s] && eigene.length < ANZAHL) { eigene.push(nachSlug[s]); drin[s] = 1; }
+      });
+      var rest = Object.keys(nachSlug).filter(function (s) { return !drin[s]; });
+      for (var i = rest.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = rest[i]; rest[i] = rest[j]; rest[j] = t; }
+      var liste = eigene.concat(rest.slice(0, ANZAHL - eigene.length).map(function (s) { return nachSlug[s]; }));
+      raster.innerHTML = liste.map(function (p) {
+        var breiten = p.skus && p.skus.length > 1 && /hauben/i.test(p.u) ? " · " + p.skus.length + " Breiten" : "";
+        return '<a class="p" href="' + B + "/produkt/" + esc(p.s) + '/"><div class="ph"><img src="' + esc(p.b) + '" alt="" loading="lazy"></div>' +
+          '<p class="n">' + esc(p.n) + '</p><span class="t">' + esc(p.h || "") + breiten + "</span>" +
+          '<div><span class="pr" data-netto="' + p.p.toFixed(2) + '"' + (p.ab ? " data-ab=1" : "") + '></span><span class="steuer"></span></div></a>';
+      }).join("");
+      if (eigene.length) {
+        titel.innerHTML = 'Für Sie ausgewählt <button type="button" class="verlauf-weg klein">Verlauf löschen</button>';
+        $(".verlauf-weg", titel).addEventListener("click", function () {
+          schreib("dg-gesehen", null); schreib("dg-gekauft", null); schreib("dg-verlauf-aus", true);
+          startseiteAuswahl();
+        });
+      } else titel.textContent = "Ausgewählte Produkte";
+      preiseSetzen();
+    }).catch(function () { /* stehende Auswahl bleibt */ });
+  }
+
   var indexVersprechen = null;
   function index() {
     if (!indexVersprechen) indexVersprechen = fetch(B + "/produkte-index.json").then(function (r) { return r.json(); });
@@ -94,6 +131,8 @@
   /* ---------- Produktseite ---------- */
   function produktseite() {
     var art = $(".produkt"); if (!art) return;
+    var m = location.pathname.match(/\/produkt\/([^/]+)\/?$/);
+    if (m) verlaufMerken("dg-gesehen", decodeURIComponent(m[1]));
     var wahl = $(".variante", art);
     function variante() {
       if (!wahl) return null;
@@ -303,7 +342,9 @@
       }
       function fertig(d, email) {
         if (d.sitzung) schreib("dg-sitzung", d.sitzung);
-        korbSpeichern([]);
+        index().then(function (ix) {
+          korb().forEach(function (p) { var a = ix.artikel[p.sku]; if (a) verlaufMerken("dg-gekauft", a.s); });
+        }).catch(function () {}).then(function () { korbSpeichern([]); });
         location.href = B + "/bestellung/?nr=" + encodeURIComponent(d.nr) + "&email=" + encodeURIComponent(d.email || email) + "&neu=1";
       }
 
@@ -688,5 +729,5 @@
     if (a) { e.preventDefault(); inDenKorb(a.dataset.sku, 1); }
   });
   korbZaehler(); kontoKopf(); preiseZeigen();
-  produktseite(); kategorieseite(); suchseite(); kasse(); bestellseite(); widerrufseite(); kontoseite(); berater();
+  produktseite(); startseiteAuswahl(); kategorieseite(); suchseite(); kasse(); bestellseite(); widerrufseite(); kontoseite(); berater();
 })();

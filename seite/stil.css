@@ -284,3 +284,4 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 .v-widerruf .btn{margin:8px 8px 0 0}
 .v-erstatten{margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .v-erstatten input{width:110px}
+.verlauf-weg{display:inline-block;margin-left:14px;padding:0;border:0;background:none;color:inherit;opacity:.7;font:500 13px/1 var(--sans);text-decoration:underline;cursor:pointer;vertical-align:middle}.verlauf-weg:hover{opacity:1}
