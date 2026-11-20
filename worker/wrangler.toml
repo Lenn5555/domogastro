@@ -9,9 +9,9 @@ account_id = "4b855f0470ebca3d071a170d0a9b51df"
 
 [vars]
 # Seiten, die den Server aufrufen dürfen (kommagetrennt)
-HERKUNFT = "https://lenn5555.github.io,http://localhost:8000"
+HERKUNFT = "https://domogastro.de,https://www.domogastro.de,https://lenn5555.github.io,http://localhost:8000"
 # Öffentliche Adresse der Website (für Links in Mails und die Rückkehr von PayPal)
-SITE_URL = "https://lenn5555.github.io/domogastro"
+SITE_URL = "https://domogastro.de"
 BESTELL_EMAIL = "sales@ts-systec.de"
 # Absender muss bei Resend als Domain bestätigt sein (SPF, DKIM, DMARC). Bis dahin werden keine Mails verschickt.
 ABSENDER = "Domo Gastro <bestellung@domogastro.de>"
