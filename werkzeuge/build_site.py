@@ -278,7 +278,7 @@ def startseite(nach_kat):
     ausgewaehlt, gesehen = [], set()
     for k in kategorien():
         for p in sorted((p for uk in nach_kat[k].values() for p in uk), key=lambda p: -(ab_preis(p) or 0)):
-            if p["bilder"] and ab_preis(p) and "ts-systemtechnik.de" in p["bilder"][0] and p["unterkategorie"] not in gesehen:
+            if p["bilder"] and ab_preis(p) and p["unterkategorie"] not in gesehen:
                 ausgewaehlt.append(p); gesehen.add(p["unterkategorie"]); break
     kacheln = "".join(
         f'<a class="c" href="{u("/" + slug(k) + "/")}"><div class="ph"><img src="{e(bild)}" alt="" loading="lazy"></div><b>{e(k)}</b><span>{e(KAT_TEXT.get(k, ""))}</span></a>'
