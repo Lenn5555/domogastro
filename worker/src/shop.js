@@ -24,11 +24,11 @@ function bestellnummer() {
 
 // Preise kommen nur aus dem Katalog des Servers, nie aus dem Browser. prozent = Gutschein-Rabatt auf den Warenwert.
 // land = Lieferland (daten/laender.json), ustidGueltig = Unternehmer mit geprüfter USt-IdNr. aus einem anderen EU-Land
-export function rechnen(positionen, prozent = 0, land = "DE", ustidGueltig = false) {
+export function rechnen(positionen, prozent = 0, land = "DE", ustidGueltig = false, jetzt = Date.now()) {
   if (!Array.isArray(positionen) || !positionen.length) throw new Fehler("Der Warenkorb ist leer.");
   if (positionen.length > 50) throw new Fehler("Zu viele Positionen.");
   if (!landVon(LAENDER, land)) throw new Fehler("In dieses Land liefern wir leider nicht. Schreiben Sie uns gern an sales@ts-systec.de.");
-  const jetzt = Date.now(), akt = aktionAktiv(AKTION, jetzt);  // Preisaktion (Black Week): reduzierter Stückpreis
+  const akt = aktionAktiv(AKTION, jetzt);  // Preisaktion (Black Week): reduzierter Stückpreis
   const pos = positionen.map((p) => {
     const a = KATALOG.artikel[String(p.sku)];
     const menge = parseInt(p.menge, 10);
