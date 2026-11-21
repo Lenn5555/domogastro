@@ -160,7 +160,7 @@ vielen Dank für Ihre Bewertung! Als Dankeschön erhalten Sie ${prozent} % Rabat
 
 Ihr persönlicher Gutscheincode: ${code}
 
-So lösen Sie ihn ein: Geben Sie den Code im Warenkorb unter „Gutscheincode“ ein. Er gilt einmal, für den gesamten Warenwert einer Bestellung, und ist nicht mit anderen Gutscheinen kombinierbar. Eine Barauszahlung ist nicht möglich.
+So lösen Sie ihn ein: Geben Sie den Code im Warenkorb unter „Gutscheincode“ ein. Er gilt einmal, für den gesamten Warenwert einer Bestellung, und ist nicht mit anderen Gutscheinen oder laufenden Rabattaktionen kombinierbar. Eine Barauszahlung ist nicht möglich.
 
 Zum Shop: ${env.SITE_URL}/
 

@@ -44,7 +44,7 @@
     });
     $$(".aktion-hinweis").forEach(function (e) {
       e.hidden = !akt;
-      if (akt) e.textContent = akt.name + ": " + akt.prozent + " % auf alles, ohne Code, bis " + (akt.bis_text || new Date(akt.bis).toLocaleString("de-DE")) + ". Durchgestrichen: niedrigster Preis der letzten 30 Tage.";
+      if (akt) e.textContent = akt.name + ": " + akt.prozent + " % auf alles, ohne Code, bis " + (akt.bis_text || new Date(akt.bis).toLocaleString("de-DE")) + ". Nicht mit Gutscheinen kombinierbar. Durchgestrichen: niedrigster Preis der letzten 30 Tage.";
     });
     $$(".steuer").forEach(function (e) { e.textContent = steuerText() + (landCode === "DE" ? (e.dataset.zusatz || "") : ", zzgl. Versand"); });
     $$(".seg button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.modus === modus)); });

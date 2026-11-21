@@ -301,7 +301,13 @@ function gutscheinZufall(n = 8) {
 function gutscheinCode(v) {
   return text(v, 30).toUpperCase().replace(/\s+/g, "");
 }
+// Lenn 2026-11-21: Rabattaktionen sind nicht kombinierbar. Während einer Preisaktion (Black Week) kein Gutschein; der Code bleibt gültig.
+function keineAktion(jetzt = Date.now()) {
+  const a = aktionAktiv(AKTION, jetzt);
+  if (a) throw new Fehler(`Gutscheine sind nicht mit der Aktion „${a.name}“ (${a.prozent} % auf alles) kombinierbar. Ihr Code bleibt gültig und ist ab ${a.bis_text ? "dem Ende der Aktion (" + a.bis_text + ")" : "dem Ende der Aktion"} wieder einlösbar.`);
+}
 async function gutscheinLesen(env, code) {
+  keineAktion();
   const g = await env.DB.prepare("SELECT code, prozent, eingeloest_nr FROM gutscheine WHERE code = ?").bind(code).first();
   if (!g) throw new Fehler("Diesen Gutscheincode kennen wir nicht. Bitte prüfen Sie die Schreibweise.");
   if (g.eingeloest_nr) throw new Fehler("Dieser Gutscheincode wurde bereits eingelöst.");
