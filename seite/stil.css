@@ -219,6 +219,35 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
   .summe{position:static}
   .suche{min-width:0;width:100%}
 }
+/* Handy (Lenn 2026-11-23: soll eher wie die Website aussehen): schlanker Kopf, Menü in einer Zeile, Domo neben dem Text */
+@media (max-width:640px){
+  .aktion-band{font-size:12px;padding:6px 12px;line-height:1.35}
+  .aktion-band .a1{display:block;font-size:13px}
+  .aktion-band .a2{display:block;font-weight:500;font-size:11px}
+  .top{padding-block:8px}
+  .top .in{display:grid;grid-template-columns:1fr;gap:8px}
+  .top .r{order:-1;display:flex;flex-wrap:nowrap;justify-content:space-between;gap:8px}
+  .konto-link{font-size:12px;white-space:nowrap}.konto-link .lang{display:none}
+  .seg button{padding:5px 10px;font-size:11px}
+  .korb{padding:6px 12px;font-size:12px}
+  .suche input{padding-block:6px;font-size:16px}
+  header.h{padding-block:10px 0}
+  .mid{gap:8px}
+  .mid .logo img{height:56px}
+  .mid nav{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scrollbar-width:none;width:calc(100% + 32px);margin-inline:-16px;padding:4px 16px 10px;gap:0 16px;font-size:13px;
+    -webkit-mask:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 28px),transparent)}
+  .mid nav::-webkit-scrollbar{display:none}
+  .hero>.in{grid-template-columns:minmax(0,1fr) 42%;grid-template-areas:"hand hand" "h1 h1" "lead domo" "ctas domo";column-gap:4px;row-gap:16px;align-items:start;min-height:0}
+  .hero .copy{display:contents}
+  .hero .hand{grid-area:hand;font-size:22px;margin-top:32px}
+  .hero h1{grid-area:h1;font-size:clamp(36px,11vw,46px)}
+  .hero .lead{grid-area:lead;font-size:15px;line-height:1.5}
+  .hero .ctas{grid-area:ctas;flex-direction:column;align-items:stretch;gap:10px;padding-bottom:28px;align-self:end}
+  .hero .ctas .btn{text-align:center;padding-inline:14px}
+  .domo{grid-area:domo;padding-top:0;align-self:end;justify-self:end;height:auto}
+  .domo img{height:min(330px,80vw)}
+  .leiste .in{min-height:0;font-size:18px;gap:6px 18px}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 /* Verwaltung */
 .v-karte{background:var(--n2);border-radius:14px;padding:16px 18px;margin:0 0 12px}
