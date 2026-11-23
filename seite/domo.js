@@ -184,7 +184,8 @@
   hero.addEventListener("click", function (e) {
     if (e.target.closest("a, button, input, label")) return;
     if (ruhig || zustand !== "ruhe") return;
-    if (trifftDomo(e.clientX, e.clientY)) {
+    // Auf dem Handy gibt es keine Jagd: jeder Tipp auf die Domo-Fläche lässt ihn winken (Pixeltest war dort zu streng)
+    if (handy || trifftDomo(e.clientX, e.clientY)) {
       if (C.winken && aktiv !== C.winken && bereit(C.winken)) {
         clearTimeout(zurueck); zustand = "winken";
         abspielen(C.winken, true); wechseln(C.winken);
