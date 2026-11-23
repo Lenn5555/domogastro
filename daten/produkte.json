@@ -1267,7 +1267,7 @@
   },
   {
    "sku": "8500-0049",
-   "gtin": null,
+   "gtin": "04262376360768",
    "name": "Gastro-Edelstahl Müllsackwagen für Müllsäcke",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Abfall",
@@ -1301,7 +1301,7 @@
   },
   {
    "sku": "8500-0001",
-   "gtin": null,
+   "gtin": "04262376360775",
    "name": "Gastro-Mülleimer aus Edelstahl 50 Liter",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Abfall",
@@ -1335,7 +1335,7 @@
   },
   {
    "sku": "8500-0002",
-   "gtin": null,
+   "gtin": "04262376360782",
    "name": "Gastro-Mülleimer aus Edelstahl 75 Liter",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Abfall",
@@ -1368,7 +1368,7 @@
   },
   {
    "sku": "8500-0003",
-   "gtin": null,
+   "gtin": "04262376360799",
    "name": "Gastro-Mülleimer aus Edelstahl 95 Liter",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Abfall",
@@ -1402,7 +1402,7 @@
   },
   {
    "sku": "8500-0004",
-   "gtin": null,
+   "gtin": "04262376360805",
    "name": "Gastro-Mülleimer aus Edelstahl mit Fußbedienung 50 Liter",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Abfall",
@@ -1436,7 +1436,7 @@
   },
   {
    "sku": "8500-0005",
-   "gtin": null,
+   "gtin": "04262376360812",
    "name": "Gastro-Mülleimer aus Edelstahl mit Fußbedienung 75 Liter",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Abfall",
@@ -1469,7 +1469,7 @@
   },
   {
    "sku": "8500-0006",
-   "gtin": null,
+   "gtin": "04262376360829",
    "name": "Gastro-Mülleimer aus Edelstahl mit Fußbedienung 95 Liter",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Abfall",
@@ -1503,7 +1503,7 @@
   },
   {
    "sku": "8500-AD6000",
-   "gtin": null,
+   "gtin": "04262376360836",
    "name": "Mülleimer-Schrank mit Einwurfklappe und Flügeltür, 60 Liter, 500x530x1200mm",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Abfall",
@@ -2054,7 +2054,7 @@
   },
   {
    "sku": "4830-91522",
-   "gtin": null,
+   "gtin": "04262376360843",
    "name": "Automatischer Seifen-und Gelspender, silber",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Spender",
@@ -2085,7 +2085,7 @@
   },
   {
    "sku": "4830-91523",
-   "gtin": null,
+   "gtin": "04262376360850",
    "name": "Automatischer Seifen-und Gelspender, weiß",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Spender",
@@ -2414,7 +2414,7 @@
   },
   {
    "sku": "4830-91525",
-   "gtin": null,
+   "gtin": "04262376360867",
    "name": "Seifen-/Gelspender, manuell, zur Wandmontage, 1100ml, weiß",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Spender",
@@ -2450,7 +2450,7 @@
   },
   {
    "sku": "4830-91520",
-   "gtin": null,
+   "gtin": "04262376360874",
    "name": "Seifen-/Gelspender, manuell, zur Wandmontage, 350ml, chrom",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Spender",
@@ -2486,7 +2486,7 @@
   },
   {
    "sku": "4830-91521",
-   "gtin": null,
+   "gtin": "04262376360881",
    "name": "Seifen-/Gelspender, manuell, zur Wandmontage, 350ml, schwarz",
    "kategorie": "Hygiene & Waschraum",
    "unterkategorie": "Spender",
@@ -3251,7 +3251,7 @@
   },
   {
    "sku": "7860-AR27-1003",
-   "gtin": null,
+   "gtin": "04262376360898",
    "name": "Elektro-Doppelfriteuse 2x 10 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3282,7 +3282,7 @@
   },
   {
    "sku": "7860-AR27-0003",
-   "gtin": null,
+   "gtin": "04262376360904",
    "name": "Elektro-Doppelfriteuse 2x 10 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3313,7 +3313,7 @@
   },
   {
    "sku": "7860-AR27-1103",
-   "gtin": null,
+   "gtin": "04262376360911",
    "name": "Elektro-Doppelfriteuse 2x 10 Liter mit Untergestell",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3344,7 +3344,7 @@
   },
   {
    "sku": "7860-AR27-1007",
-   "gtin": null,
+   "gtin": "04262376360928",
    "name": "Elektro-Doppelfriteuse 2x 14 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3375,7 +3375,7 @@
   },
   {
    "sku": "7860-AR27-1107",
-   "gtin": null,
+   "gtin": "04262376360935",
    "name": "Elektro-Doppelfriteuse 2x 14 Liter mit Untergestell",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3406,7 +3406,7 @@
   },
   {
    "sku": "7860-AR27-1035",
-   "gtin": null,
+   "gtin": "04262376360942",
    "name": "Elektro-Doppelfriteuse 2x 18 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3437,7 +3437,7 @@
   },
   {
    "sku": "7860-AR27-1135",
-   "gtin": null,
+   "gtin": "04262376360959",
    "name": "Elektro-Doppelfriteuse 2x 18 Liter mit Untergestell",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3468,7 +3468,7 @@
   },
   {
    "sku": "7860-AR27-0001",
-   "gtin": null,
+   "gtin": "04262376360966",
    "name": "Elektro-Friteuse 10 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3500,7 +3500,7 @@
   },
   {
    "sku": "7860-AR27-1001",
-   "gtin": null,
+   "gtin": "04262376360973",
    "name": "Elektro-Friteuse 10 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3531,7 +3531,7 @@
   },
   {
    "sku": "7860-AR27-1101",
-   "gtin": null,
+   "gtin": "04262376360980",
    "name": "Elektro-Friteuse 10 Liter mit Untergestell",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3562,7 +3562,7 @@
   },
   {
    "sku": "7860-AR27-1005",
-   "gtin": null,
+   "gtin": "04262376360997",
    "name": "Elektro-Friteuse 14 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3593,7 +3593,7 @@
   },
   {
    "sku": "7860-AR27-1105",
-   "gtin": null,
+   "gtin": "04262376361000",
    "name": "Elektro-Friteuse 14 Liter mit Untergestell",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3624,7 +3624,7 @@
   },
   {
    "sku": "7860-AR27-1034",
-   "gtin": null,
+   "gtin": "04262376361017",
    "name": "Elektro-Friteuse 18 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3655,7 +3655,7 @@
   },
   {
    "sku": "7860-AR27-1134",
-   "gtin": null,
+   "gtin": "04262376361024",
    "name": "Elektro-Friteuse 18 Liter mit Untergestell",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3686,7 +3686,7 @@
   },
   {
    "sku": "7860-AR27-1032",
-   "gtin": null,
+   "gtin": "04262376361031",
    "name": "Elektro-Pommeswärmer 1/1 GN",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3717,7 +3717,7 @@
   },
   {
    "sku": "7860-AR27-0048",
-   "gtin": null,
+   "gtin": "04262376361048",
    "name": "Elektro-Pommeswärmer 2/3 GN",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3748,7 +3748,7 @@
   },
   {
    "sku": "7003-AR26-0024",
-   "gtin": null,
+   "gtin": "04262376361055",
    "name": "Fettabscheider 180 Liter; Schlammfang 45 Liter, Fettabscheideraum 135 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3784,7 +3784,7 @@
   },
   {
    "sku": "7003-AR26-0025",
-   "gtin": null,
+   "gtin": "04262376361062",
    "name": "Fettabscheider 180 Liter; Schlammfang 45 Liter, Fettabscheideraum 135 Liter mit Untergestell mit Rollen",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3822,7 +3822,7 @@
   },
   {
    "sku": "7003-AR26-0020",
-   "gtin": null,
+   "gtin": "04262376361079",
    "name": "Fettabscheider 30 Liter; Schlammfang 9 Liter, Fettabscheideraum 19 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3858,7 +3858,7 @@
   },
   {
    "sku": "7003-AR26-0021",
-   "gtin": null,
+   "gtin": "04262376361086",
    "name": "Fettabscheider 30 Liter; Schlammfang 9 Liter, Fettabscheideraum 19 Liter mit Untergestell mit Rollen",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3896,7 +3896,7 @@
   },
   {
    "sku": "7003-AR26-0022",
-   "gtin": null,
+   "gtin": "04262376361093",
    "name": "Fettabscheider 60 Liter; Schlammfang 23 Liter, Fettabscheideraum 34 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -3932,7 +3932,7 @@
   },
   {
    "sku": "7003-AR26-0023",
-   "gtin": null,
+   "gtin": "04262376361109",
    "name": "Fettabscheider 60 Liter; Schlammfang 23 Liter, Fettabscheideraum 34 Liter mit Untergestell mit Rollen",
    "kategorie": "Kochen",
    "unterkategorie": "Fritteusen",
@@ -4006,7 +4006,7 @@
   },
   {
    "sku": "7860-AR27-0008",
-   "gtin": null,
+   "gtin": "04262376361116",
    "name": "Elektro-Grillplatte 400 x 630 mm gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4038,7 +4038,7 @@
   },
   {
    "sku": "7860-AR27-0010",
-   "gtin": null,
+   "gtin": "04262376361123",
    "name": "Elektro-Grillplatte 400 x 630 mm glatt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4070,7 +4070,7 @@
   },
   {
    "sku": "7860-AR27-1008",
-   "gtin": null,
+   "gtin": "04262376361130",
    "name": "Elektro-Grillplatte 400 x 700 mm gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4101,7 +4101,7 @@
   },
   {
    "sku": "7860-AR27-1009",
-   "gtin": null,
+   "gtin": "04262376361147",
    "name": "Elektro-Grillplatte 400 x 700 mm glatt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4132,7 +4132,7 @@
   },
   {
    "sku": "7860-AR27-0013",
-   "gtin": null,
+   "gtin": "04262376361154",
    "name": "Elektro-Grillplatte 600 x 630 mm gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4163,7 +4163,7 @@
   },
   {
    "sku": "7860-AR27-0011",
-   "gtin": null,
+   "gtin": "04262376361161",
    "name": "Elektro-Grillplatte 600 x 630 mm glatt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4194,7 +4194,7 @@
   },
   {
    "sku": "7860-AR27-0012",
-   "gtin": null,
+   "gtin": "04262376361178",
    "name": "Elektro-Grillplatte 600 x 630 mm je zur Hälfte glatt/gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4225,7 +4225,7 @@
   },
   {
    "sku": "7860-AR27-001",
-   "gtin": null,
+   "gtin": "04262376361185",
    "name": "Elektro-Grillplatte 600 x 630 mm je zur Hälfte glatt/gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4256,7 +4256,7 @@
   },
   {
    "sku": "7860-AR27-1002",
-   "gtin": null,
+   "gtin": "04262376361192",
    "name": "Elektro-Grillplatte 800 x 700 mm gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4287,7 +4287,7 @@
   },
   {
    "sku": "7860-AR27-1010",
-   "gtin": null,
+   "gtin": "04262376361208",
    "name": "Elektro-Grillplatte 800 x 700 mm glatt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4318,7 +4318,7 @@
   },
   {
    "sku": "7860-AR27-1011",
-   "gtin": null,
+   "gtin": "04262376361215",
    "name": "Elektro-Grillplatte 800 x 700 mm je zur Hälfte glatt/gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4349,7 +4349,7 @@
   },
   {
    "sku": "7860-AR27-0025",
-   "gtin": null,
+   "gtin": "04262376361222",
    "name": "Gas-Grillplatte 400 x 630 mm gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4380,7 +4380,7 @@
   },
   {
    "sku": "7860-AR27-0026",
-   "gtin": null,
+   "gtin": "04262376361239",
    "name": "Gas-Grillplatte 400 x 630 mm glatt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4411,7 +4411,7 @@
   },
   {
    "sku": "7860-AR27-1004",
-   "gtin": null,
+   "gtin": "04262376361246",
    "name": "Gas-Grillplatte 400 x 700 mm gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4442,7 +4442,7 @@
   },
   {
    "sku": "7860-AR27-1012",
-   "gtin": null,
+   "gtin": "04262376361253",
    "name": "Gas-Grillplatte 400 x 700 mm glatt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4473,7 +4473,7 @@
   },
   {
    "sku": "7860-AR27-0029",
-   "gtin": null,
+   "gtin": "04262376361260",
    "name": "Gas-Grillplatte 600 x 630 mm gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4505,7 +4505,7 @@
   },
   {
    "sku": "7860-AR27-0027",
-   "gtin": null,
+   "gtin": "04262376361277",
    "name": "Gas-Grillplatte 600 x 630 mm glatt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4537,7 +4537,7 @@
   },
   {
    "sku": "7860-AR27-0028",
-   "gtin": null,
+   "gtin": "04262376361284",
    "name": "Gas-Grillplatte 600 x 630 mm je zur Hälfte glatt/gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4569,7 +4569,7 @@
   },
   {
    "sku": "7860-AR27-1006",
-   "gtin": null,
+   "gtin": "04262376361291",
    "name": "Gas-Grillplatte 800 x 700 mm gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4600,7 +4600,7 @@
   },
   {
    "sku": "7860-AR27-1013",
-   "gtin": null,
+   "gtin": "04262376361307",
    "name": "Gas-Grillplatte 800 x 700 mm glatt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4631,7 +4631,7 @@
   },
   {
    "sku": "7860-AR27-1014",
-   "gtin": null,
+   "gtin": "04262376361314",
    "name": "Gas-Grillplatte 800 x 700 mm je zur Hälfte glatt/gerillt",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4662,7 +4662,7 @@
   },
   {
    "sku": "7860-AR27-1022",
-   "gtin": null,
+   "gtin": "04262376361321",
    "name": "Gas-Lavasteingrill 1200 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4693,7 +4693,7 @@
   },
   {
    "sku": "7860-AR27-0030",
-   "gtin": null,
+   "gtin": "04262376361338",
    "name": "Gas-Lavasteingrill 400 x 630 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4725,7 +4725,7 @@
   },
   {
    "sku": "7860-AR27-1015",
-   "gtin": null,
+   "gtin": "04262376361345",
    "name": "Gas-Lavasteingrill 400 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4756,7 +4756,7 @@
   },
   {
    "sku": "7860-AR27-0032",
-   "gtin": null,
+   "gtin": "04262376361352",
    "name": "Gas-Lavasteingrill 600 x 630 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4787,7 +4787,7 @@
   },
   {
    "sku": "7860-AR27-1016",
-   "gtin": null,
+   "gtin": "04262376361369",
    "name": "Gas-Lavasteingrill 800 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4818,7 +4818,7 @@
   },
   {
    "sku": "7860-AR27-1033",
-   "gtin": null,
+   "gtin": "04262376361376",
    "name": "Gas-Wasser-Vapor-Grill 800 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4849,7 +4849,7 @@
   },
   {
    "sku": "7860-AR09-0020",
-   "gtin": null,
+   "gtin": "04262376361383",
    "name": "Gashähnchengrill mit Licht, 2 Spieße, für ca. 10-12 Hähnchen, Tischgerät, 12 kW",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4884,7 +4884,7 @@
   },
   {
    "sku": "7860-AR09-0021",
-   "gtin": null,
+   "gtin": "04262376361390",
    "name": "Gashähnchengrill mit Licht, 3 Spieße, für ca. 15-18 Hähnchen, Tischgerät, 18 kW",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4919,7 +4919,7 @@
   },
   {
    "sku": "7860-AR09-0022",
-   "gtin": null,
+   "gtin": "04262376361406",
    "name": "Gashähnchengrill mit Licht, 4 Spieße, für ca. 20-25 Hähnchen, Tischgerät, 24 kW",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4954,7 +4954,7 @@
   },
   {
    "sku": "7860-AR09-0023",
-   "gtin": null,
+   "gtin": "04262376361413",
    "name": "Gashähnchengrill mit Licht, 6 Spieße, für ca. 30-36 Hähnchen, Standgerät, 36 kW",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -4990,7 +4990,7 @@
   },
   {
    "sku": "7860-AR09-0024",
-   "gtin": null,
+   "gtin": "04262376361420",
    "name": "Gashähnchengrill mit Licht, 8 Spieße, für ca. 40-48 Hähnchen, Standgerät, 48 kW",
    "kategorie": "Kochen",
    "unterkategorie": "Grillplatten & Grills",
@@ -5026,7 +5026,7 @@
   },
   {
    "sku": "7860-AR27-0040",
-   "gtin": null,
+   "gtin": "04262376361437",
    "name": "Elektroherd mit 2 runden Platten",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5058,7 +5058,7 @@
   },
   {
    "sku": "7860-AR27-1023",
-   "gtin": null,
+   "gtin": "04262376361444",
    "name": "Elektroherd mit 2 runden Platten",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5089,7 +5089,7 @@
   },
   {
    "sku": "7860-AR27-1024",
-   "gtin": null,
+   "gtin": "04262376361451",
    "name": "Elektroherd mit 4 runden Platten",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5120,7 +5120,7 @@
   },
   {
    "sku": "7860-AR27-0042",
-   "gtin": null,
+   "gtin": "04262376361468",
    "name": "Elektroherd mit 4 runden Platten",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5152,7 +5152,7 @@
   },
   {
    "sku": "7860-AR27-1026",
-   "gtin": null,
+   "gtin": "04262376361475",
    "name": "Elektroherd mit 4 runden Platten und Ofen 2x GN 2/1",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5183,7 +5183,7 @@
   },
   {
    "sku": "7860-AR27-1025",
-   "gtin": null,
+   "gtin": "04262376361482",
    "name": "Elektroherd mit 6 runden Platten",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5214,7 +5214,7 @@
   },
   {
    "sku": "7860-AR27-1027",
-   "gtin": null,
+   "gtin": "04262376361499",
    "name": "Elektroherd mit 6 runden Platten und Ofen 2x GN 2/1",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5245,7 +5245,7 @@
   },
   {
    "sku": "7860-AR27-0049",
-   "gtin": null,
+   "gtin": "04262376361505",
    "name": "Gas-Wok-Kocher mit 1 Brenner 400 x 630 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5276,7 +5276,7 @@
   },
   {
    "sku": "7860-AR27-0034",
-   "gtin": null,
+   "gtin": "04262376361512",
    "name": "Gasherd 2 Flammen 400 x 630 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5308,7 +5308,7 @@
   },
   {
    "sku": "7860-AR27-1017",
-   "gtin": null,
+   "gtin": "04262376361529",
    "name": "Gasherd 2 Flammen 400 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5339,7 +5339,7 @@
   },
   {
    "sku": "7860-AR27-0036",
-   "gtin": null,
+   "gtin": "04262376361536",
    "name": "Gasherd 4 Flammen 600 x 630 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5370,7 +5370,7 @@
   },
   {
    "sku": "7860-AR27-1018",
-   "gtin": null,
+   "gtin": "04262376361543",
    "name": "Gasherd 4 Flammen 800 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5401,7 +5401,7 @@
   },
   {
    "sku": "7860-AR27-0038",
-   "gtin": null,
+   "gtin": "04262376361550",
    "name": "Gasherd 4 Flammen mit Gasbackofen 1/1 GN 600 x 630 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5433,7 +5433,7 @@
   },
   {
    "sku": "7860-AR27-1020",
-   "gtin": null,
+   "gtin": "04262376361567",
    "name": "Gasherd 4 Flammen mit Gasbackofen 1/1 GN 800 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5464,7 +5464,7 @@
   },
   {
    "sku": "7860-AR27-1019",
-   "gtin": null,
+   "gtin": "04262376361574",
    "name": "Gasherd 6 Flammen 1200 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5495,7 +5495,7 @@
   },
   {
    "sku": "7860-AR27-1021",
-   "gtin": null,
+   "gtin": "04262376361581",
    "name": "Gasherd 6 Flammen mit Gasbackofen 1/1 GN 1200 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5526,7 +5526,7 @@
   },
   {
    "sku": "7860-AR27-1065",
-   "gtin": null,
+   "gtin": "04262376361598",
    "name": "Power-Gasherd 1x 16 kW 400 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5557,7 +5557,7 @@
   },
   {
    "sku": "7860-AR27-1066",
-   "gtin": null,
+   "gtin": "04262376361604",
    "name": "Power-Gasherd 2x 16 kW 800 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5588,7 +5588,7 @@
   },
   {
    "sku": "7860-AR27-1067",
-   "gtin": null,
+   "gtin": "04262376361611",
    "name": "Power-Gasherd 3x 16 kW 1200 x 700 mm",
    "kategorie": "Kochen",
    "unterkategorie": "Herde & Kochfelder",
@@ -5683,7 +5683,7 @@
   },
   {
    "sku": "7860-AR27-0046",
-   "gtin": null,
+   "gtin": "04262376361628",
    "name": "Elektro-Pastakocher 8 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Kessel, Pastakocher & Kippbratpfannen",
@@ -5743,7 +5743,7 @@
   },
   {
    "sku": "7860-AR27-0047",
-   "gtin": null,
+   "gtin": "04262376361635",
    "name": "Gas-Pastakocher 8 Liter",
    "kategorie": "Kochen",
    "unterkategorie": "Kessel, Pastakocher & Kippbratpfannen",
@@ -5887,7 +5887,7 @@
   },
   {
    "sku": "7860-THSK10",
-   "gtin": null,
+   "gtin": "04262376361642",
    "name": "Suppentopf aus hochwertigem Edelstahl mit Thermostat und Kontrollleuchte, 8 Liter Nutzvolumen",
    "kategorie": "Kochen",
    "unterkategorie": "Kessel, Pastakocher & Kippbratpfannen",
@@ -5922,7 +5922,7 @@
   },
   {
    "sku": "7860-AR14-0047",
-   "gtin": null,
+   "gtin": "04262376361659",
    "name": "Elektro Pizzaofen Vollschamott Doppelkammer 12 kW, bis 500°C für 8 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -5957,7 +5957,7 @@
   },
   {
    "sku": "7860-AR14-0053",
-   "gtin": null,
+   "gtin": "04262376361666",
    "name": "Elektro Pizzaofen Vollschamott Doppelkammer 18 kW, bis 500°C für 12 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -5992,7 +5992,7 @@
   },
   {
    "sku": "7860-AR14-0049",
-   "gtin": null,
+   "gtin": "04262376361673",
    "name": "Elektro Pizzaofen Vollschamott Doppelkammer 18 kW, bis 500°C für 12 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6027,7 +6027,7 @@
   },
   {
    "sku": "7860-AR14-0056",
-   "gtin": null,
+   "gtin": "04262376361680",
    "name": "Elektro Pizzaofen Vollschamott Doppelkammer 26,4 kW, bis 500°C für 18 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6062,7 +6062,7 @@
   },
   {
    "sku": "7860-AR14-0055",
-   "gtin": null,
+   "gtin": "04262376361697",
    "name": "Elektro Pizzaofen Vollschamott Einkammer 13,2 kW, bis 500°C für 9 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6097,7 +6097,7 @@
   },
   {
    "sku": "7860-AR14-0046",
-   "gtin": null,
+   "gtin": "04262376361703",
    "name": "Elektro Pizzaofen Vollschamott Einkammer 6 kW, bis 500°C für 4 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6132,7 +6132,7 @@
   },
   {
    "sku": "7860-AR14-0052",
-   "gtin": null,
+   "gtin": "04262376361710",
    "name": "Elektro Pizzaofen Vollschamott Einkammer 9 kW, bis 500°C für 6 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6167,7 +6167,7 @@
   },
   {
    "sku": "7860-AR14-0048",
-   "gtin": null,
+   "gtin": "04262376361727",
    "name": "Elektro Pizzaofen Vollschamott Einkammer 9 kW, bis 500°C für 6 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6202,7 +6202,7 @@
   },
   {
    "sku": "7860-AR14-0107",
-   "gtin": null,
+   "gtin": "04262376361734",
    "name": "Elektro Pizzaofen mit Thermometer Doppelkammer 12 kW, bis 500°C für 8 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6238,7 +6238,7 @@
   },
   {
    "sku": "7860-AR14-0105",
-   "gtin": null,
+   "gtin": "04262376361741",
    "name": "Elektro Pizzaofen mit Thermometer Doppelkammer 14,4 kW, bis 500°C für 12 Pizzen 30 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6274,7 +6274,7 @@
   },
   {
    "sku": "7860-AR14-0109",
-   "gtin": null,
+   "gtin": "04262376361758",
    "name": "Elektro Pizzaofen mit Thermometer Doppelkammer 18 kW, bis 500°C für 12 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6310,7 +6310,7 @@
   },
   {
    "sku": "7860-AR14-0103",
-   "gtin": null,
+   "gtin": "04262376361765",
    "name": "Elektro Pizzaofen mit Thermometer Doppelkammer 8,4 kW, bis 500°C für 8 Pizzen 30 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6346,7 +6346,7 @@
   },
   {
    "sku": "7860-AR14-0102",
-   "gtin": null,
+   "gtin": "04262376361772",
    "name": "Elektro Pizzaofen mit Thermometer Einkammer 4,2 kW, bis 500°C für 4 Pizzen 30 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6382,7 +6382,7 @@
   },
   {
    "sku": "7860-AR14-0106",
-   "gtin": null,
+   "gtin": "04262376361789",
    "name": "Elektro Pizzaofen mit Thermometer Einkammer 6 kW, bis 500°C für 4 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6418,7 +6418,7 @@
   },
   {
    "sku": "7860-AR14-0104",
-   "gtin": null,
+   "gtin": "04262376361796",
    "name": "Elektro Pizzaofen mit Thermometer Einkammer 7,2 kW, bis 500°C für 6 Pizzen 30 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6454,7 +6454,7 @@
   },
   {
    "sku": "7860-AR14-0108",
-   "gtin": null,
+   "gtin": "04262376361802",
    "name": "Elektro Pizzaofen mit Thermometer Einkammer 9 kW, bis 500°C für 6 Pizzen 36 cm",
    "kategorie": "Kochen",
    "unterkategorie": "Pizzaöfen",
@@ -6663,7 +6663,7 @@
   },
   {
    "sku": "8806-202642",
-   "gtin": null,
+   "gtin": "04262376361819",
    "name": "Fahrbarer Design-Tellerwärmer, für runde Teller 200-238 mm (1 Stapel)",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -6700,7 +6700,7 @@
   },
   {
    "sku": "8806-212842",
-   "gtin": null,
+   "gtin": "04262376361826",
    "name": "Fahrbarer Design-Tellerwärmer, für runde Teller 200-238 mm (2 Stapel)",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -6737,7 +6737,7 @@
   },
   {
    "sku": "8806-202644",
-   "gtin": null,
+   "gtin": "04262376361833",
    "name": "Fahrbarer Design-Tellerwärmer, für runde Teller 240-278 mm (1 Stapel)",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -6774,7 +6774,7 @@
   },
   {
    "sku": "8806-212844",
-   "gtin": null,
+   "gtin": "04262376361840",
    "name": "Fahrbarer Design-Tellerwärmer, für runde Teller 240-278 mm (2 Stapel)",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -6811,7 +6811,7 @@
   },
   {
    "sku": "8806-202646",
-   "gtin": null,
+   "gtin": "04262376361857",
    "name": "Fahrbarer Design-Tellerwärmer, für runde Teller 270-308 mm (1 Stapel)",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -6848,7 +6848,7 @@
   },
   {
    "sku": "8806-212846",
-   "gtin": null,
+   "gtin": "04262376361864",
    "name": "Fahrbarer Design-Tellerwärmer, für runde Teller 270-308 mm (2 Stapel)",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -6885,7 +6885,7 @@
   },
   {
    "sku": "8804-202720",
-   "gtin": null,
+   "gtin": "04262376361871",
    "name": "Fahrbarer Tellerwärmer, für runde Teller 200-238 mm (1 Stapel) – Equalizer",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -6922,7 +6922,7 @@
   },
   {
    "sku": "8804-212890",
-   "gtin": null,
+   "gtin": "04262376361888",
    "name": "Fahrbarer Tellerwärmer, für runde Teller 200-238 mm (2 Stapel) – Equalizer",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -6959,7 +6959,7 @@
   },
   {
    "sku": "8804-202730",
-   "gtin": null,
+   "gtin": "04262376361895",
    "name": "Fahrbarer Tellerwärmer, für runde Teller 240-278 mm (1 Stapel) – Equalizer",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -6996,7 +6996,7 @@
   },
   {
    "sku": "8804-212900",
-   "gtin": null,
+   "gtin": "04262376361901",
    "name": "Fahrbarer Tellerwärmer, für runde Teller 240-278 mm (2 Stapel) – Equalizer",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -7033,7 +7033,7 @@
   },
   {
    "sku": "8804-202740",
-   "gtin": null,
+   "gtin": "04262376361918",
    "name": "Fahrbarer Tellerwärmer, für runde Teller 270-308 mm (1 Stapel) – Equalizer",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -7070,7 +7070,7 @@
   },
   {
    "sku": "8804-212990",
-   "gtin": null,
+   "gtin": "04262376361925",
    "name": "Fahrbarer Tellerwärmer, für runde Teller 270-308 mm (2 Stapel) – Equalizer",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -7107,7 +7107,7 @@
   },
   {
    "sku": "8804-202742",
-   "gtin": null,
+   "gtin": "04262376361932",
    "name": "Fahrbarer Tellerwärmer, für runde Teller 300-338 mm (1 Stapel) – Equalizer",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -7144,7 +7144,7 @@
   },
   {
    "sku": "8804-212996",
-   "gtin": null,
+   "gtin": "04262376361949",
    "name": "Fahrbarer Tellerwärmer, für runde Teller 300-338 mm (2 Stapel) – Equalizer",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -7727,7 +7727,7 @@
   },
   {
    "sku": "7860-AR16-0020",
-   "gtin": null,
+   "gtin": "04262376361956",
    "name": "Teigausrollmaschine für Pizza 140-310 mm Durchmesser, inkl. Fußpedal",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -7761,7 +7761,7 @@
   },
   {
    "sku": "7860-AR16-0021",
-   "gtin": null,
+   "gtin": "04262376361963",
    "name": "Teigausrollmaschine für Pizza 260-400 mm Durchmesser, inkl. Fußpedal",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -7795,7 +7795,7 @@
   },
   {
    "sku": "7860-AR15-0050",
-   "gtin": null,
+   "gtin": "04262376361970",
    "name": "Teigknetmaschine 53 Liter, 42 kg, zwei Geschwindigkeiten, auf Rollen",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -7829,7 +7829,7 @@
   },
   {
    "sku": "7860-AR15-0051",
-   "gtin": null,
+   "gtin": "04262376361987",
    "name": "Teigknetmaschine 62 Liter,50 kg,  zwei Geschwindigkeiten, auf Rollen",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -7896,7 +7896,7 @@
   },
   {
    "sku": "8804-935210",
-   "gtin": null,
+   "gtin": "04262376361994",
    "name": "Zubehör CNS-Deckel für fahrbare Stapelplattformen 580 x 580 mm",
    "kategorie": "Küchenhelfer",
    "unterkategorie": "Küchenhelfer & Kleingeräte",
@@ -17003,7 +17003,7 @@
   },
   {
    "sku": "7520-500400",
-   "gtin": null,
+   "gtin": "04262376362007",
    "name": "Flammschutzfilter Typ A (Bauart A / Bauklasse A) Serie 7520 nach DIN 18869-5 (500 mm x 400 mm x 20 mm)",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17075,7 +17075,7 @@
   },
   {
    "sku": "7003-400400",
-   "gtin": null,
+   "gtin": "04262376362014",
    "name": "Flammschutzfilter Typ B (Bauart B / Bauklasse B) Serie 7003 (400 mm x 400 mm x 20 mm)",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17107,7 +17107,7 @@
   },
   {
    "sku": "7003-500400",
-   "gtin": null,
+   "gtin": "04262376362021",
    "name": "Flammschutzfilter Typ B (Bauart B / Bauklasse B) Serie 7003 (500 mm x 400 mm x 20 mm)",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17139,7 +17139,7 @@
   },
   {
    "sku": "7003-500500",
-   "gtin": null,
+   "gtin": "04262376362038",
    "name": "Flammschutzfilter Typ B (Bauart B / Bauklasse B) Serie 7003 (500 mm x 500 mm x 20 mm)",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17203,7 +17203,7 @@
   },
   {
    "sku": "7812-PCVBP",
-   "gtin": null,
+   "gtin": "04262376362045",
    "name": "Haubenbelüftung, glasgefülltes Polypropylen",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17235,7 +17235,7 @@
   },
   {
    "sku": "7812-PCVBP",
-   "gtin": null,
+   "gtin": "04262376362045",
    "name": "Haubenbelüftung, glasgefülltes Polypropylen",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17267,7 +17267,7 @@
   },
   {
    "sku": "7812-EL2-LED",
-   "gtin": null,
+   "gtin": "04262376362069",
    "name": "LED-Einbauleuchte OHLED 2 - 530 Lux",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17297,7 +17297,7 @@
   },
   {
    "sku": "7812-EL2-LED",
-   "gtin": null,
+   "gtin": "04262376362069",
    "name": "LED-Einbauleuchte OHLED 2 - 530 Lux",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17327,7 +17327,7 @@
   },
   {
    "sku": "7812-EL3-LED",
-   "gtin": null,
+   "gtin": "04262376362083",
    "name": "LED-Einbauleuchte OHLED 3 - 504 Lux",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17357,7 +17357,7 @@
   },
   {
    "sku": "7812-EL3-LED",
-   "gtin": null,
+   "gtin": "04262376362083",
    "name": "LED-Einbauleuchte OHLED 3 - 504 Lux",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17387,7 +17387,7 @@
   },
   {
    "sku": "7812-EL4-LED",
-   "gtin": null,
+   "gtin": "04262376362106",
    "name": "LED-Einbauleuchte OHLED 4 - 727 Lux",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17417,7 +17417,7 @@
   },
   {
    "sku": "7812-EL4-LED",
-   "gtin": null,
+   "gtin": "04262376362106",
    "name": "LED-Einbauleuchte OHLED 4 - 727 Lux",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17447,7 +17447,7 @@
   },
   {
    "sku": "7812-OHNANO-4000",
-   "gtin": null,
+   "gtin": "04262376362120",
    "name": "Nano-LED-Strahler",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17479,7 +17479,7 @@
   },
   {
    "sku": "7812-OHNANO-4000",
-   "gtin": null,
+   "gtin": "04262376362120",
    "name": "Nano-LED-Strahler für Abzugshauben",
    "kategorie": "Lüftung",
    "unterkategorie": "Haubenzubehör",
@@ -17983,7 +17983,7 @@
   },
   {
    "sku": "7811-THSS1040L",
-   "gtin": null,
+   "gtin": "04262376362144",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 1000x400x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18019,7 +18019,7 @@
   },
   {
    "sku": "7811-THSS1050L",
-   "gtin": null,
+   "gtin": "04262376362151",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 1000x500x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18055,7 +18055,7 @@
   },
   {
    "sku": "7811-THSS1240L",
-   "gtin": null,
+   "gtin": "04262376362168",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 1200x400x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18091,7 +18091,7 @@
   },
   {
    "sku": "7811-THSS1250L",
-   "gtin": null,
+   "gtin": "04262376362175",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 1200x500x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18127,7 +18127,7 @@
   },
   {
    "sku": "7811-THSS1440L",
-   "gtin": null,
+   "gtin": "04262376362182",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 1400x400x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18163,7 +18163,7 @@
   },
   {
    "sku": "7811-THSS1450L",
-   "gtin": null,
+   "gtin": "04262376362199",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 1400x500x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18199,7 +18199,7 @@
   },
   {
    "sku": "7811-THSS1640L",
-   "gtin": null,
+   "gtin": "04262376362205",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 1600x400x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18235,7 +18235,7 @@
   },
   {
    "sku": "7811-THSS1650L",
-   "gtin": null,
+   "gtin": "04262376362212",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 1600x500x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18271,7 +18271,7 @@
   },
   {
    "sku": "7811-THSS1840L",
-   "gtin": null,
+   "gtin": "04262376362229",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 1800x400x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18307,7 +18307,7 @@
   },
   {
    "sku": "7811-THSS1850L",
-   "gtin": null,
+   "gtin": "04262376362236",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 1800x500x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18343,7 +18343,7 @@
   },
   {
    "sku": "7811-THSS2040L",
-   "gtin": null,
+   "gtin": "04262376362243",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 2000x400x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18379,7 +18379,7 @@
   },
   {
    "sku": "7811-THSS2050L",
-   "gtin": null,
+   "gtin": "04262376362250",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 2000x500x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18415,7 +18415,7 @@
   },
   {
    "sku": "7811-THSS640L",
-   "gtin": null,
+   "gtin": "04262376362267",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 600x400x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18451,7 +18451,7 @@
   },
   {
    "sku": "7811-THSS650L",
-   "gtin": null,
+   "gtin": "04262376362274",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 600x500x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18487,7 +18487,7 @@
   },
   {
    "sku": "7811-THSS840L",
-   "gtin": null,
+   "gtin": "04262376362281",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 800x400x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18523,7 +18523,7 @@
   },
   {
    "sku": "7811-THSS850L",
-   "gtin": null,
+   "gtin": "04262376362298",
    "name": "Edelstahlregal, 4 verstellbare Regalböden, 75kg Traglast/Boden, 800x500x1800mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18559,7 +18559,7 @@
   },
   {
    "sku": "7860-AR27-0060",
-   "gtin": null,
+   "gtin": "04262376362304",
    "name": "Neutrales Arbeitselement 400 x 630 mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18590,7 +18590,7 @@
   },
   {
    "sku": "7860-AR27-1040",
-   "gtin": null,
+   "gtin": "04262376362311",
    "name": "Neutrales Arbeitselement 400 x 700 mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18621,7 +18621,7 @@
   },
   {
    "sku": "7860-AR27-0061",
-   "gtin": null,
+   "gtin": "04262376362328",
    "name": "Neutrales Arbeitselement 600 x 630 mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18652,7 +18652,7 @@
   },
   {
    "sku": "7860-AR27-1041",
-   "gtin": null,
+   "gtin": "04262376362335",
    "name": "Neutrales Arbeitselement 800 x 700 mm",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18683,7 +18683,7 @@
   },
   {
    "sku": "7860-AR27-1044",
-   "gtin": null,
+   "gtin": "04262376362342",
    "name": "Untergestell 1200 x 700 mm offen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18714,7 +18714,7 @@
   },
   {
    "sku": "7860-AR27-0056",
-   "gtin": null,
+   "gtin": "04262376362359",
    "name": "Untergestell 400 x 630 mm mit 1 Tür",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18745,7 +18745,7 @@
   },
   {
    "sku": "7860-AR27-0062",
-   "gtin": null,
+   "gtin": "04262376362366",
    "name": "Untergestell 400 x 630 mm mit 2 Schubladen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18776,7 +18776,7 @@
   },
   {
    "sku": "7860-AR27-0057",
-   "gtin": null,
+   "gtin": "04262376362373",
    "name": "Untergestell 400 x 630 mm offen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18807,7 +18807,7 @@
   },
   {
    "sku": "7860-AR27-1045",
-   "gtin": null,
+   "gtin": "04262376362380",
    "name": "Untergestell 400 x 700 mm mit 1 Tür",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18838,7 +18838,7 @@
   },
   {
    "sku": "7860-AR27-1047",
-   "gtin": null,
+   "gtin": "04262376362397",
    "name": "Untergestell 400 x 700 mm mit 2 Schubladen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18869,7 +18869,7 @@
   },
   {
    "sku": "7860-AR27-1042",
-   "gtin": null,
+   "gtin": "04262376362403",
    "name": "Untergestell 400 x 700 mm offen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18900,7 +18900,7 @@
   },
   {
    "sku": "7860-AR27-0058",
-   "gtin": null,
+   "gtin": "04262376362410",
    "name": "Untergestell 600 x 630 mm mit 2 Türen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18931,7 +18931,7 @@
   },
   {
    "sku": "7860-AR27-0059",
-   "gtin": null,
+   "gtin": "04262376362427",
    "name": "Untergestell 600 x 630 mm offen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18962,7 +18962,7 @@
   },
   {
    "sku": "7860-AR27-1046",
-   "gtin": null,
+   "gtin": "04262376362434",
    "name": "Untergestell 800 x 700 mm mit 2 Türen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -18993,7 +18993,7 @@
   },
   {
    "sku": "7860-AR27-1043",
-   "gtin": null,
+   "gtin": "04262376362441",
    "name": "Untergestell 800 x 700 mm offen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -19024,7 +19024,7 @@
   },
   {
    "sku": "8500-0007",
-   "gtin": null,
+   "gtin": "04262376362458",
    "name": "rollbarer Vorratsbehälter aus Edelstahl, 115 Liter",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -19055,7 +19055,7 @@
   },
   {
    "sku": "8500-0013",
-   "gtin": null,
+   "gtin": "04262376362465",
    "name": "rollbarer Vorratsbehälter aus Edelstahl, 120 Liter",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -19086,7 +19086,7 @@
   },
   {
    "sku": "8500-0009",
-   "gtin": null,
+   "gtin": "04262376362472",
    "name": "rollbarer Vorratsbehälter aus Edelstahl, 135 Liter",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Regale & Untergestelle",
@@ -19117,7 +19117,7 @@
   },
   {
    "sku": "7860-AR19-1104",
-   "gtin": null,
+   "gtin": "04262376362489",
    "name": "Biertresen 1550 mit 2 Volltüren und 1 Becken Links",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Theken",
@@ -19158,7 +19158,7 @@
   },
   {
    "sku": "7860-AR19-1103",
-   "gtin": null,
+   "gtin": "04262376362496",
    "name": "Biertresen 1550 mit 2 Volltüren und 1 Becken Rechts",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Theken",
@@ -19199,7 +19199,7 @@
   },
   {
    "sku": "7860-AR19-1106",
-   "gtin": null,
+   "gtin": "04262376362502",
    "name": "Biertresen 2100 mit 3 Volltüren und 1 Becken Links",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Theken",
@@ -19240,7 +19240,7 @@
   },
   {
    "sku": "7860-AR19-1105",
-   "gtin": null,
+   "gtin": "04262376362519",
    "name": "Biertresen 2100 mit 3 Volltüren und 1 Becken Rechts",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Theken",
@@ -19281,7 +19281,7 @@
   },
   {
    "sku": "7860-AR19-1116",
-   "gtin": null,
+   "gtin": "04262376362526",
    "name": "Biertresen 2500 mit 3 Volltüren und 2 Becken Links",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Theken",
@@ -19322,7 +19322,7 @@
   },
   {
    "sku": "7860-AR19-1115",
-   "gtin": null,
+   "gtin": "04262376362533",
    "name": "Biertresen 2500 mit 3 Volltüren und 2 Becken Rechts",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Theken",
@@ -19396,7 +19396,7 @@
   },
   {
    "sku": "8500-0021",
-   "gtin": null,
+   "gtin": "04262376362540",
    "name": "Gastro-Servierwagen aus Edelstahl, 2 Etagen, 100 cm breit",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Wagen",
@@ -19430,7 +19430,7 @@
   },
   {
    "sku": "8500-0017",
-   "gtin": null,
+   "gtin": "04262376362557",
    "name": "Gastro-Servierwagen aus Edelstahl, 2 Etagen, 80 cm breit",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Wagen",
@@ -19464,7 +19464,7 @@
   },
   {
    "sku": "8500-0022",
-   "gtin": null,
+   "gtin": "04262376362564",
    "name": "Gastro-Servierwagen aus Edelstahl, 3 Etagen, 100 cm breit",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Wagen",
@@ -19498,7 +19498,7 @@
   },
   {
    "sku": "8500-0018",
-   "gtin": null,
+   "gtin": "04262376362571",
    "name": "Gastro-Servierwagen aus Edelstahl, 3 Etagen, 80 cm breit",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Wagen",
@@ -19532,7 +19532,7 @@
   },
   {
    "sku": "8500-THTR-15S",
-   "gtin": null,
+   "gtin": "04262376362588",
    "name": "Tablettwagen Edelstahl, passend für 15x Backnorm 400x600mm, Rollen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Wagen",
@@ -19569,7 +19569,7 @@
   },
   {
    "sku": "8500-THTR-15A",
-   "gtin": null,
+   "gtin": "04262376362595",
    "name": "Tablettwagen Edelstahl, passend für 15x GN 1/1 Behälter, Rollen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Wagen",
@@ -19606,7 +19606,7 @@
   },
   {
    "sku": "8500-THTR2-15S",
-   "gtin": null,
+   "gtin": "04262376362601",
    "name": "Tablettwagen Edelstahl, passend für 30x Backnorm 400x600mm, Rollen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Wagen",
@@ -19642,7 +19642,7 @@
   },
   {
    "sku": "8500-THTR2-15A",
-   "gtin": null,
+   "gtin": "04262376362618",
    "name": "Tablettwagen Edelstahl, passend für 30x GN 1/1 Behälter, Rollen",
    "kategorie": "Möbel & Transport",
    "unterkategorie": "Wagen",
@@ -19858,7 +19858,7 @@
   },
   {
    "sku": "4800-6045-001",
-   "gtin": null,
+   "gtin": "04262376362625",
    "name": "Gläserfüller",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Armaturen & Füller",
@@ -19889,7 +19889,7 @@
   },
   {
    "sku": "4800-6045-001",
-   "gtin": null,
+   "gtin": "04262376362625",
    "name": "Gläserfüller - Wasserhahn zur Gläserbefüllung",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Armaturen & Füller",
@@ -20163,7 +20163,7 @@
   },
   {
    "sku": "4800-8005",
-   "gtin": null,
+   "gtin": "04262376362649",
    "name": "Premium-Spülbrause mit Auslaufhahn 8005 - Einloch-Mischbatterie mit Einhebelmischer",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Armaturen & Füller",
@@ -20510,7 +20510,7 @@
   },
   {
    "sku": "4800-OHGR01",
-   "gtin": null,
+   "gtin": "04262376362656",
    "name": "leistungsstarker Glas-Spüler aus Edelstahl",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Armaturen & Füller",
@@ -20679,7 +20679,7 @@
   },
   {
    "sku": "4830-0075",
-   "gtin": null,
+   "gtin": "04262376362663",
    "name": "Handwaschbecken aus Edelstahl mit Kniebedienung und zeitgesteuertem Wasserfluß Nr.0075",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Handwaschbecken",
@@ -20712,7 +20712,7 @@
   },
   {
    "sku": "4830-0076",
-   "gtin": null,
+   "gtin": "04262376362670",
    "name": "Handwaschbecken aus Edelstahl mit Kniebedienung und zeitgesteuertem Wasserfluß Nr.0076",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Handwaschbecken",
@@ -20745,7 +20745,7 @@
   },
   {
    "sku": "4830-0079",
-   "gtin": null,
+   "gtin": "04262376362687",
    "name": "Handwaschbecken aus Edelstahl mit Kniebedienung, zeitgesteuertem Wasserfluß und Unterschrank Nr.0079",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Handwaschbecken",
@@ -20777,7 +20777,7 @@
   },
   {
    "sku": "4830-0080",
-   "gtin": null,
+   "gtin": "04262376362694",
    "name": "Handwaschbecken aus Edelstahl mit Kniebedienung, zeitgesteuertem Wasserfluß und Unterschrank Nr.0080",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Handwaschbecken",
@@ -20809,7 +20809,7 @@
   },
   {
    "sku": "4830-0039",
-   "gtin": null,
+   "gtin": "04262376362700",
    "name": "Handwaschbecken aus Edelstahl mit abnehmbarem Abtropfsieb 500 x 600 mm",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Handwaschbecken",
@@ -20843,7 +20843,7 @@
   },
   {
    "sku": "4830-0040",
-   "gtin": null,
+   "gtin": "04262376362717",
    "name": "Handwaschbecken aus Edelstahl mit abnehmbarem Abtropfsieb 500 x 700 mm",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Handwaschbecken",
@@ -20877,7 +20877,7 @@
   },
   {
    "sku": "4830-THHWR43G",
-   "gtin": null,
+   "gtin": "04262376362724",
    "name": "Handwaschbecken mit Kniebedienung und Armatur, 400x340x6585mm",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Handwaschbecken",
@@ -20912,7 +20912,7 @@
   },
   {
    "sku": "4830-THHWR445",
-   "gtin": null,
+   "gtin": "04262376362731",
    "name": "Handwaschbecken mit Unterschrank und Fußpedal, 400x510x850mm",
    "kategorie": "Spülen & Wasser",
    "unterkategorie": "Handwaschbecken",
@@ -20947,7 +20947,7 @@
   },
   {
    "sku": "7805-69423",
-   "gtin": null,
+   "gtin": "04262376362748",
    "name": "Deckenheizstrahler mit ausklappbaren Armen, Aluminium schwarz, 2 kW",
    "kategorie": "Terrasse & Raum",
    "unterkategorie": "Heizstrahler",
@@ -20983,7 +20983,7 @@
   },
   {
    "sku": "7805-69420",
-   "gtin": null,
+   "gtin": "04262376362755",
    "name": "Deckenheizstrahler, freihängend, Aluminium, 1500 W",
    "kategorie": "Terrasse & Raum",
    "unterkategorie": "Heizstrahler",
@@ -21017,7 +21017,7 @@
   },
   {
    "sku": "7805-69421",
-   "gtin": null,
+   "gtin": "04262376362762",
    "name": "Deckenheizstrahler, freihängend, Aluminium, 2100 W",
    "kategorie": "Terrasse & Raum",
    "unterkategorie": "Heizstrahler",
@@ -21052,7 +21052,7 @@
   },
   {
    "sku": "7805-69424",
-   "gtin": null,
+   "gtin": "04262376362779",
    "name": "Elektrische Heizung zur Wandmontage, Alu, 1500 W",
    "kategorie": "Terrasse & Raum",
    "unterkategorie": "Heizstrahler",
@@ -21088,7 +21088,7 @@
   },
   {
    "sku": "7805-69425",
-   "gtin": null,
+   "gtin": "04262376362786",
    "name": "Elektrische Heizung zur Wandmontage, Alu, 1800 W",
    "kategorie": "Terrasse & Raum",
    "unterkategorie": "Heizstrahler",
@@ -21124,7 +21124,7 @@
   },
   {
    "sku": "7805-69422",
-   "gtin": null,
+   "gtin": "04262376362793",
    "name": "Elektrischer Deckenheizstrahler, Aluminium schwarz, 900-2100 W",
    "kategorie": "Terrasse & Raum",
    "unterkategorie": "Heizstrahler",
@@ -21161,7 +21161,7 @@
   },
   {
    "sku": "7805-69410",
-   "gtin": null,
+   "gtin": "04262376362809",
    "name": "Standheizstrahler höhenverstellbar, Aluminium und Edelstahl, 160-210 cm hoch,  900-2100 W",
    "kategorie": "Terrasse & Raum",
    "unterkategorie": "Heizstrahler",
@@ -21198,7 +21198,7 @@
   },
   {
    "sku": "7805-69414",
-   "gtin": null,
+   "gtin": "04262376362816",
    "name": "Standheizstrahler, Aluminium schwarz, 210 cm hoch, 900-2100 W",
    "kategorie": "Terrasse & Raum",
    "unterkategorie": "Heizstrahler",
@@ -21235,7 +21235,7 @@
   },
   {
    "sku": "7805-69411",
-   "gtin": null,
+   "gtin": "04262376362823",
    "name": "Standheizstrahler, Aluminium und Edelstahl, 210 cm hoch, 1200-3000 W",
    "kategorie": "Terrasse & Raum",
    "unterkategorie": "Heizstrahler",
@@ -21272,7 +21272,7 @@
   },
   {
    "sku": "7860-AR24-0001",
-   "gtin": null,
+   "gtin": "04262376362830",
    "name": "Edelstahl-Besteckbehälter mit 4 (2x2) Besteckköchern",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Ausgabe & Buffet",
@@ -21306,7 +21306,7 @@
   },
   {
    "sku": "7860-AR24-0003",
-   "gtin": null,
+   "gtin": "04262376362847",
    "name": "Edelstahl-Besteckbehälter mit 4 Besteckköchern",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Ausgabe & Buffet",
@@ -21341,7 +21341,7 @@
   },
   {
    "sku": "7860-AR24-0002",
-   "gtin": null,
+   "gtin": "04262376362854",
    "name": "Edelstahl-Besteckbehälter mit 6 (2x3) Besteckköchern",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Ausgabe & Buffet",
@@ -21375,7 +21375,7 @@
   },
   {
    "sku": "7860-AR24-0005",
-   "gtin": null,
+   "gtin": "04262376362861",
    "name": "Edelstahl-Besteckköcher gelocht",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Ausgabe & Buffet",
@@ -21479,7 +21479,7 @@
   },
   {
    "sku": "7860-AR24-2001",
-   "gtin": null,
+   "gtin": "04262376362878",
    "name": "Theken-Trennwand 1/1 GN aus Edelstahl",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Ausgabe & Buffet",
@@ -21574,7 +21574,7 @@
   },
   {
    "sku": "8802-1513NC",
-   "gtin": null,
+   "gtin": "04262376362885",
    "name": "Einbau-Tellerstapler beheizt, für runde Teller 170-208 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21610,7 +21610,7 @@
   },
   {
    "sku": "8802-1523NC",
-   "gtin": null,
+   "gtin": "04262376362892",
    "name": "Einbau-Tellerstapler beheizt, für runde Teller 200-238 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21646,7 +21646,7 @@
   },
   {
    "sku": "8802-1533NC",
-   "gtin": null,
+   "gtin": "04262376362908",
    "name": "Einbau-Tellerstapler beheizt, für runde Teller 240-278 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21682,7 +21682,7 @@
   },
   {
    "sku": "8802-1543NC",
-   "gtin": null,
+   "gtin": "04262376362915",
    "name": "Einbau-Tellerstapler beheizt, für runde Teller 270-308 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21718,7 +21718,7 @@
   },
   {
    "sku": "8802-1563NC",
-   "gtin": null,
+   "gtin": "04262376362922",
    "name": "Einbau-Tellerstapler beheizt, für runde Teller 300-338 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21754,7 +21754,7 @@
   },
   {
    "sku": "8800-1123NC",
-   "gtin": null,
+   "gtin": "04262376362939",
    "name": "Einbau-Tellerstapler unbeheizt, für runde Teller 170-208 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21789,7 +21789,7 @@
   },
   {
    "sku": "8800-1133NC",
-   "gtin": null,
+   "gtin": "04262376362946",
    "name": "Einbau-Tellerstapler unbeheizt, für runde Teller 200-238 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21824,7 +21824,7 @@
   },
   {
    "sku": "8800-1143NC",
-   "gtin": null,
+   "gtin": "04262376362953",
    "name": "Einbau-Tellerstapler unbeheizt, für runde Teller 240-278 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21859,7 +21859,7 @@
   },
   {
    "sku": "8800-1153NC",
-   "gtin": null,
+   "gtin": "04262376362960",
    "name": "Einbau-Tellerstapler unbeheizt, für runde Teller 270-308 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21894,7 +21894,7 @@
   },
   {
    "sku": "8800-1163NC",
-   "gtin": null,
+   "gtin": "04262376362977",
    "name": "Einbau-Tellerstapler unbeheizt, für runde Teller 300-338 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21929,7 +21929,7 @@
   },
   {
    "sku": "8800-100002",
-   "gtin": null,
+   "gtin": "04262376362984",
    "name": "Einbau-Tellerstapler unbeheizt, für runde Untertassen 145-160 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -21964,7 +21964,7 @@
   },
   {
    "sku": "8806-503582",
-   "gtin": null,
+   "gtin": "04262376362991",
    "name": "Fahrbarer Design-Stapler beheizt für Körbe 500 x 500 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22001,7 +22001,7 @@
   },
   {
    "sku": "8806-503584",
-   "gtin": null,
+   "gtin": "04262376363004",
    "name": "Fahrbarer Design-Stapler beheizt für Körbe 590 x 590 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22038,7 +22038,7 @@
   },
   {
    "sku": "8804-413552",
-   "gtin": null,
+   "gtin": "04262376363011",
    "name": "Fahrbarer Design-Stapler unbeheizt für Körbe 500 x 500 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22075,7 +22075,7 @@
   },
   {
    "sku": "8804-413554",
-   "gtin": null,
+   "gtin": "04262376363028",
    "name": "Fahrbarer Design-Stapler unbeheizt für Körbe 590 x 590 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22112,7 +22112,7 @@
   },
   {
    "sku": "8804-403454",
-   "gtin": null,
+   "gtin": "04262376363035",
    "name": "Fahrbarer Design-Tablettstapler unbeheizt für Tabletts 460 x 360 mm (14 x 18″)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22149,7 +22149,7 @@
   },
   {
    "sku": "8804-403450",
-   "gtin": null,
+   "gtin": "04262376363042",
    "name": "Fahrbarer Design-Tablettstapler unbeheizt für Tabletts 530 x 325 mm (1/1 GN)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22186,7 +22186,7 @@
   },
   {
    "sku": "8804-403452",
-   "gtin": null,
+   "gtin": "04262376363059",
    "name": "Fahrbarer Design-Tablettstapler unbeheizt für Tabletts 530 x 370 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22223,7 +22223,7 @@
   },
   {
    "sku": "8804-112242",
-   "gtin": null,
+   "gtin": "04262376363066",
    "name": "Fahrbarer Design-Tellerstapler unbeheizt, für runde Teller 200-238 mm (2 Stapel)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22260,7 +22260,7 @@
   },
   {
    "sku": "8804-112244",
-   "gtin": null,
+   "gtin": "04262376363073",
    "name": "Fahrbarer Design-Tellerstapler unbeheizt, für runde Teller 240-278 mm (2 Stapel)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22297,7 +22297,7 @@
   },
   {
    "sku": "8804-112246",
-   "gtin": null,
+   "gtin": "04262376363080",
    "name": "Fahrbarer Design-Tellerstapler unbeheizt, für runde Teller 270-308 mm (2 Stapel)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22334,7 +22334,7 @@
   },
   {
    "sku": "8804-553650",
-   "gtin": null,
+   "gtin": "04262376363097",
    "name": "Fahrbarer Stapler beheizt für Körbe 500 x 500 mm – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22371,7 +22371,7 @@
   },
   {
    "sku": "8804-563720",
-   "gtin": null,
+   "gtin": "04262376363103",
    "name": "Fahrbarer Stapler beheizt mit Plattform 580 x 580 mm – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22408,7 +22408,7 @@
   },
   {
    "sku": "8804-413470",
-   "gtin": null,
+   "gtin": "04262376363110",
    "name": "Fahrbarer Stapler unbeheizt für Körbe 500 x 500 mm – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22445,7 +22445,7 @@
   },
   {
    "sku": "8804-413480",
-   "gtin": null,
+   "gtin": "04262376363127",
    "name": "Fahrbarer Stapler unbeheizt mit Plattform 580 x 580 mm – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22482,7 +22482,7 @@
   },
   {
    "sku": "8804-403430",
-   "gtin": null,
+   "gtin": "04262376363134",
    "name": "Fahrbarer Tablettstapler unbeheizt für Tabletts 360 x 460 mm (14 x 18″) – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22519,7 +22519,7 @@
   },
   {
    "sku": "8804-403410",
-   "gtin": null,
+   "gtin": "04262376363141",
    "name": "Fahrbarer Tablettstapler unbeheizt für Tabletts 530 x 325 mm (1/1 GN) – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22556,7 +22556,7 @@
   },
   {
    "sku": "8804-403420",
-   "gtin": null,
+   "gtin": "04262376363158",
    "name": "Fahrbarer Tablettstapler unbeheizt für Tabletts 530 x 370 mm (Euronorm) – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22593,7 +22593,7 @@
   },
   {
    "sku": "8804-403440",
-   "gtin": null,
+   "gtin": "04262376363165",
    "name": "Fahrbarer Tablettstapler unbeheizt für Tabletts mit Sondermaß – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22629,7 +22629,7 @@
   },
   {
    "sku": "8804-112320",
-   "gtin": null,
+   "gtin": "04262376363172",
    "name": "Fahrbarer Tellerstapler unbeheizt, für runde Teller 200-238 mm (2 Stapel) – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22666,7 +22666,7 @@
   },
   {
    "sku": "8804-112330",
-   "gtin": null,
+   "gtin": "04262376363189",
    "name": "Fahrbarer Tellerstapler unbeheizt, für runde Teller 240-278 mm (2 Stapel) – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22703,7 +22703,7 @@
   },
   {
    "sku": "8804-112340",
-   "gtin": null,
+   "gtin": "04262376363196",
    "name": "Fahrbarer Tellerstapler unbeheizt, für runde Teller 270-308 mm (2 Stapel) – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22740,7 +22740,7 @@
   },
   {
    "sku": "8804-112342",
-   "gtin": null,
+   "gtin": "04262376363202",
    "name": "Fahrbarer Tellerstapler unbeheizt, für runde Teller 300-338 mm (2 Stapel) – Equalizer",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22777,7 +22777,7 @@
   },
   {
    "sku": "8804-935200",
-   "gtin": null,
+   "gtin": "04262376363219",
    "name": "Zubehör CNS-Deckel für fahrbare Stapler für Körbe 500 x 500 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22810,7 +22810,7 @@
   },
   {
    "sku": "8892-5065",
-   "gtin": null,
+   "gtin": "04262376363226",
    "name": "Zubehör Deckel für Einbaustapler, CNS 302 x 302 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22842,7 +22842,7 @@
   },
   {
    "sku": "8892-5075",
-   "gtin": null,
+   "gtin": "04262376363233",
    "name": "Zubehör Deckel für Einbaustapler, CNS 336 x 336 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22874,7 +22874,7 @@
   },
   {
    "sku": "8892-5085",
-   "gtin": null,
+   "gtin": "04262376363240",
    "name": "Zubehör Deckel für Einbaustapler, CNS 372 x 372 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22906,7 +22906,7 @@
   },
   {
    "sku": "8892-5095",
-   "gtin": null,
+   "gtin": "04262376363257",
    "name": "Zubehör Deckel für Einbaustapler, CNS 402 x 402 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22938,7 +22938,7 @@
   },
   {
    "sku": "8892-5130",
-   "gtin": null,
+   "gtin": "04262376363264",
    "name": "Zubehör Deckel für Einbaustapler, CNS 432 x 432 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -22970,7 +22970,7 @@
   },
   {
    "sku": "8891-5011",
-   "gtin": null,
+   "gtin": "04262376363271",
    "name": "Zubehör Deckel für Einbaustapler, Kunststoff \"Smoke\", klarsicht, Durchmesser 300 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -23000,7 +23000,7 @@
   },
   {
    "sku": "8891-5021",
-   "gtin": null,
+   "gtin": "04262376363288",
    "name": "Zubehör Deckel für Einbaustapler, Kunststoff \"Smoke\", klarsicht, Durchmesser 330 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -23030,7 +23030,7 @@
   },
   {
    "sku": "8891-5031",
-   "gtin": null,
+   "gtin": "04262376363295",
    "name": "Zubehör Deckel für Einbaustapler, Kunststoff \"Smoke\", klarsicht, Durchmesser 366 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -23060,7 +23060,7 @@
   },
   {
    "sku": "8804-915051",
-   "gtin": null,
+   "gtin": "04262376363301",
    "name": "Zubehör Deckel für Einbaustapler, Kunststoff \"Smoke\", klarsicht, Durchmesser 390 mm mit 4 Ausschnitten",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -23091,7 +23091,7 @@
   },
   {
    "sku": "8891-5041",
-   "gtin": null,
+   "gtin": "04262376363318",
    "name": "Zubehör Deckel für Einbaustapler, Kunststoff \"Smoke\", klarsicht, Durchmesser 396 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -23121,7 +23121,7 @@
   },
   {
    "sku": "8891-5044",
-   "gtin": null,
+   "gtin": "04262376363325",
    "name": "Zubehör Deckel für Einbaustapler, Kunststoff \"Smoke\", klarsicht, Durchmesser 396 mm mit 4 Ausschnitten",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Tellerstapler",
@@ -23151,7 +23151,7 @@
   },
   {
    "sku": "7860-THTHBMT",
-   "gtin": null,
+   "gtin": "04262376363332",
    "name": "Bain Marie Edelstahl für GN 1/1 Behälter mit Thermostat und Kontrollleuchte",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Warmhalteplatten & Bain Marie",
@@ -23262,7 +23262,7 @@
   },
   {
    "sku": "7860-AR27-0044",
-   "gtin": null,
+   "gtin": "04262376363349",
    "name": "Elektro Bain Marie 400 x 630 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Warmhalteplatten & Bain Marie",
@@ -23294,7 +23294,7 @@
   },
   {
    "sku": "7860-AR27-1028",
-   "gtin": null,
+   "gtin": "04262376363356",
    "name": "Elektro Bain Marie 400 x 700 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Warmhalteplatten & Bain Marie",
@@ -23325,7 +23325,7 @@
   },
   {
    "sku": "7860-AR27-0045",
-   "gtin": null,
+   "gtin": "04262376363363",
    "name": "Elektro Bain Marie 600 x 630 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Warmhalteplatten & Bain Marie",
@@ -23356,7 +23356,7 @@
   },
   {
    "sku": "7860-AR27-1029",
-   "gtin": null,
+   "gtin": "04262376363370",
    "name": "Elektro Bain Marie 800 x 700 mm",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Warmhalteplatten & Bain Marie",
@@ -23633,7 +23633,7 @@
   },
   {
    "sku": "7803-69562",
-   "gtin": null,
+   "gtin": "04262376363387",
    "name": "Warmhalteplatte, Edelstahl, 2x250W Halogenlampen",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Warmhalteplatten & Bain Marie",
@@ -23663,7 +23663,7 @@
   },
   {
    "sku": "7803-69563",
-   "gtin": null,
+   "gtin": "04262376363394",
    "name": "Warmhalteplatte, Edelstahl, 3x250 W Halogenlampen",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Warmhalteplatten & Bain Marie",
@@ -23802,7 +23802,7 @@
   },
   {
    "sku": "7803-IR-300CH",
-   "gtin": null,
+   "gtin": "04262376363400",
    "name": "Quarzlampe aus gehärtetem Glas, 300W, E27",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -23834,7 +23834,7 @@
   },
   {
    "sku": "7803-IR-375CH",
-   "gtin": null,
+   "gtin": "04262376363417",
    "name": "Quarzlampe aus gehärtetem Glas, 375W, E27",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -24350,7 +24350,7 @@
   },
   {
    "sku": "7801-R300-PJ",
-   "gtin": null,
+   "gtin": "04262376363424",
    "name": "Ummantelter Einsteck-Wärmestrahler 300 Watt",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -24383,7 +24383,7 @@
   },
   {
    "sku": "7801-R500-PJ",
-   "gtin": null,
+   "gtin": "04262376363431",
    "name": "Ummantelter Einsteck-Wärmestrahler 500 Watt",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -24944,7 +24944,7 @@
   },
   {
    "sku": "7803-69361",
-   "gtin": null,
+   "gtin": "04262376363448",
    "name": "Wärmebrücke, höhenverstellbar, 1 x 275W Infrarotstrahler",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -24974,7 +24974,7 @@
   },
   {
    "sku": "7803-69061",
-   "gtin": null,
+   "gtin": "04262376363455",
    "name": "Wärmebrücke, höhenverstellbar, 2 x 275W Infrarotstrahler",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -25189,7 +25189,7 @@
   },
   {
    "sku": "7803-GS-GLD",
-   "gtin": null,
+   "gtin": "04262376363462",
    "name": "Wärmelampe Fabio, Glockenform, höhenverstellbar (Gold gebürstet)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -25226,7 +25226,7 @@
   },
   {
    "sku": "7803-GS-COP",
-   "gtin": null,
+   "gtin": "04262376363479",
    "name": "Wärmelampe Fabio, Glockenform, höhenverstellbar (Kupfer gebürstet)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -25263,7 +25263,7 @@
   },
   {
    "sku": "7803-GS-BLK",
-   "gtin": null,
+   "gtin": "04262376363486",
    "name": "Wärmelampe Fabio, Glockenform, höhenverstellbar (Schwarz matt)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -25300,7 +25300,7 @@
   },
   {
    "sku": "7803-GS-SLV",
-   "gtin": null,
+   "gtin": "04262376363493",
    "name": "Wärmelampe Fabio, Glockenform, höhenverstellbar (Silber gebürstet)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -25337,7 +25337,7 @@
   },
   {
    "sku": "7803-69266",
-   "gtin": null,
+   "gtin": "04262376363509",
    "name": "Wärmelampe Aurora, Glockenform, höhenverstellbar (Aluminium gebürstet)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -25367,7 +25367,7 @@
   },
   {
    "sku": "7803-69365",
-   "gtin": null,
+   "gtin": "04262376363516",
    "name": "Wärmelampe Aurora, Glockenform, höhenverstellbar (Chrom)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
@@ -25397,7 +25397,7 @@
   },
   {
    "sku": "7803-69367",
-   "gtin": null,
+   "gtin": "04262376363523",
    "name": "Wärmelampe Aurora, Glockenform, höhenverstellbar (Kupfer)",
    "kategorie": "Warmhalten & Ausgabe",
    "unterkategorie": "Wärmelampen & Wärmebrücken",
