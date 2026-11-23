@@ -11,6 +11,8 @@
   var bild = figur.querySelector("img"), leinwand = figur.querySelector("canvas");
   var hero = figur.closest(".hero") || document.body;
   var ruhig = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Lenn 2026-11-23: Lauf-/Jagd-Animation auf dem Handy aus (dort verbuggt). Lauf-Clips werden dann gar nicht geladen.
+  var handy = window.matchMedia && matchMedia("(max-width: 900px), (pointer: coarse)").matches;
 
   // Leinwand 1700 × 1000: Stehen/Winken liegen mittig (552 breit), Laufen nutzt die ganze Breite
   var LW = 1700, STEH = [547 / LW, 0, 552 / LW, 1], GANZ = [0, 0, 1, 1];
@@ -101,7 +103,7 @@
         var v = C.winken.v;
         if (aktiv === C.winken && v.duration && v.currentTime > v.duration - 0.35) { zustand = "ruhe"; wechseln(C.ruhe); }
       });
-      if (d.laufStart) {
+      if (d.laufStart && !handy) {
         C.start = clip(d.laufStart, false, GANZ); C.lauf = clip(d.lauf, true, GANZ); C.ende = clip(d.laufEnde, false, GANZ);
         C.start.v.addEventListener("ended", function () { if (zustand === "drehen") { zustand = "laufen"; abspielen(C.lauf, true); wechseln(C.lauf, 80); } });
         C.ende.v.addEventListener("ended", function () { if (zustand === "aufstehen") angekommen(); });
@@ -133,6 +135,7 @@
     return Math.max(hr.left + r.width / 2 - mitte0, Math.min(hr.right - r.width / 2 - mitte0, x));
   }
   function losrennen(nachHause) {
+    if (handy) return false;
     if (!bereit(C.start) || !bereit(C.lauf) || !bereit(C.ende)) return false;
     clearTimeout(zurueck);
     heim = nachHause; jagdBis = performance.now() + 4500;
