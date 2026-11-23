@@ -27,6 +27,7 @@ QUELLE = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "quelle/metro-export
 ZIEL = ROOT / "daten/produkte.json"
 PRUEF = ROOT / "daten/pruefliste.csv"
 PREISE = ROOT / "daten/preise.csv"
+GTINS = ROOT / "daten/gtin.csv"
 ANGEBOTE = ROOT / "quelle/metro-angebote.xlsx"
 
 # Reihenfolge zählt: erste passende Regel gewinnt. (Kategorie, Unterkategorie, Muster im Namen)
@@ -138,6 +139,13 @@ def main():
             if len(r) >= 2 and zahl(r[1]) is not None:
                 preise[r[0].strip()] = float(r[1].replace(",", "."))
 
+    # GTIN aus dem GS1-Export von T&S (daten/gtin.csv: Artikelnummer;GTIN) geht vor
+    gtins = {}
+    if GTINS.exists():
+        for r in csv.reader(GTINS.open(encoding="utf-8"), delimiter=";"):
+            if len(r) >= 2 and not r[0].startswith("#") and r[1].strip().isdigit():
+                gtins[r[0].strip()] = r[1].strip()
+
     pruef = []
     artikel = []
     for z in daten:
@@ -148,7 +156,7 @@ def main():
         bilder = [str(b) for b in alle(z, "Image")]
         a = {
             "sku": sku,
-            "gtin": feld(z, "GTIN"),
+            "gtin": gtins.get(sku) or feld(z, "GTIN"),
             "name": name,
             "kategorie": k,
             "unterkategorie": u,
