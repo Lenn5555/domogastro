@@ -247,6 +247,13 @@ def stellfuesse():
 <a class="btn pri" href="https://beinundfuss.de/" target="_blank" rel="noopener">Zu beinundfuss.de</a></div></div></div>"""
 
 
+# Lenn 2026-11-23: Google zeigte das transparente Logo.svg (dunkel auf Karo) als Bild/Kleinbild. Darum eigenes Icon auf Navy + Logo-Angabe für Google.
+LD_START = '<script type="application/ld+json">' + json.dumps([
+    {"@context": "https://schema.org", "@type": "WebSite", "name": "Domo Gastro", "url": SITE_URL + "/"},
+    {"@context": "https://schema.org", "@type": "Organization", "name": "Domo Gastro", "url": SITE_URL + "/", "logo": SITE_URL + "/icon-512.png", "image": SITE_URL + "/logo-teilen.png"},
+], ensure_ascii=False) + '</script>'
+
+
 def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
     if index:
         SEITEN.append(pfad)
@@ -259,7 +266,9 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <link rel="canonical" href="{SITE_URL}{pfad}"><meta name="theme-color" content="#0A1628">
 <meta property="og:title" content="{e(titel)}"><meta property="og:locale" content="de_DE">
 {'' if index and not VORSCHAU else '<meta name="robots" content="noindex">'}
-<link rel="stylesheet" href="{uv('/stil.css')}"><link rel="icon" href="{u('/logo.svg')}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Domo Gastro"><meta property="og:url" content="{SITE_URL}{pfad}"><meta property="og:image" content="{SITE_URL}/logo-teilen.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<link rel="stylesheet" href="{uv('/stil.css')}"><link rel="icon" href="{u('/favicon.ico')}" sizes="48x48"><link rel="icon" href="{u('/favicon.svg')}" type="image/svg+xml"><link rel="apple-touch-icon" href="{u('/apple-touch-icon.png')}"><link rel="manifest" href="{u('/site.webmanifest')}">
+{LD_START if pfad == "/" else ""}
 <script>window.DG={json.dumps(dg)}</script><script src="{uv('/rechnen.js')}" defer></script><script src="{uv('/shop.js')}" defer></script></head>
 <body>
 {'<div style="background:#F2B84B;color:#0A1628;text-align:center;font:600 14px/1.4 sans-serif;padding:8px 16px">Vorschau – noch kein echter Shop. Bestellungen werden nicht ausgeführt.</div>' if VORSCHAU else ''}
@@ -607,7 +616,9 @@ def main():
     if VORSCHAU:
         (OUT / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
     else:
-        (OUT / "robots.txt").write_text(f"User-agent: *\nDisallow: /konto/\nDisallow: /warenkorb/\nDisallow: /bestellung/\nDisallow: /widerrufen/\nDisallow: /verwaltung/\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
+        gesperrt = "Disallow: /konto/\nDisallow: /warenkorb/\nDisallow: /bestellung/\nDisallow: /widerrufen/\nDisallow: /verwaltung/\n"
+        # Das transparente Logo.svg nicht in der Google-Bildersuche zeigen (wirkt dort dunkel auf Karo), stattdessen logo-teilen.png / icon-512.png
+        (OUT / "robots.txt").write_text(f"User-agent: *\n{gesperrt}\nUser-agent: Googlebot-Image\n{gesperrt}Disallow: /logo.svg\n\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
     print(f"site/ gebaut: {len(PRODUKTE)} Produktseiten, {len(kategorien())} Kategorien, {len(artikel)} Artikelnummern, API {'an' if API else 'aus'}")
 
 
