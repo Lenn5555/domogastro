@@ -186,9 +186,16 @@
     if (ruhig || zustand !== "ruhe") return;
     // Auf dem Handy gibt es keine Jagd: jeder Tipp auf die Domo-Fläche lässt ihn winken (Pixeltest war dort zu streng)
     if (handy || trifftDomo(e.clientX, e.clientY)) {
-      if (C.winken && aktiv !== C.winken && bereit(C.winken)) {
+      if (C.winken && aktiv !== C.winken) {
+        // iPhone lädt Videos erst beim Abspielen (preload wird ignoriert): darum im Tipp starten und erst umschalten, wenn Bilder da sind
         clearTimeout(zurueck); zustand = "winken";
-        abspielen(C.winken, true); wechseln(C.winken);
+        var w = C.winken;
+        abspielen(w, true);
+        if (bereit(w)) wechseln(w);
+        else {
+          w.v.addEventListener("playing", function () { if (zustand === "winken") wechseln(w); }, { once: true });
+          setTimeout(function () { if (zustand === "winken" && aktiv !== w) zustand = "ruhe"; }, 5000);
+        }
       } else if (C.ruhe && C.ruhe.v.paused) abspielen(C.ruhe);  // falls der Browser erst nach einem Klick abspielt
     } else {
       maus = e.clientX; losrennen(false);
