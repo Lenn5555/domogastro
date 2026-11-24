@@ -47,6 +47,19 @@ test("Double-Opt-in: Code erst nach Bestätigung, nur einer je Adresse", async (
   assert.equal(v.liste.length, 1); assert.equal(v.anzahl.bestaetigt, 1);
 });
 
+test("Jede Adresse nur einmal: Schreibvarianten bekommen keinen zweiten Code", async () => {
+  const { env, post } = umgebung();
+  assert.equal(nl.adressKern("Max.Muster+nl@googlemail.com"), "maxmuster@gmail.com");
+  assert.equal(nl.adressKern("max.muster+x@firma.de"), "max.muster@firma.de");
+  await nl.anmelden(env, { email: "max.muster@gmail.com", einwilligung: true });
+  assert.equal((await nl.bestaetigen(env, { token: link(post[0], "bestaetigen") })).code, true);
+  await nl.anmelden(env, { email: "maxmuster+2@googlemail.com", einwilligung: true });
+  assert.equal((await nl.bestaetigen(env, { token: link(post[2], "bestaetigen") })).code, false);
+  await nl.anmelden(env, { email: "max.muster@firma.de", einwilligung: true });  // andere Adresse: eigener Code
+  assert.equal((await nl.bestaetigen(env, { token: link(post[3], "bestaetigen") })).code, true);
+  assert.equal(env.DB.roh.prepare("SELECT COUNT(*) AS n FROM gutscheine").get().n, 2);
+});
+
 test("Links: ungültig, abgelaufen, nach Abmeldung", async () => {
   const { env, post } = umgebung();
   await assert.rejects(nl.bestaetigen(env, { token: "kaputt" }), /ungültig/);

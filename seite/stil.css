@@ -358,3 +358,12 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 /* Bewertungen: verstecktes Feld gegen Bots, Zeichen „Verifizierter Kauf“ */
 .hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}
 .bewertung .verifiziert{color:var(--ok)}
+
+/* Karriere */
+.karriere-kopf{display:flex;gap:24px;align-items:flex-end;justify-content:space-between}
+.karriere-kopf img{flex:none;height:220px;width:auto}
+.karriere h2{margin-top:26px}
+.karriere-trotzdem h2{margin-top:0}
+.karriere-trotzdem ul{padding-left:20px}
+.karriere-trotzdem li{margin:6px 0}
+@media (max-width:640px){.karriere-kopf{flex-direction:column-reverse;align-items:flex-start}.karriere-kopf img{height:130px;align-self:center}}

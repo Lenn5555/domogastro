@@ -288,7 +288,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <footer class="fuss g"><div class="in">{newsletter_fuss()}<div class="spalten">
 <div><img src="{u('/logo.svg')}" alt="Domo Gastro"><p>Zuhause in der Gastronomie. Profigeräte, Ausstattung und Zubehör für Gastronomie, Hotellerie und alle, die zu Hause wie Profis kochen.</p><p>{e(CFG['betreiber_zeile'])}</p><p class="klein">WEEE-Reg.-Nr. {e(CFG['weee'])}</p></div>
 <div><h3>Shop</h3><ul>{''.join(f'<li><a href="{u("/" + slug(k) + "/")}">{e(k)}</a></li>' for k in kategorien()[:6])}</ul></div>
-<div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/widerrufen/')}">Vertrag widerrufen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li><li><a href="{u('/newsletter/')}">Newsletter</a></li><li><a href="#" class="einw-oeffnen">Cookie-Einstellungen</a></li></ul></div>
+<div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/widerrufen/')}">Vertrag widerrufen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li><li><a href="{u('/newsletter/')}">Newsletter</a></li><li><a href="{u('/karriere/')}">Karriere</a></li><li><a href="#" class="einw-oeffnen">Cookie-Einstellungen</a></li></ul></div>
 <div><h3>Rechtliches</h3><ul><li><a href="{u('/impressum/')}">Impressum</a></li><li><a href="{u('/datenschutz/')}">Datenschutz</a></li><li><a href="{u('/agb/')}">AGB</a></li><li><a href="{u('/widerruf/')}">Widerrufsbelehrung</a></li><li><a href="{u('/entsorgung/')}">Entsorgung und Batterien</a></li></ul></div>
 </div><p class="steuerhinweis"></p></div></footer>
 </body></html>"""
@@ -329,6 +329,30 @@ def newsletter_seite():
             f'einmalig einen persönlichen {p}-%-Gutscheincode für Ihre nächste Bestellung{nl_mindestwert()}. Der Code gilt einmal, nur einer je E-Mail-Adresse, und ist nicht mit anderen Gutscheinen oder laufenden Rabattaktionen kombinierbar.</p>'
             f'<p><b>Abmelden</b> können Sie sich jederzeit mit einem Klick über den Link unten in jeder E-Mail.</p>'
             f'<div class="kasten" style="margin-top:18px">{nl_formular("seite")}</div></div></div></div>')
+
+
+def karriere_seite():
+    mail = CFG["anfrage_email"]
+    betreff = "Bewerbung bei Domo Gastro"
+    link = f"mailto:{mail}?subject=" + betreff.replace(" ", "%20")
+    return (f'<div class="seite g"><div class="in karriere" style="max-width:860px">'
+            f'<div class="karriere-kopf"><div><h1 class="titel">Karriere bei Domo Gastro</h1>'
+            f'<p>Domo Gastro ist der Onlineshop für Gastronomie-Ausstattung der T&amp;S Systemtechnik GmbH aus Pfungstadt. '
+            f'Wir verkaufen Profigeräte, Lüftungstechnik und Zubehör an Gastronomie, Hotellerie und alle, die zu Hause wie Profis kochen.</p></div>'
+            f'<img src="{u("/bilder/domo-start.webp")}" alt="Domo, das Erdmännchen von Domo Gastro" width="138" height="250" loading="lazy"></div>'
+            f'<h2>Offene Stellen</h2>'
+            f'<p>Gerade schreiben wir keine feste Stelle aus.</p>'
+            f'<div class="kasten karriere-trotzdem"><h2>Keine passende Stelle dabei? Bewirb dich trotzdem!</h2>'
+            f'<p>Wir wachsen und suchen Menschen, die Lust auf Gastronomie und Technik haben. Warum zu uns?</p><ul>'
+            f'<li><b>Mitgestalten statt Rädchen sein:</b> Domo Gastro ist jung, deine Ideen landen direkt im Shop.</li>'
+            f'<li><b>Kurze Wege:</b> Du sprichst direkt mit der Geschäftsführung.</li>'
+            f'<li><b>Starkes Fundament:</b> Hinter Domo Gastro steht die T&amp;S Systemtechnik GmbH mit Erfahrung in Gastro-Lüftung und Edelstahl.</li>'
+            f'<li><b>Und ein Kollege, der dir zuwinkt:</b> Domo.</li></ul>'
+            f'<p>Schick uns ein paar Zeilen über dich, was du gut kannst und was du bei uns machen möchtest, gern mit Lebenslauf und Zeugnissen (am besten als PDF).</p>'
+            f'<p><a class="btn pri" href="{e(link)}">Jetzt bewerben</a></p>'
+            f'<p class="klein">Per E-Mail an {e(mail)}. Wir freuen uns über jede Bewerbung (m/w/d), unabhängig von Herkunft, Geschlecht, Alter, Religion, Behinderung oder sexueller Identität. '
+            f'Wie wir mit deinen Daten umgehen, steht in unserer <a href="{u("/datenschutz/#bewerbungen")}">Datenschutzerklärung</a>.</p></div>'
+            f'</div></div>')
 
 
 def karte(p):
@@ -628,6 +652,8 @@ def main():
     schreib("/widerrufen/", seite("Vertrag widerrufen | Domo Gastro", widerrufen(), "/widerrufen/", index=False))
     schreib("/newsletter/", seite(f"Newsletter mit {NEWSLETTER['prozent']} % Willkommensrabatt | Domo Gastro", newsletter_seite(), "/newsletter/",
                                    f"Angebote, Neuheiten und Tipps für die Gastronomie, {NEWSLETTER['haeufigkeit']}. Nach der Anmeldung einmalig {NEWSLETTER['prozent']} % Rabatt."))
+    schreib("/karriere/", seite("Karriere | Domo Gastro", karriere_seite(), "/karriere/",
+                                 "Jobs bei Domo Gastro in Pfungstadt: Keine passende Stelle dabei? Bewirb dich trotzdem."))
     schreib("/suche/", seite("Suche | Domo Gastro", suche(), "/suche/", index=False))
     schreib("/verwaltung/", seite("Verwaltung | Domo Gastro", verwaltung(), "/verwaltung/", index=False))
     for pfad, titel, datei in [("/impressum/", "Impressum", "impressum.html"), ("/datenschutz/", "Datenschutzerklärung", "datenschutz.html"),

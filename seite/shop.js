@@ -862,7 +862,7 @@
         api("/newsletter/bestaetigen", { token: token }).then(function (d) {
           zeigen("ok", d.schon ? "<p>Ihre Anmeldung war schon bestätigt. Danke!</p>"
             : d.code ? "<p><b>Danke, Sie sind eingetragen!</b> Ihr persönlicher Gutscheincode ist per E-Mail unterwegs.</p>"
-            : "<p><b>Danke, Sie sind wieder eingetragen!</b> Den Willkommenscode gibt es einmal je E-Mail-Adresse; Sie hatten ihn schon bekommen.</p>");
+            : "<p><b>Danke, Sie sind eingetragen!</b> Den Willkommenscode gibt es nur einmal je E-Mail-Adresse, und für diese Adresse wurde er schon vergeben.</p>");
         }).catch(function (err) { zeigen("fehler", "<p>" + esc(err.message) + "</p>"); });
       });
     } else {

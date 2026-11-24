@@ -93,6 +93,15 @@ export async function anmelden(env, d, { ip = "", quelle = "fuss", api = "" } = 
   return antwort;
 }
 
+// Kern einer Adresse: ohne „+Zusatz“ im Namen; bei Gmail ohne Punkte und googlemail.com = gmail.com
+export function adressKern(mail) {
+  let [name, domain = ""] = String(mail).toLowerCase().split("@");
+  name = name.split("+")[0];
+  if (domain === "googlemail.com") domain = "gmail.com";
+  if (domain === "gmail.com") name = name.replace(/\./g, "");
+  return name + "@" + domain;
+}
+
 export async function bestaetigen(env, d, { ip = "", api = "" } = {}) {
   const token = text(d?.token, 100);
   if (!/^[0-9a-f]{48}$/.test(token)) throw new Fehler("Dieser Bestätigungslink ist ungültig.");
@@ -104,6 +113,10 @@ export async function bestaetigen(env, d, { ip = "", api = "" } = {}) {
   await env.DB.prepare("UPDATE newsletter SET status = 'bestaetigt', bestaetigt = ?, bestaetigt_ip = ?, abgemeldet = '' WHERE email = ? AND status = 'offen'")
     .bind(jetzt(), text(ip, 60), z.email).run();
   await ereignis(env, "bestaetigung");
+  // Lenn 2026-11-24: jede Adresse nur einmal. Schreibvarianten derselben Adresse (name+x@…, bei Gmail Punkte) zählen als dieselbe.
+  const k = adressKern(z.email);
+  const mitCode = (await env.DB.prepare("SELECT email FROM newsletter WHERE code <> '' AND email <> ?").bind(z.email).all()).results;
+  if (mitCode.some((x) => adressKern(x.email) === k)) return { ok: true, code: false };
   // Nur ein Code je Adresse, auch bei gleichzeitigen Klicks: erst die Zeile reservieren, dann den Gutschein anlegen
   const code = PRAEFIX + codeZufall();
   const u = await env.DB.prepare("UPDATE newsletter SET code = ? WHERE email = ? AND code = ''").bind(code, z.email).run();
