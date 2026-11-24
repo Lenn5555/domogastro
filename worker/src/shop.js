@@ -261,9 +261,9 @@ export async function kaufSchluessel(env, nr) {
   return (await sha256(`bewertung:${nr}:${env.VERWALTUNG_SCHLUESSEL || ""}`)).slice(0, 32);
 }
 
-// Ohne Konto (Lenn 2026-11-24: ohne E-Mail-Bestätigung, erscheint sofort). Vorname und E-Mail Pflicht, E-Mail nie öffentlich.
+// Ohne Konto (Lenn 2026-11-24: ohne E-Mail-Bestätigung, erscheint sofort). Vorname Pflicht, E-Mail freiwillig und nie öffentlich.
 // Spamschutz, den Kunden nicht merken: verstecktes Feld (Honigtopf), mindestens 5 Sekunden zwischen Seitenaufruf und Absenden,
-// höchstens 3 Bewertungen je IP und Tag, eine Bewertung je E-Mail und Produkt.
+// höchstens 3 Bewertungen je IP und Tag, eine Bewertung je E-Mail und Produkt (wenn angegeben).
 // „Verifizierter Kauf“ ohne Konto nur über den persönlichen Link aus der Erinnerungsmail: Eine eingetippte E-Mail-Adresse beweist nichts.
 export const BEWERTUNGEN_JE_IP_UND_TAG = 3;
 export async function bewertenOffen(env, d, ip = "") {
@@ -278,11 +278,9 @@ export async function bewertenOffen(env, d, ip = "") {
     const z = await env.DB.prepare(`SELECT email, positionen FROM bestellungen WHERE nr = ? AND ${BEZAHLT}`).bind(nr).first();
     if (z && enthaelt([z], skus)) { verifiziert = 1; mail = z.email; }
   }
-  if (!mail) {
-    if (nr && !text(d.email)) throw new Fehler("Den Kauf konnten wir über diesen Link nicht bestätigen. Bitte geben Sie Ihre E-Mail-Adresse an.");
-    mail = email(d.email);
-  }
-  if (await env.DB.prepare("SELECT 1 FROM bewertung_mail WHERE produkt = ? AND email = ?").bind(slug, mail).first())
+  // E-Mail freiwillig (Lenn 2026-11-24). Mit Adresse: eine Bewertung je Adresse und Produkt.
+  if (!mail && text(d.email)) mail = email(d.email);
+  if (mail && await env.DB.prepare("SELECT 1 FROM bewertung_mail WHERE produkt = ? AND email = ?").bind(slug, mail).first())
     throw new Fehler("Mit dieser E-Mail-Adresse wurde dieses Produkt schon bewertet.", 409);
   // IP nur als Tages-Prüfwert (mit Datum gehasht), wird täglich gelöscht
   const tag = jetzt().slice(0, 10), iph = await sha256(`${tag}:${ip}`);
@@ -291,7 +289,7 @@ export async function bewertenOffen(env, d, ip = "") {
   await env.DB.prepare("INSERT INTO bewertung_ip (ip, tag) VALUES (?, ?)").bind(iph, tag).run();
   const id = (await env.DB.prepare("INSERT INTO bewertungen (produkt, kunde_id, name, sterne, titel, text, verifiziert, freigegeben, datum) VALUES (?, NULL, ?, ?, ?, ?, ?, 1, ?)")
     .bind(slug, name, sterne, titel, inhalt, verifiziert, jetzt()).run()).meta.last_row_id;
-  try {
+  if (mail) try {
     await env.DB.prepare("INSERT INTO bewertung_mail (bewertung_id, produkt, email, erstellt) VALUES (?, ?, ?, ?)").bind(id, slug, mail, jetzt()).run();
   } catch (err) {
     await env.DB.prepare("DELETE FROM bewertungen WHERE id = ?").bind(id).run();

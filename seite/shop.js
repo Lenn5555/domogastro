@@ -275,12 +275,19 @@
         form.hidden = !(gast || d.darf === "ja");
         form.querySelectorAll(".bew-gast").forEach(function (x) { x.hidden = !gast; });
         form.elements.name.required = gast;
-        $(".bew-mail-feld", form).hidden = !gast || !!kauf; form.elements.email.required = gast && !kauf;
+        $(".bew-mail-feld", form).hidden = !gast || !!kauf; form.elements.email.required = false;
+        nlZeigen();
         $(".bew-verifiziert", form).hidden = !(gast && kauf);
         hinweis.textContent = d.darf === "schon_bewertet" ? "Sie haben dieses Produkt bereits bewertet. Vielen Dank!" : "";
         if (location.hash === "#bewertungen") box.scrollIntoView();
       }).catch(function () { liste.innerHTML = '<p class="klein">Bewertungen konnten nicht geladen werden.</p>'; });
     }
+    // Newsletter-Häkchen nur mit E-Mail-Adresse (angemeldet bzw. über den Link aus der Mail ist sie bekannt)
+    function nlZeigen() {
+      var mit = !$(".bew-gast", form).hidden ? (!!kauf || /@/.test(form.elements.email.value)) : true;
+      $(".nl-bew", form).hidden = !mit; if (!mit) form.elements.newsletter.checked = false;
+    }
+    form.elements.email.addEventListener("input", nlZeigen);
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var f = new FormData(form), st = $(".status", form), k = $("button[type=submit]", form);
@@ -298,7 +305,7 @@
         })
         .catch(function (err) {
           st.className = "status meldung fehler"; st.textContent = err.message;
-          if (kauf && /E-Mail-Adresse an/.test(err.message)) { kauf = null; $(".bew-mail-feld", form).hidden = false; form.elements.email.required = true; $(".bew-verifiziert", form).hidden = true; }
+
         })
         .then(function () { k.disabled = false; });
     });

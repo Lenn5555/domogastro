@@ -42,3 +42,13 @@ test("Verifizierter Kauf nur über den Link aus der Erinnerungsmail, nicht über
   assert.equal((await shop.bewertenOffen(e, neu({ name: "Anna", email: "egal@x.de", bestellung: "DG-1", k: "falsch" }))).verifiziert, false);
   assert.equal((await shop.bewertenOffen(e, neu({ name: "Anna", email: "x@x.de", bestellung: "DG-1", k }))).verifiziert, true);
 });
+
+test("E-Mail freiwillig: ohne Adresse sofort sichtbar, ohne Kauf-Zeichen", async () => {
+  const e = env();
+  const r = await shop.bewertenOffen(e, neu({ email: "" }), "5.5.5.5");
+  assert.equal(r.verifiziert, false); assert.equal(r.mail, "");
+  await shop.bewertenOffen(e, neu({ email: "" }), "5.5.5.5");  // ohne Adresse greift nur das IP-Limit
+  assert.equal((await shop.bewertungenLesen(e, slug)).anzahl, 2);
+  assert.equal(e.DB.roh.prepare("SELECT COUNT(*) AS n FROM bewertung_mail").get().n, 0);
+  await assert.rejects(shop.bewertenOffen(e, neu({ email: "kaputt" }), "6.6.6.6"), /gültige E-Mail/);
+});
