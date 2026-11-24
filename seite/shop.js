@@ -727,6 +727,9 @@
     }).catch(function () {});
   }
   function beraterZeigen() {
+    // Texte, die den Berater erwähnen (z. B. Ratgeber), nur zeigen, wenn er wirklich läuft
+    $$(".nur-berater").forEach(function (x) { x.hidden = false; });
+    $$(".ohne-berater").forEach(function (x) { x.hidden = true; });
     var stand = (function () { try { return JSON.parse(sessionStorage.getItem("dg-berater")) || {}; } catch (e) { return {}; } })();
     var verlauf = stand.verlauf || [], karten = stand.karten || {}, offen = !!stand.offen;
     function merken() { try { sessionStorage.setItem("dg-berater", JSON.stringify({ verlauf: verlauf, karten: karten, offen: offen })); } catch (e) {} }

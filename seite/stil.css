@@ -126,6 +126,17 @@ select,input[type=text],input[type=email],input[type=password],input[type=tel],i
 .text h3{margin:22px 0 6px;font-size:17px}
 .text p,.text li{color:var(--soft)}
 .text strong{color:var(--ink)}
+/* Ratgeber */
+.ratgeber .lead-text{font-size:18px;color:var(--ink)}
+.ratgeber li{margin:6px 0}
+.ratgeber .tabelle-rahmen{overflow-x:auto;margin:12px 0}
+.ratgeber table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px}
+.ratgeber th,.ratgeber td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--n3);color:var(--soft);vertical-align:top}
+.ratgeber th{color:var(--ink);background:var(--n2)}
+.ratgeber-weiter{margin-top:28px}
+.ratgeber-hinweis{display:flex;flex-direction:column;gap:4px;margin:14px 0 4px;padding:14px 18px;border:1px solid var(--n3);border-left:4px solid var(--cyan);border-radius:12px;background:var(--n2);text-decoration:none;max-width:720px}
+.ratgeber-hinweis b{color:var(--ink)}.ratgeber-hinweis span{color:var(--soft);font-size:14px}
+.ratgeber-hinweis:hover{border-color:var(--cyan)}
 .kasten{background:var(--n2);border-radius:10px;padding:20px}
 .platzhalter{color:var(--warn);font-weight:700}
 

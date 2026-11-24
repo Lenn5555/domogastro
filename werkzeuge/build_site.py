@@ -398,6 +398,7 @@ def kategorieseite(k, uk):
         f'<button type="button" data-unter="{e(un)}">{e(un)} ({len(v)})</button>' for un, v in sorted(uk.items()))
     inhalt = f"""<div class="seite g"><div class="in">
 <nav class="pfad"><a href="{u('/')}">Start</a> › {e(k)}</nav><h1 class="titel">{e(k)}</h1><p class="klein">{e(KAT_TEXT.get(k, ''))}</p>
+{ratgeber_hinweis(k)}
 <div class="werkzeug"><div class="chips">{chips}</div>
 <label style="display:flex;gap:8px;align-items:center;margin-left:auto">Sortieren <select id="sortierung"><option value="name">Name</option><option value="preis-auf">Preis aufsteigend</option><option value="preis-ab">Preis absteigend</option></select></label></div>
 <div class="raster" data-filter>{''.join(karte(p) for p in alle)}</div></div></div>"""
@@ -494,6 +495,31 @@ def suche():
     return """<div class="seite g"><div class="in"><h1 class="titel">Suche</h1><p id="anzahl" class="klein"></p><div class="raster" id="treffer" style="margin-top:20px"></div></div></div>"""
 
 
+# Ratgeber (Lenn 2026-11-24 freigegeben): Text in daten/ratgeber/<slug>.html, verlinkt aus der Kategorie
+RATGEBER = [
+    {"slug": "abzugshaube-gastrokueche", "kategorie": "Lüftung",
+     "h1": "Welche Abzugshaube passt in deine Gastroküche?",
+     "titel": "Abzugshaube für die Gastroküche: Größe, Bauform, Motor | Domo Gastro",
+     "beschreibung": "Wandhaube, Kastenhaube oder Deckenhaube? Mit oder ohne Motor? So findest du die passende Gastro-Abzugshaube für deine Küche.",
+     "teaser": "Wand-, Kasten- oder Deckenhaube, mit oder ohne Motor: So findest du die passende Haube in vier Schritten."},
+]
+
+
+def ratgeberseite(r):
+    pfad = f"/ratgeber/{r['slug']}/"
+    text = (ROOT / "daten/ratgeber" / f"{r['slug']}.html").read_text(encoding="utf-8")
+    text = text.replace("<!--MAIL-->", e(CFG["anfrage_email"])).replace('href="/', f'href="{BASIS}/')
+    k = r["kategorie"]
+    inhalt = (f'<div class="seite g"><div class="in text ratgeber"><nav class="pfad"><a href="{u("/")}">Start</a> › '
+              f'<a href="{u("/" + slug(k) + "/")}">{e(k)}</a> › Ratgeber</nav><h1 class="titel">{e(r["h1"])}</h1>{text}</div></div>')
+    return seite(r["titel"], inhalt, pfad, r["beschreibung"], k)
+
+
+def ratgeber_hinweis(k):
+    return "".join(f'<a class="ratgeber-hinweis" href="{u("/ratgeber/" + r["slug"] + "/")}"><b>Ratgeber: {e(r["h1"])}</b><span>{e(r["teaser"])}</span></a>'
+                   for r in RATGEBER if r["kategorie"] == k)
+
+
 def textseite(titel, datei, pfad, beschreibung=""):
     inhalt = (RECHT / datei).read_text(encoding="utf-8") if (RECHT / datei).exists() else "<p class='platzhalter'>Text fehlt – so nicht veröffentlichen.</p>"
     inhalt = inhalt.replace('href="/', f'href="{BASIS}/')
@@ -557,6 +583,8 @@ def main():
                                ("/versand/", "Versand und Zahlung", "versand.html"), ("/kontakt/", "Kontakt", "kontakt.html"),
                                ("/entsorgung/", "Entsorgung von Altgeräten, Batterien und Verpackungen", "entsorgung.html")]:
         schreib(pfad, textseite(titel, datei, pfad))
+    for r in RATGEBER:
+        schreib(f"/ratgeber/{r['slug']}/", ratgeberseite(r))
     (OUT / "404.html").write_text(seite("Seite nicht gefunden | Domo Gastro",
         f'<div class="seite g"><div class="in"><h1 class="titel">Seite nicht gefunden</h1><p><a href="{u("/")}">Zur Startseite</a> oder oben suchen.</p></div></div>', "/404", index=False), encoding="utf-8")
 
