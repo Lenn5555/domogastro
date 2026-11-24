@@ -217,6 +217,19 @@ footer h3{color:var(--ink);font-size:14px;margin:0 0 10px;letter-spacing:.06em;t
 footer ul{list-style:none;padding:0;margin:0;display:grid;gap:6px}
 footer a{text-decoration:none}
 footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
+/* Newsletter (Fußzeile, /newsletter/) */
+.nl-fuss{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:start;padding-bottom:32px;margin-bottom:32px;border-bottom:1px solid var(--n3)}
+.nl-fuss h3{font-size:15px}
+.nl-fuss p{margin:0}
+.nl-form{display:flex;gap:8px}
+.nl-form input{flex:1;min-width:0;padding:11px 12px;border-radius:8px;border:1px solid var(--n3);background:var(--n2);color:var(--ink);font:16px var(--sans)}
+.nl-form .btn{white-space:nowrap}
+.nl-text{margin:8px 0 0;color:var(--mute);font-size:12px;line-height:1.5}
+.nl-text a{text-decoration:underline}
+.nl-status:empty{display:none}
+.nl-status{margin:8px 0 0}.nl-status.ok{color:var(--ok)}.nl-status.fehler{color:var(--err)}
+.nl-kasse span a{text-decoration:underline}
+@media (max-width:760px){.nl-fuss{grid-template-columns:1fr;gap:14px}}
 
 @media (max-width:900px){
   header.h{position:static}
@@ -263,6 +276,7 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 /* Verwaltung */
 .v-karte{background:var(--n2);border-radius:14px;padding:16px 18px;margin:0 0 12px}
 .v-karte p{margin:6px 0}
+.v-tabelle{width:100%;border-collapse:collapse;margin:8px 0}.v-tabelle th,.v-tabelle td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--n3);word-break:break-all}
 .v-status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
 .v-status select,.v-status input[name=sendung]{padding:8px 10px;border-radius:8px;background:var(--n1);color:var(--ink);border:1px solid var(--n3)}
 .klein{font-size:13px;color:var(--soft)}

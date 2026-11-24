@@ -3,12 +3,12 @@ import TEXTE from "./texte.json" with { type: "json" };
 import { euro, runden } from "./hilfe.js";
 
 // Jede Mail geht als Text UND als schlichte HTML-Version raus (beides senkt die Spam-Wertung). anhaenge: [{ filename, content (Base64) }]
-export async function senden(env, an, betreff, text, { abruf = fetch, anhaenge } = {}) {
+export async function senden(env, an, betreff, text, { abruf = fetch, anhaenge, kopf } = {}) {
   if (!env.RESEND_API_KEY) { console.log(`[Mail nicht verschickt, kein RESEND_API_KEY] an ${an}: ${betreff}${anhaenge ? ` (+${anhaenge.length} Anhang)` : ""}`); return false; }
   const r = await abruf("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.ABSENDER, to: [an], subject: betreff, text, html: alsHtml(text), reply_to: env.BESTELL_EMAIL,
+    body: JSON.stringify({ from: env.ABSENDER, to: [an], subject: betreff, text, html: alsHtml(text), reply_to: env.BESTELL_EMAIL, ...(kopf ? { headers: kopf } : {}),
       attachments: [{ filename: "domo-gastro-logo.png", content: TEXTE.logo_png, content_id: "logo" }, ...(anhaenge || [])] }),
   });
   if (!r.ok) console.error("Resend:", r.status, await r.text().catch(() => ""));

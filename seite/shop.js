@@ -415,7 +415,7 @@
                    email: f.get("email"), telefon: f.get("telefon") || "", hinweis: f.get("hinweis") || "",
                    liefer: f.get("gleich") ? null : { firma: f.get("l_firma") || "", name: f.get("l_name"), strasse: f.get("l_strasse"), plz: f.get("l_plz"), ort: f.get("l_ort") } },
           zahlart: f.get("zahlart"), agb: !!f.get("agb"), gesamt_brutto: r.brutto, gutschein: gutschein ? gutschein.code : "",
-          konto_anlegen: !!f.get("konto_anlegen"), passwort: f.get("passwort") || "", bewertungsmail: !!f.get("bewertungsmail"),
+          konto_anlegen: !!f.get("konto_anlegen"), passwort: f.get("passwort") || "", bewertungsmail: !!f.get("bewertungsmail"), newsletter: !!f.get("newsletter"),
         };
       }
       function gewerbeFehlt() {
@@ -516,7 +516,7 @@
         var code = form.elements.gutschein.value.trim();
         if (!code) { gutschein = null; gs.textContent = ""; zeichnen(); return; }
         api("/gutschein/pruefen", { code: code }).then(function (d) {
-          gutschein = d; gs.className = "klein ok"; gs.textContent = "Gutschein eingelöst: " + d.prozent + " % Rabatt auf den Warenwert."; zeichnen();
+          gutschein = d; gs.className = "klein ok"; gs.textContent = "Gutschein eingelöst: " + d.prozent + " % Rabatt auf den Warenwert." + (d.mindestwert ? " Gilt ab " + eur(d.mindestwert) + " Warenwert (netto)." : ""); zeichnen();
         }).catch(function (err) { gutschein = null; gs.className = "klein fehler"; gs.textContent = err.message; zeichnen(); });
       });
       form.elements.gutschein.addEventListener("input", function () { if (gutschein) { gutschein = null; gs.textContent = ""; zeichnen(); } });
@@ -813,6 +813,47 @@
     if (offen) auf(true);
   }
 
+  /* ---------- Newsletter (Double-Opt-in, Lenn 2026-11-24) ---------- */
+  function newsletter() {
+    document.querySelectorAll(".nl-form").forEach(function (f) {
+      var st = f.parentNode.querySelector(".nl-status");
+      f.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var k = $("button", f); k.disabled = true;
+        api("/newsletter/anmelden", { email: f.elements.email.value.trim(), einwilligung: true }).then(function () {
+          st.className = "nl-status klein ok";
+          st.textContent = "Fast geschafft: Wir haben Ihnen eine E-Mail geschickt. Bitte klicken Sie dort auf den Bestätigungslink, dann kommt Ihr Gutscheincode.";
+          f.reset();
+        }).catch(function (err) {
+          st.className = "nl-status klein fehler";
+          st.textContent = err.message === "offline" ? "Die Anmeldung ist gerade nicht möglich." : err.message;
+        }).then(function () { k.disabled = false; });
+      });
+    });
+    var ziel = $("#nl-seite");
+    if (!ziel) return;
+    var q = new URLSearchParams(location.search), token = q.get("bestaetigen"), s = q.get("abmelden");
+    if (!token && !s) return;
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+    function zeigen(art, html) { ziel.innerHTML = '<div class="meldung ' + art + '" style="margin:0 0 22px">' + html + "</div>"; }
+    if (token) {
+      zeigen("", '<p><b>Nur noch ein Klick:</b> Bestätigen Sie, dass Sie den Newsletter von Domo Gastro erhalten möchten.</p><p><button class="btn pri" type="button" id="nl-ja">Anmeldung bestätigen</button></p>');
+      $("#nl-ja").addEventListener("click", function () {
+        this.disabled = true;
+        api("/newsletter/bestaetigen", { token: token }).then(function (d) {
+          zeigen("ok", d.schon ? "<p>Ihre Anmeldung war schon bestätigt. Danke!</p>"
+            : d.code ? "<p><b>Danke, Sie sind eingetragen!</b> Ihr persönlicher Gutscheincode ist per E-Mail unterwegs.</p>"
+            : "<p><b>Danke, Sie sind wieder eingetragen!</b> Den Willkommenscode gibt es einmal je E-Mail-Adresse; Sie hatten ihn schon bekommen.</p>");
+        }).catch(function (err) { zeigen("fehler", "<p>" + esc(err.message) + "</p>"); });
+      });
+    } else {
+      zeigen("", "<p>Sie werden abgemeldet …</p>");
+      api("/newsletter/abmelden", { s: s }).then(function () {
+        zeigen("ok", "<p><b>Sie sind abgemeldet.</b> Sie bekommen keinen Newsletter mehr von uns. Bestellbestätigungen zu künftigen Bestellungen schicken wir natürlich weiterhin.</p>");
+      }).catch(function (err) { zeigen("fehler", "<p>" + esc(err.message) + "</p>"); });
+    }
+  }
+
   /* ---------- Start ---------- */
   document.addEventListener("click", function (e) {
     var s = e.target.closest(".seg button");
@@ -822,5 +863,5 @@
   });
   korbZaehler(); kontoKopf(); preiseZeigen();
   if (!einwilligung()) banner(false); else googleLaden();
-  produktseite(); startseiteAuswahl(); kategorieseite(); suchseite(); kasse(); bestellseite(); widerrufseite(); kontoseite(); berater();
+  produktseite(); startseiteAuswahl(); kategorieseite(); suchseite(); kasse(); bestellseite(); widerrufseite(); kontoseite(); berater(); newsletter();
 })();

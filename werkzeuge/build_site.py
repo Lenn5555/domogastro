@@ -38,6 +38,7 @@ def _nur_mit_preis(produkte):
 
 PRODUKTE = _nur_mit_preis(PRODUKTE)
 LAENDER = json.loads((ROOT / "daten/laender.json").read_text(encoding="utf-8"))
+NEWSLETTER = json.loads((ROOT / "daten/newsletter.json").read_text(encoding="utf-8"))  # Newsletter mit Double-Opt-in (Lenn 2026-11-24)
 AKTION = {k: v for k, v in json.loads((ROOT / "daten/aktion.json").read_text(encoding="utf-8")).items() if k != "hinweis"}  # Preisaktion (Black Week)
 
 # Auslandsversand (Lenn 2026-11-19): Gewichte gibt es noch nicht, deshalb grob aus den Außenmaßen geschätzt
@@ -284,13 +285,50 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <header class="h g"><div class="in">
 <div class="mid"><a class="logo" href="{u('/')}"><img src="{u('/logo.svg')}" alt="Domo Gastro – Zuhause in der Gastronomie" width="380" height="140"></a><nav aria-label="Kategorien">{nav}</nav></div></div></header>
 <main>{inhalt}</main>
-<footer class="fuss g"><div class="in"><div class="spalten">
+<footer class="fuss g"><div class="in">{newsletter_fuss()}<div class="spalten">
 <div><img src="{u('/logo.svg')}" alt="Domo Gastro"><p>Zuhause in der Gastronomie. Profigeräte, Ausstattung und Zubehör für Gastronomie, Hotellerie und alle, die zu Hause wie Profis kochen.</p><p>{e(CFG['betreiber_zeile'])}</p><p class="klein">WEEE-Reg.-Nr. {e(CFG['weee'])}</p></div>
 <div><h3>Shop</h3><ul>{''.join(f'<li><a href="{u("/" + slug(k) + "/")}">{e(k)}</a></li>' for k in kategorien()[:6])}</ul></div>
-<div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/widerrufen/')}">Vertrag widerrufen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li><li><a href="#" class="einw-oeffnen">Cookie-Einstellungen</a></li></ul></div>
+<div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/widerrufen/')}">Vertrag widerrufen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li><li><a href="{u('/newsletter/')}">Newsletter</a></li><li><a href="#" class="einw-oeffnen">Cookie-Einstellungen</a></li></ul></div>
 <div><h3>Rechtliches</h3><ul><li><a href="{u('/impressum/')}">Impressum</a></li><li><a href="{u('/datenschutz/')}">Datenschutz</a></li><li><a href="{u('/agb/')}">AGB</a></li><li><a href="{u('/widerruf/')}">Widerrufsbelehrung</a></li><li><a href="{u('/entsorgung/')}">Entsorgung und Batterien</a></li></ul></div>
 </div><p class="steuerhinweis"></p></div></footer>
 </body></html>"""
+
+
+def nl_einwilligung():
+    """Wortlaut der Einwilligung (wird bei jeder Anmeldung gespeichert), mit Link zur Datenschutzerklärung."""
+    return e(NEWSLETTER["einwilligung"]).replace("Datenschutzerklärung", f'<a href="{u("/datenschutz/#newsletter")}">Datenschutzerklärung</a>')
+
+
+def nl_mindestwert():
+    m = NEWSLETTER.get("mindestwert_netto") or 0
+    return f" (ab {m:.2f} € Warenwert netto)".replace(".", ",") if m else ""
+
+
+def nl_formular(klasse=""):
+    return (f'<form class="nl-form {klasse}"><label class="sr" for="nl-email-{klasse or "f"}">E-Mail-Adresse</label>'
+            f'<input id="nl-email-{klasse or "f"}" type="email" name="email" required autocomplete="email" placeholder="Ihre E-Mail-Adresse">'
+            f'<button class="btn pri">Anmelden</button></form>'
+            f'<p class="klein nl-text">Mit „Anmelden“ erklären Sie: {nl_einwilligung()}</p><p class="nl-status klein" role="status"></p>')
+
+
+def newsletter_fuss():
+    p = NEWSLETTER["prozent"]
+    return (f'<div class="nl-fuss"><div><h3>Newsletter: {p} % Willkommensrabatt</h3>'
+            f'<p>Angebote, Neuheiten und Tipps für Ihre Gastronomie, {e(NEWSLETTER["haeufigkeit"])}. Nach der Bestätigung per E-Mail bekommen Sie einmalig '
+            f'einen persönlichen {p}-%-Gutscheincode{nl_mindestwert()}. Abmelden jederzeit mit einem Klick.</p></div>'
+            f'<div>{nl_formular()}</div></div>')
+
+
+def newsletter_seite():
+    p = NEWSLETTER["prozent"]
+    return (f'<div class="seite g"><div class="in" style="max-width:760px"><h1 class="titel">Newsletter</h1>'
+            f'<div id="nl-seite"></div>'
+            f'<div class="nl-info"><p>Mit unserem Newsletter erfahren Sie zuerst von Angeboten, neuen Geräten und Aktionen und bekommen Tipps rund um die Gastronomie-Ausstattung, '
+            f'{e(NEWSLETTER["haeufigkeit"])}.</p>'
+            f'<p><b>{p} % Willkommensrabatt:</b> Nach der Anmeldung schicken wir Ihnen eine E-Mail mit einem Bestätigungslink. Erst nach Ihrem Klick sind Sie eingetragen und bekommen '
+            f'einmalig einen persönlichen {p}-%-Gutscheincode für Ihre nächste Bestellung{nl_mindestwert()}. Der Code gilt einmal, nur einer je E-Mail-Adresse, und ist nicht mit anderen Gutscheinen oder laufenden Rabattaktionen kombinierbar.</p>'
+            f'<p><b>Abmelden</b> können Sie sich jederzeit mit einem Klick über den Link unten in jeder E-Mail.</p>'
+            f'<div class="kasten" style="margin-top:18px">{nl_formular("seite")}</div></div></div></div>')
 
 
 def karte(p):
@@ -444,6 +482,7 @@ def warenkorb():
 <label class="check zahlart sofort-art" hidden><input type="radio" name="zahlart" value="PayPal"> <span><b>PayPal</b><br><span class="klein">Sofort bezahlen mit Ihrem PayPal-Konto.</span></span></label></fieldset>
 <label class="check"><input type="checkbox" name="konto_anlegen"> Kundenkonto anlegen (Bestellungen verfolgen, Produkte bewerten)</label>
 <label id="pw-feld" hidden>Passwort für Ihr Konto (mind. 10 Zeichen) <input type="password" name="passwort" minlength="10" autocomplete="new-password"></label>
+<label class="check nl-kasse"><input type="checkbox" name="newsletter"> <span>Newsletter (freiwillig, mit {NEWSLETTER['prozent']} % Willkommensrabatt): {nl_einwilligung()} Sie bekommen zuerst eine E-Mail zur Bestätigung.</span></label>
 <label class="check" id="bew-mail" hidden><input type="checkbox" name="bewertungsmail"> Ja, erinnern Sie mich nach der Lieferung einmal per E-Mail daran, die Artikel zu bewerten (freiwillig).</label>
 <label class="check"><input type="checkbox" name="agb" required> Ich habe die <a href="{u('/agb/')}" target="_blank">AGB</a> gelesen und akzeptiere sie. Die <a href="{u('/datenschutz/')}" target="_blank">Datenschutzerklärung</a> habe ich zur Kenntnis genommen.</label>
 <p class="klein nur-privat">Als Verbraucher haben Sie ein gesetzliches Widerrufsrecht. Einzelheiten in der <a href="{u('/widerruf/')}" target="_blank">Widerrufsbelehrung</a>.</p>
@@ -579,6 +618,8 @@ def main():
     schreib("/konto/", seite("Kundenkonto | Domo Gastro", konto(), "/konto/", index=False))
     schreib("/bestellung/", seite("Bestellung verfolgen | Domo Gastro", bestellung(), "/bestellung/", index=False))
     schreib("/widerrufen/", seite("Vertrag widerrufen | Domo Gastro", widerrufen(), "/widerrufen/", index=False))
+    schreib("/newsletter/", seite(f"Newsletter mit {NEWSLETTER['prozent']} % Willkommensrabatt | Domo Gastro", newsletter_seite(), "/newsletter/",
+                                   f"Angebote, Neuheiten und Tipps für die Gastronomie, {NEWSLETTER['haeufigkeit']}. Nach der Anmeldung einmalig {NEWSLETTER['prozent']} % Rabatt."))
     schreib("/suche/", seite("Suche | Domo Gastro", suche(), "/suche/", index=False))
     schreib("/verwaltung/", seite("Verwaltung | Domo Gastro", verwaltung(), "/verwaltung/", index=False))
     for pfad, titel, datei in [("/impressum/", "Impressum", "impressum.html"), ("/datenschutz/", "Datenschutzerklärung", "datenschutz.html"),

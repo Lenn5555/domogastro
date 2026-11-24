@@ -1,0 +1,7 @@
+{
+  "hinweis": "Newsletter mit Double-Opt-in (Lenn 2026-11-24): nach Bestätigung einmalig ein persönlicher Code (Präfix DGN-), nur einer je Mailadresse, nicht mit Preisaktionen kombinierbar. mindestwert_netto = Mindest-Warenwert netto für den Code (0 = keiner). Änderst du 'einwilligung', gilt der neue Text für neue Anmeldungen; jede Anmeldung speichert ihren eigenen Text als Nachweis.",
+  "prozent": 5,
+  "mindestwert_netto": 0,
+  "haeufigkeit": "höchstens zweimal im Monat",
+  "einwilligung": "Ja, ich möchte den Newsletter von Domo Gastro (T&S Systemtechnik GmbH) per E-Mail erhalten: Angebote, Neuheiten und Tipps rund um Gastronomie-Ausstattung, höchstens zweimal im Monat. Als Dankeschön bekomme ich nach der Bestätigung einmalig einen persönlichen 5-%-Gutscheincode. Meine Einwilligung kann ich jederzeit mit einem Klick über den Abmeldelink in jeder E-Mail widerrufen. Einzelheiten in der Datenschutzerklärung."
+}

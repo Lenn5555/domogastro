@@ -87,10 +87,14 @@
       <p>Vergeben: <b>${g.vergeben}</b> · eingelöst: <b>${g.eingeloest}</b>${g.vergeben ? ` (${Math.round(g.eingeloest / g.vergeben * 100)} %)` : ""}</p>
       <p>Bestellungen mit Code: <b>${g.alle.anzahl}</b> · Umsatz <b>${euro(g.alle.brutto)}</b> brutto (${euro(g.alle.netto)} netto) · gewährter Rabatt ${euro(g.alle.rabatt)} netto</p>
       <p class="klein">Davon bezahlt: ${g.bezahlt.anzahl} Bestellungen, ${euro(g.bezahlt.brutto)} brutto (${euro(g.bezahlt.netto)} netto). Stornierte Bestellungen zählen nicht mit.</p></div>` : "";
+    const ng = d.newsletter_gutscheine;
+    const nlGut = ng ? `<div class="v-karte"><b>Newsletter-Gutscheine (DGN-, einmal je Adresse)</b>
+      <p>Vergeben: <b>${ng.vergeben}</b> · eingelöst: <b>${ng.eingeloest}</b>${ng.vergeben ? ` (${Math.round(ng.eingeloest / ng.vergeben * 100)} %)` : ""}</p>
+      <p>Bestellungen mit Code: <b>${ng.alle.anzahl}</b> · Umsatz <b>${euro(ng.alle.brutto)}</b> brutto (${euro(ng.alle.netto)} netto) · gewährter Rabatt ${euro(ng.alle.rabatt)} netto</p></div>` : "";
     const nZahlung = d.bestellungen.filter(offen).length, nVersand = d.bestellungen.filter(zuVersenden).length;
     const nWiderruf = d.bestellungen.reduce((n, b) => n + (b.widerrufe || []).filter((w) => w.status !== "erstattet").length, 0);
     const todo = `<div class="v-karte"><b>Zu erledigen</b><p>${nZahlung || nVersand || nWiderruf ? `${nZahlung} Überweisung${nZahlung === 1 ? "" : "en"} abwarten · ${nVersand} Bestellung${nVersand === 1 ? "" : "en"} versenden${nWiderruf ? ` · <b>${nWiderruf} Widerruf${nWiderruf === 1 ? "" : "e"} erstatten</b>` : ""}` : "Alles erledigt."}</p></div>`;
-    box.innerHTML = `${todo}<h2>Gutscheine</h2>${gut}<h2>Neueste Bewertungen (${d.bewertungen.length})</h2>${bew}<h2 id="v-bestellungen">Bestellungen (${d.bestellungen.length})</h2>${best}
+    box.innerHTML = `${todo}<h2>Gutscheine</h2>${gut}${nlGut}<h2 id="v-newsletter">Newsletter</h2><div id="v-nl" class="v-karte">Lädt …</div><h2>Neueste Bewertungen (${d.bewertungen.length})</h2>${bew}<h2 id="v-bestellungen">Bestellungen (${d.bestellungen.length})</h2>${best}
       <p><button class="btn sec" id="v-ab">Abmelden</button></p>`;
     box.querySelectorAll("[data-bew]").forEach((k) => k.addEventListener("click", async () => {
       if (!confirm("Diese Bewertung endgültig löschen?")) return;
@@ -124,7 +128,31 @@
       const k = f.querySelector("button"); k.disabled = true;
       try { await rufen("/verwaltung/widerruf", { id: f.dataset.wid, schritt: "erstattet", betrag }); laden(); } catch (err) { alert(err.message); k.disabled = false; }
     }));
+    newsletterLaden();
     document.getElementById("v-ab").addEventListener("click", () => { schluessel = ""; try { sessionStorage.removeItem("dg-verwaltung"); } catch {} anmelden(); });
   }
+  // Newsletter: nur bestätigte Adressen (Double-Opt-in) mit Nachweis; CSV für einen späteren Versanddienst
+  const csvFeld = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  async function newsletterLaden() {
+    const ziel = document.getElementById("v-nl");
+    let n;
+    try { n = await rufen("/verwaltung/newsletter"); } catch (err) { ziel.textContent = err.message; return; }
+    const a = n.anzahl;
+    ziel.innerHTML = `<p>Bestätigt: <b>${a.bestaetigt}</b> · wartet auf Bestätigung: ${a.offen} · abgemeldet: ${a.abgemeldet}
+      ${n.mindestwert ? ` · Mindestwert für den Code: ${euro(n.mindestwert)} netto` : " · Code ohne Mindestwert"}</p>
+      ${n.liste.length ? `<p><button class="btn sec" id="v-nl-csv">Bestätigte Adressen als CSV herunterladen</button></p>
+      <details class="klein"><summary>Liste anzeigen (${n.liste.length})</summary><table class="v-tabelle"><tr><th>E-Mail</th><th>Bestätigt</th><th>Quelle</th><th>Code</th></tr>
+      ${n.liste.map((x) => `<tr><td>${esc(x.email)}</td><td>${esc(x.bestaetigt.slice(0, 16).replace("T", " "))}</td><td>${x.quelle === "kasse" ? "Kasse" : "Anmeldefeld"}</td><td>${esc(x.code)}${x.eingeloest_nr ? ` ✓ ${esc(x.eingeloest_nr)}` : ""}</td></tr>`).join("")}</table></details>
+      <p class="klein">Die CSV enthält je Adresse den Nachweis der Einwilligung (Zeitpunkt und IP von Anmeldung und Bestätigung, Wortlaut). Bitte sicher aufbewahren und nur für den Newsletter nutzen.</p>` : "<p>Noch keine bestätigten Anmeldungen.</p>"}`;
+    const k = document.getElementById("v-nl-csv");
+    if (k) k.addEventListener("click", () => {
+      const spalten = ["email", "bestaetigt", "bestaetigt_ip", "angemeldet", "anmelde_ip", "quelle", "einwilligung", "code", "eingeloest_nr"];
+      const csv = "\ufeff" + [spalten.join(";"), ...n.liste.map((x) => spalten.map((s) => csvFeld(x[s])).join(";"))].join("\r\n");
+      const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      const l = Object.assign(document.createElement("a"), { href: url, download: `newsletter-domogastro-${new Date().toISOString().slice(0, 10)}.csv` });
+      document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+  }
+
   laden();
 })();

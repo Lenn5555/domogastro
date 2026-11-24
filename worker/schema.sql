@@ -57,3 +57,20 @@ CREATE TABLE IF NOT EXISTS widerrufe (
   datum TEXT NOT NULL, aktualisiert TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS widerrufe_nr ON widerrufe(nr);
+-- Newsletter mit Double-Opt-in (Lenn 2026-11-24): offen → bestaetigt → abgemeldet. Nachweis: Wortlaut, Zeitpunkt und IP von Anmeldung und Bestätigung.
+-- code: der einmalige Willkommens-Gutschein (DGN-…), bleibt auch nach Abmeldung stehen (nur ein Code je Adresse).
+CREATE TABLE IF NOT EXISTS newsletter (
+  email TEXT PRIMARY KEY,
+  status TEXT NOT NULL,
+  quelle TEXT NOT NULL DEFAULT '',
+  einwilligung TEXT NOT NULL,
+  angemeldet TEXT NOT NULL, anmelde_ip TEXT NOT NULL DEFAULT '',
+  bestaetigen_hash TEXT NOT NULL DEFAULT '', bestaetigen_bis INTEGER NOT NULL DEFAULT 0,
+  bestaetigt TEXT NOT NULL DEFAULT '', bestaetigt_ip TEXT NOT NULL DEFAULT '',
+  abmelde_schluessel TEXT NOT NULL,
+  abgemeldet TEXT NOT NULL DEFAULT '',
+  code TEXT NOT NULL DEFAULT '',
+  mail_gesendet TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS newsletter_bestaetigen ON newsletter(bestaetigen_hash);
+CREATE UNIQUE INDEX IF NOT EXISTS newsletter_abmelden ON newsletter(abmelde_schluessel);

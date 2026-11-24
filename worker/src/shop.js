@@ -9,6 +9,7 @@ import LAENDER from "../../daten/laender.json" with { type: "json" };
 import AKTION from "../../daten/aktion.json" with { type: "json" };
 import { gesamtRechnen, landVon, aktionAktiv, stueckpreis } from "./steuer.js";
 import { ustidPruefen } from "./ustid.js";
+import { mindestwertFehler, mindestwert, PRAEFIX as NL_PRAEFIX } from "./newsletter.js";
 
 export const MWST = 0.19;
 export const GUTSCHEIN_PROZENT = 5;
@@ -85,6 +86,8 @@ async function vorbereiten(env, d, kunde) {
     if (!ust.gueltig) throw new Fehler(ust.fehler || "Die USt-IdNr. ist laut EU-Prüfung (VIES) nicht gültig. Bitte prüfen Sie sie oder bestellen Sie ohne USt-IdNr. mit Umsatzsteuer.");
   }
   const r = rechnen(d.positionen, g ? g.prozent : 0, k.land, Boolean(ust?.gueltig));
+  const mw = g ? mindestwertFehler(g.code, r.warenwert) : "";
+  if (mw) throw new Fehler(mw);
   // Der Browser zeigt den Betrag vor dem Absenden an; weicht er ab (z. B. Preisänderung), lieber neu bestätigen lassen
   if (d.gesamt_brutto != null && Math.abs(Number(d.gesamt_brutto) - r.brutto) > 0.01)
     throw new Fehler("Die Preise haben sich geändert. Bitte laden Sie den Warenkorb neu und prüfen Sie den Betrag.", 409);
@@ -263,15 +266,16 @@ export async function verwaltungListe(env) {
   const wNach = {};
   for (const x of w.results) (wNach[x.nr] ||= []).unshift({ ...x, positionen: JSON.parse(x.positionen) });
   return { bestellungen: b.results.map((z) => ({ ...oeffentlich(z), email: z.email, kunde: JSON.parse(z.kunde), transaktion: z.transaktion, widerrufe: wNach[z.nr] || [] })), bewertungen: r.results,
-    gutscheine: await gutscheinStatistik(env) };
+    gutscheine: await gutscheinStatistik(env, "DG5-"), newsletter_gutscheine: await gutscheinStatistik(env, NL_PRAEFIX) };
 }
 
-// Wie viele Bewertungs-Gutscheine wurden vergeben/eingelöst, und was haben die Bestellungen damit eingebracht (ohne Stornos)?
-async function gutscheinStatistik(env) {
-  const v = await env.DB.prepare("SELECT COUNT(*) AS vergeben, SUM(eingeloest_nr <> '') AS eingeloest FROM gutscheine").first();
+// Wie viele Gutscheine wurden vergeben/eingelöst, und was haben die Bestellungen damit eingebracht (ohne Stornos)?
+// praefix: "DG5-" = Dank für Bewertung, "DGN-" = Newsletter-Willkommen
+async function gutscheinStatistik(env, praefix = "DG5-") {
+  const v = await env.DB.prepare("SELECT COUNT(*) AS vergeben, SUM(eingeloest_nr <> '') AS eingeloest FROM gutscheine WHERE code LIKE ?").bind(praefix + "%").first();
   const summe = (bedingung) => env.DB.prepare(`SELECT COUNT(*) AS anzahl, COALESCE(SUM(b.brutto), 0) AS brutto, COALESCE(SUM(b.netto), 0) AS netto,
       COALESCE(SUM(json_extract(b.kunde, '$.gutschein.rabatt')), 0) AS rabatt
-    FROM bestellungen b JOIN gutscheine g ON g.eingeloest_nr = b.nr WHERE ${bedingung}`).first();
+    FROM bestellungen b JOIN gutscheine g ON g.eingeloest_nr = b.nr WHERE g.code LIKE ? AND ${bedingung}`).bind(praefix + "%").first();
   return {
     vergeben: v.vergeben || 0, eingeloest: v.eingeloest || 0,
     alle: await summe("b.status <> 'storniert'"),
@@ -315,7 +319,7 @@ async function gutscheinLesen(env, code) {
 }
 export async function gutscheinPruefen(env, d) {
   const g = await gutscheinLesen(env, gutscheinCode(d.code));
-  return { code: g.code, prozent: g.prozent };
+  return { code: g.code, prozent: g.prozent, ...(g.code.startsWith(NL_PRAEFIX) && mindestwert() ? { mindestwert: mindestwert() } : {}) };
 }
 
 /* ---------- Bitte um Bewertung (einmal je Bestellung) ---------- */
