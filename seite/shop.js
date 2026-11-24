@@ -424,7 +424,7 @@
         return {
           modus: modus, positionen: r.pos.map(function (p) { return { sku: p.sku, menge: p.menge }; }),
           kunde: { land: landCode, name: f.get("name"), firma: f.get("firma") || "", ustid: f.get("ustid") || "", strasse: f.get("strasse"), plz: f.get("plz"), ort: f.get("ort"),
-                   email: f.get("email"), telefon: f.get("telefon") || "", hinweis: f.get("hinweis") || "",
+                   email: f.get("email"), telefon: f.get("telefon") || "", hinweis: f.get("hinweis") || "", werbehinweis: true, keine_werbung: !!f.get("keine_werbung"),
                    liefer: f.get("gleich") ? null : { firma: f.get("l_firma") || "", name: f.get("l_name"), strasse: f.get("l_strasse"), plz: f.get("l_plz"), ort: f.get("l_ort") } },
           zahlart: f.get("zahlart"), agb: !!f.get("agb"), gesamt_brutto: r.brutto, gutschein: gutschein ? gutschein.code : "",
           konto_anlegen: !!f.get("konto_anlegen"), passwort: f.get("passwort") || "", bewertungsmail: !!f.get("bewertungsmail"), newsletter: !!f.get("newsletter"),
@@ -861,7 +861,7 @@
     } else {
       zeigen("", "<p>Sie werden abgemeldet …</p>");
       api("/newsletter/abmelden", { s: s }).then(function () {
-        zeigen("ok", "<p><b>Sie sind abgemeldet.</b> Sie bekommen keinen Newsletter mehr von uns. Bestellbestätigungen zu künftigen Bestellungen schicken wir natürlich weiterhin.</p>");
+        zeigen("ok", "<p><b>Sie sind abgemeldet.</b> Sie bekommen keine Werbe-E-Mails mehr von uns. Bestellbestätigungen zu künftigen Bestellungen schicken wir natürlich weiterhin.</p>");
       }).catch(function (err) { zeigen("fehler", "<p>" + esc(err.message) + "</p>"); });
     }
   }

@@ -146,29 +146,51 @@
       ${n.liste.map((x) => `<tr><td>${esc(x.email)}</td><td>${esc(x.bestaetigt.slice(0, 16).replace("T", " "))}</td><td>${({ kasse: "Kasse", bewertung: "Bewertung" })[x.quelle] || "Anmeldefeld"}</td><td>${esc(x.code)}${x.eingeloest_nr ? ` ✓ ${esc(x.eingeloest_nr)}` : ""}</td></tr>`).join("")}</table></details>
       <p class="klein">Die CSV enthält je Adresse den Nachweis der Einwilligung (Zeitpunkt und IP von Anmeldung und Bestätigung, Wortlaut). Bitte sicher aufbewahren und nur für den Newsletter nutzen.</p>` : "<p>Noch keine bestätigten Anmeldungen.</p>"}`;
     // Statistik und Versand darunter
-    const tab = (zeilen, fmt) => zeilen.length ? `<table class="v-tabelle"><tr><th>${fmt === "tag" ? "Tag" : "Monat"}</th><th>Anmeldungen</th><th>Bestätigt</th><th>Abmeldungen</th><th>Codes eingelöst</th></tr>
-      ${zeilen.map((z) => `<tr><td>${fmt === "tag" ? esc(z.zeit.split("-").reverse().join(".")) : esc(z.zeit.split("-").reverse().join("/"))}</td><td>${z.anmeldung}</td><td>${z.bestaetigung}</td><td>${z.abmeldung}</td><td>${z.eingeloest}</td></tr>`).join("")}</table>` : "<p>Noch keine Daten.</p>";
+    const tab = (zeilen, fmt) => zeilen.length ? `<table class="v-tabelle"><tr><th>${fmt === "tag" ? "Tag" : "Monat"}</th><th>Anmeldungen</th><th>Bestätigt</th><th>Abmeldungen</th><th>Widersprüche Bestandskunden</th><th>Codes eingelöst</th></tr>
+      ${zeilen.map((z) => `<tr><td>${fmt === "tag" ? esc(z.zeit.split("-").reverse().join(".")) : esc(z.zeit.split("-").reverse().join("/"))}</td><td>${z.anmeldung}</td><td>${z.bestaetigung}</td><td>${z.abmeldung}</td><td>${z.widerspruch || 0}</td><td>${z.eingeloest}</td></tr>`).join("")}</table>` : "<p>Noch keine Daten.</p>";
     const quote = (() => { const t = n.statistik.monate.reduce((x, z) => ({ an: x.an + z.anmeldung, be: x.be + z.bestaetigung }), { an: 0, be: 0 }); return t.an ? Math.round(t.be / t.an * 100) : null; })();
+    const bk = n.bestandskunden || { aktiv: 0, gesperrt: 0, kategorien: {}, liste: [] };
     const STATUS_A = { laeuft: "läuft", fertig: "fertig", abgebrochen: "abgebrochen" };
-    const ausg = n.ausgaben.length ? n.ausgaben.map((x) => `<div class="v-aufgabe"><span><b>${esc(x.betreff)}</b> · ${esc(x.gestartet.slice(0, 16).replace("T", " "))} · ${STATUS_A[x.status] || esc(x.status)} ·
+    const ausg = n.ausgaben.length ? n.ausgaben.map((x) => `<div class="v-aufgabe"><span><b>${esc(x.betreff)}</b> · ${x.gruppe === "bestandskunden" ? "Bestandskunden" : "Abonnenten"} · ${esc(x.gestartet.slice(0, 16).replace("T", " "))} · ${STATUS_A[x.status] || esc(x.status)} ·
       ${x.gesendet} von ${x.empfaenger} verschickt${x.fehler ? `, ${x.fehler} Fehler` : ""}${x.status === "laeuft" ? `, noch ${x.offen} offen` : ""}</span>
       ${x.status === "laeuft" ? `<button class="btn sec" data-nl-stop="${x.id}">Abbrechen</button>` : ""}</div>`).join("") : "<p>Noch kein Newsletter verschickt.</p>";
     ziel.insertAdjacentHTML("afterend", `
+      <div class="v-karte"><b>Bestandskunden (§ 7 Abs. 3 UWG)</b>
+        <p>Aktiv: <b>${bk.aktiv}</b> · widersprochen (dauerhaft gesperrt): ${bk.gesperrt}</p>
+        <p class="klein">Nur Käufer, die ab ${esc(bk.hinweis_stand || "")} bestellt haben (seitdem steht der Hinweis an der Kasse); ältere Käufer sind nicht dabei. Gast- und Kontobestellungen gleich. Kein Gutscheincode. Werbung nur für Produkte, die dem Gekauften ähnlich sind.</p>
+        ${bk.liste.length ? `<p><button class="btn sec" id="v-bk-csv">Bestandskunden als CSV herunterladen</button></p>` : ""}</div>
       <div class="v-karte"><b>Statistik</b>${quote != null ? `<p class="klein">Bestätigungsquote der letzten 12 Monate: ${quote} %. Unbestätigte Anmeldungen werden nach 30 Tagen gelöscht.</p>` : ""}
         <details open><summary>Je Monat</summary>${tab(n.statistik.monate, "monat")}</details>
         <details><summary>Je Tag (letzte 31 Tage)</summary>${tab(n.statistik.tage, "tag")}</details></div>
       <div class="v-karte"><b>Newsletter verschicken</b>
         <p class="klein">Erst Testmail an ${esc(DG.mail || "sales@")} schicken und prüfen, dann an alle ${a.bestaetigt} bestätigten Adressen. Abmeldelink und Impressum kommen automatisch dazu.
         Versand gedrosselt: höchstens ${n.tageslimit} Newsletter-Mails pro Tag (heute schon ${n.heute_gesendet}), alle 10 Minuten ein Schwung.</p>
-        <form id="v-nl-form"><label>Betreff <input type="text" name="betreff" maxlength="150" required></label>
+        <form id="v-nl-form">
+        <fieldset style="border:0;padding:0;margin:0 0 10px"><legend><b>An wen?</b></legend>
+        <label class="check"><input type="radio" name="gruppe" value="newsletter" checked> Newsletter-Abonnenten mit Einwilligung (${a.bestaetigt})</label>
+        <label class="check"><input type="radio" name="gruppe" value="bestandskunden"> Bestandskunden (§ 7 Abs. 3 UWG, ohne Einwilligung, ${bk.aktiv} aktiv). Nur Angebote zu Produkten, die dem Gekauften ähnlich sind!</label>
+        <div id="v-nl-kat" class="klein" hidden><p>Kategorien, zu denen dieser Newsletter Angebote macht. Er geht nur an Kunden, die in einer davon gekauft haben (Abonnenten ausgenommen, die bekommen den normalen Newsletter):</p>
+        ${Object.keys(bk.kategorien).length ? Object.entries(bk.kategorien).map(([k, z]) => `<label class="check"><input type="checkbox" name="kat" value="${esc(k)}"> ${esc(k)} (${z})</label>`).join("") : "<p>Noch keine Bestandskunden.</p>"}</div></fieldset>
+        <label>Betreff <input type="text" name="betreff" maxlength="150" required></label>
         <label>Text (Links einfach als https://… einfügen) <textarea name="text" rows="14" required></textarea></label>
-        <p><button class="btn sec" type="button" id="v-nl-test">Testmail senden</button> <button class="btn pri" type="button" id="v-nl-los">An alle bestätigten Adressen senden</button></p>
+        <p><button class="btn sec" type="button" id="v-nl-test">Testmail senden</button> <button class="btn pri" type="button" id="v-nl-los">Jetzt verschicken</button></p>
         <p class="klein" id="v-nl-meldung" role="status"></p></form>
         <h3 style="font-size:15px;margin:14px 0 6px">Bisherige Newsletter</h3>${ausg}</div>`);
+    const bkK = document.getElementById("v-bk-csv");
+    if (bkK) bkK.addEventListener("click", () => {
+      const spalten = ["email", "seit", "hinweis_stand", "letzte_bestellung", "kategorien", "gesperrt"];
+      const csv = "\ufeff" + [spalten.join(";"), ...bk.liste.map((x) => spalten.map((sp) => csvFeld(x[sp])).join(";"))].join("\r\n");
+      const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      const l = Object.assign(document.createElement("a"), { href: url, download: `bestandskunden-domogastro-${new Date().toISOString().slice(0, 10)}.csv` });
+      document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
     const form = document.getElementById("v-nl-form"), meld = document.getElementById("v-nl-meldung");
     try { const e = JSON.parse(localStorage.getItem("dg-nl-entwurf") || "null"); if (e) { form.betreff.value = e.betreff || ""; form.text.value = e.text || ""; } } catch {}
     form.addEventListener("input", () => { try { localStorage.setItem("dg-nl-entwurf", JSON.stringify({ betreff: form.betreff.value, text: form.text.value })); } catch {} });
-    const daten = () => ({ betreff: form.betreff.value.trim(), text: form.text.value });
+    const gruppe = () => form.querySelector("input[name=gruppe]:checked").value;
+    form.querySelectorAll("input[name=gruppe]").forEach((r) => r.addEventListener("change", () => { document.getElementById("v-nl-kat").hidden = gruppe() !== "bestandskunden"; }));
+    const daten = () => ({ betreff: form.betreff.value.trim(), text: form.text.value, gruppe: gruppe(),
+      kategorien: [...form.querySelectorAll("input[name=kat]:checked")].map((x) => x.value) });
     document.getElementById("v-nl-test").addEventListener("click", async (ev) => {
       ev.target.disabled = true;
       try { const r = await rufen("/verwaltung/newsletter/test", daten()); meld.textContent = `Testmail an ${r.an} verschickt. Bitte im Postfach prüfen.`; }
@@ -176,7 +198,8 @@
       ev.target.disabled = false;
     });
     document.getElementById("v-nl-los").addEventListener("click", async (ev) => {
-      if (!confirm(`Newsletter „${form.betreff.value}“ jetzt an alle ${a.bestaetigt} bestätigten Adressen verschicken? Das lässt sich nicht zurückholen (nur noch nicht verschickte Mails lassen sich abbrechen).`)) return;
+      const ziel = gruppe() === "bestandskunden" ? "die Bestandskunden der gewählten Kategorien" : `alle ${a.bestaetigt} bestätigten Abonnenten`;
+      if (!confirm(`Newsletter „${form.betreff.value}“ jetzt an ${ziel} verschicken? Das lässt sich nicht zurückholen (nur noch nicht verschickte Mails lassen sich abbrechen).`)) return;
       ev.target.disabled = true;
       try { const r = await rufen("/verwaltung/newsletter/senden", { ...daten(), sicher: true }); try { localStorage.removeItem("dg-nl-entwurf"); } catch {}
         alert(`Versand gestartet: ${r.empfaenger} Empfänger, höchstens ${r.tageslimit} pro Tag.`); laden(); }

@@ -9,7 +9,7 @@ import LAENDER from "../../daten/laender.json" with { type: "json" };
 import AKTION from "../../daten/aktion.json" with { type: "json" };
 import { gesamtRechnen, landVon, aktionAktiv, stueckpreis } from "./steuer.js";
 import { ustidPruefen } from "./ustid.js";
-import { mindestwertFehler, mindestwert, PRAEFIX as NL_PRAEFIX } from "./newsletter.js";
+import { mindestwertFehler, mindestwert, PRAEFIX as NL_PRAEFIX, WERBEHINWEIS_STAND } from "./newsletter.js";
 
 export const MWST = 0.19;
 const ZAHLARTEN = ["Vorkasse", "Kreditkarte", "PayPal"];
@@ -59,6 +59,9 @@ function kundendaten(k, modus) {
     d.liefer = { firma: text(l.firma, 120), name: text(l.name, 120), strasse: text(l.strasse, 120), plz: text(l.plz, 10), ort: text(l.ort, 80) };
     if (!d.liefer.name || !d.liefer.strasse || !d.liefer.ort) throw new Fehler("Bitte Name und vollständige Lieferadresse angeben.");
   }
+  // § 7 Abs. 3 UWG (Lenn 2026-11-24): Hinweis auf Werbung zu ähnlichen Produkten wurde an der Kasse gezeigt; Häkchen = sofortiger Widerspruch
+  if (k?.werbehinweis === true) d.werbehinweis = WERBEHINWEIS_STAND;
+  if (k?.keine_werbung === true) d.keine_werbung = true;
   d.land = landVon(LAENDER, String(k?.land || "DE")) ? String(k?.land || "DE") : "";
   if (!d.land) throw new Fehler("In dieses Land liefern wir leider nicht. Schreiben Sie uns gern an sales@ts-systec.de.");
   const plz = d.liefer ? d.liefer.plz : d.plz;

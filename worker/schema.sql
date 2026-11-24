@@ -95,3 +95,10 @@ CREATE TABLE IF NOT EXISTS bewertung_mail (
 );
 CREATE TABLE IF NOT EXISTS bewertung_ip (ip TEXT NOT NULL, tag TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS bewertung_ip_tag ON bewertung_ip(ip, tag);
+-- Bestandskunden-Werbung nach § 7 Abs. 3 UWG (Lenn 2026-11-24): nur Käufer mit Hinweis an der Kasse (hinweis_stand), nur ähnliche Produkte (kategorien), gesperrt = Zeitpunkt des Widerspruchs (dauerhaft)
+CREATE TABLE IF NOT EXISTS bestandskunden (
+  email TEXT PRIMARY KEY, schluessel TEXT NOT NULL, seit TEXT NOT NULL, hinweis_stand TEXT NOT NULL,
+  letzte_bestellung TEXT NOT NULL, kategorien TEXT NOT NULL DEFAULT '[]', gesperrt TEXT NOT NULL DEFAULT ''
+);
+CREATE UNIQUE INDEX IF NOT EXISTS bestandskunden_schluessel ON bestandskunden(schluessel);
+CREATE TABLE IF NOT EXISTS newsletter_ausgabe_gruppe (ausgabe_id INTEGER PRIMARY KEY, gruppe TEXT NOT NULL, kategorien TEXT NOT NULL DEFAULT '[]');

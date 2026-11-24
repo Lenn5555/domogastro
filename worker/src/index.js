@@ -37,6 +37,8 @@ const ipVon = (request) => request.headers.get("CF-Connecting-IP") || "";
 
 // Häkchen „Newsletter“ an der Kasse: nach erfolgreicher Bestellung Bestätigungsmail (Double-Opt-in) an die Bestelladresse
 function mitNewsletter(env, ctx, request, d, ergebnis) {
+  // Bestandskunden-Gruppe (§ 7 Abs. 3 UWG): nur mit Hinweis an der Kasse, siehe newsletter.bestandskundeMerken
+  if (ergebnis?.nr) ctx.waitUntil(newsletter.bestandskundeMerken(env, ergebnis.nr).catch((err) => console.error("Bestandskunde:", err)));
   if (d.newsletter === true && ergebnis?.email) {
     ctx.waitUntil(newsletter.anmelden(env, { email: ergebnis.email, einwilligung: true }, { ip: ipVon(request), quelle: "kasse", api: new URL(request.url).origin })
       .catch((err) => console.error("Newsletter (Kasse):", err)));

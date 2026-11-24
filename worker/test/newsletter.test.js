@@ -95,3 +95,33 @@ test("Monatlicher Versand: Testmail, gedrosselt an Bestätigte, Abgemeldete übe
   assert.equal(heute.anmeldung, 5); assert.equal(heute.bestaetigung, 4); assert.equal(heute.abmeldung, 1);
   assert.equal(l.statistik.monate[0].anmeldung, 5);
 });
+
+test("Bestandskunden (§ 7 Abs. 3): nur mit Hinweis, nur passende Kategorie, Widerspruch sperrt dauerhaft, kein Code", async () => {
+  const { env, post } = umgebung();
+  env.API_URL = "https://api.test"; env.NEWSLETTER_TAGESLIMIT = "100";
+  const KAT = (await import("../src/katalog.json", { with: { type: "json" } })).default;
+  const [sku1, a1] = Object.entries(KAT.artikel).find(([, a]) => a.k);
+  const [sku2] = Object.entries(KAT.artikel).find(([, a]) => a.k && a.k !== a1.k);
+  const best = (nr, mail, sku, kunde) => env.DB.roh.prepare(`INSERT INTO bestellungen (nr, email, modus, kunde, positionen, netto, mwst, brutto, zahlart, status, datum, aktualisiert)
+    VALUES (?, ?, 'privat', ?, ?, 1, 0, 1, 'Vorkasse', 'eingegangen', '2026-11-25T10:00:00Z', 'x')`).run(nr, mail, JSON.stringify(kunde), JSON.stringify([{ sku, menge: 1 }]));
+  best("A", "alt@x.de", sku1, {});                                            // vor dem Hinweis: nicht aufnehmen
+  best("B", "neu@x.de", sku1, { werbehinweis: nl.WERBEHINWEIS_STAND });
+  best("C", "nein@x.de", sku1, { werbehinweis: nl.WERBEHINWEIS_STAND, keine_werbung: true });
+  best("D", "andere@x.de", sku2, { werbehinweis: nl.WERBEHINWEIS_STAND });
+  for (const nr of "ABCD") await nl.bestandskundeMerken(env, nr);
+  let v = await nl.verwaltungListe(env);
+  assert.equal(v.bestandskunden.aktiv, 2); assert.equal(v.bestandskunden.gesperrt, 1);
+  await assert.rejects(nl.versandStarten(env, { betreff: "Neu", text: "Angebote zu ähnlichen Produkten.", sicher: true, gruppe: "bestandskunden" }), /Kategorie/);
+  const s = await nl.versandStarten(env, { betreff: "Neu", text: "Angebote zu ähnlichen Produkten.", sicher: true, gruppe: "bestandskunden", kategorien: [a1.k] });
+  assert.equal(s.empfaenger, 1);
+  await nl.versandWeiter(env, { pause: 0 });
+  assert.equal(post.length, 1); assert.equal(post[0].to[0], "neu@x.de");
+  assert.match(post[0].text, /widersprechen.*Basistarifen/s);
+  assert.doesNotMatch(post[0].text, /DGN-/);
+  await nl.abmelden(env, post[0].text.match(/abmelden=([0-9a-f]{32})/)[1]);
+  v = await nl.verwaltungListe(env);
+  assert.equal(v.bestandskunden.aktiv, 1); assert.equal(v.statistik.tage[0].widerspruch, 2);
+  await nl.bestandskundeMerken(env, "B");  // neue Bestellung hebt die Sperre nicht auf
+  assert.equal((await nl.verwaltungListe(env)).bestandskunden.aktiv, 1);
+  assert.equal(env.DB.roh.prepare("SELECT COUNT(*) AS n FROM gutscheine").get().n, 0);
+});

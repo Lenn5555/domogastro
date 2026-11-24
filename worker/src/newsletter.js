@@ -7,8 +7,11 @@ import AKTION from "../../daten/aktion.json" with { type: "json" };
 import { Fehler, text, email, jetzt, zufall, sha256 } from "./hilfe.js";
 import { senden } from "./mail.js";
 import { aktionAktiv } from "./steuer.js";
+import KATALOG from "./katalog.json" with { type: "json" };
 
 export const PRAEFIX = "DGN-";
+// § 7 Abs. 3 UWG: ab diesem Stand steht an der Kasse der Hinweis auf Werbung zu ähnlichen Produkten. Nur Bestellungen ab hier zählen.
+export const WERBEHINWEIS_STAND = "2026-11-24";
 const TAG = 86400000;
 const LINK_GUELTIG = 7 * TAG;          // Bestätigungslink
 const ERNEUT_FRUEHESTENS = 10 * 60000; // gleiche Adresse: höchstens alle 10 Minuten eine Bestätigungsmail
@@ -111,16 +114,49 @@ export async function bestaetigen(env, d, { ip = "", api = "" } = {}) {
   return { ok: true, code: true };
 }
 
+// Abmeldelink aus Newsletter ODER Bestandskunden-Mail. Wer widerspricht, bekommt gar keine Werbung mehr (beide Gruppen);
+// als Bestandskunde dauerhaft gesperrt, den Newsletter kann man später nur mit neuer, bestätigter Einwilligung wieder bekommen.
 export async function abmelden(env, schluessel) {
   const s = text(schluessel, 64);
   if (!/^[0-9a-f]{32}$/.test(s)) throw new Fehler("Dieser Abmeldelink ist ungültig.");
-  const z = await env.DB.prepare("SELECT email, status FROM newsletter WHERE abmelde_schluessel = ?").bind(s).first();
+  const z = (await env.DB.prepare("SELECT email FROM newsletter WHERE abmelde_schluessel = ?").bind(s).first())
+    || (await env.DB.prepare("SELECT email FROM bestandskunden WHERE schluessel = ?").bind(s).first());
   if (!z) throw new Fehler("Diesen Abmeldelink kennen wir nicht. Schreiben Sie uns gern an sales@ts-systec.de, dann tragen wir Sie von Hand aus.", 404);
-  if (z.status !== "abgemeldet") {
-    await env.DB.prepare("UPDATE newsletter SET status = 'abgemeldet', abgemeldet = ?, bestaetigen_hash = '' WHERE email = ?").bind(jetzt(), z.email).run();
-    if (z.status === "bestaetigt") await ereignis(env, "abmeldung");
-  }
+  await werbungSperren(env, z.email);
   return { ok: true };
+}
+
+export async function werbungSperren(env, mail) {
+  const n = await env.DB.prepare("SELECT status FROM newsletter WHERE email = ?").bind(mail).first();
+  if (n && n.status !== "abgemeldet") {
+    await env.DB.prepare("UPDATE newsletter SET status = 'abgemeldet', abgemeldet = ?, bestaetigen_hash = '' WHERE email = ?").bind(jetzt(), mail).run();
+    if (n.status === "bestaetigt") await ereignis(env, "abmeldung");
+  }
+  const b = await env.DB.prepare("SELECT gesperrt FROM bestandskunden WHERE email = ?").bind(mail).first();
+  if (b && !b.gesperrt) {
+    await env.DB.prepare("UPDATE bestandskunden SET gesperrt = ? WHERE email = ?").bind(jetzt(), mail).run();
+    await ereignis(env, "widerspruch");
+  }
+}
+
+// Nach jeder Bestellung: Käufer mit Hinweis an der Kasse in die Gruppe „Bestandskunden (§ 7 Abs. 3)“, mit den gekauften Kategorien.
+// Ohne Hinweis (ältere Bestellung) nicht; mit Häkchen „keine Angebote“ gleich gesperrt. Kein Gutscheincode für diese Gruppe.
+export async function bestandskundeMerken(env, nr) {
+  const z = await env.DB.prepare("SELECT email, kunde, positionen, datum FROM bestellungen WHERE nr = ?").bind(nr).first();
+  if (!z) return;
+  const k = JSON.parse(z.kunde);
+  if (!k.werbehinweis || k.werbehinweis < WERBEHINWEIS_STAND) return;
+  const kat = [...new Set(JSON.parse(z.positionen).map((p) => KATALOG.artikel[p.sku]?.k).filter(Boolean))];
+  const da = await env.DB.prepare("SELECT kategorien, gesperrt FROM bestandskunden WHERE email = ?").bind(z.email).first();
+  if (!da) {
+    await env.DB.prepare("INSERT INTO bestandskunden (email, schluessel, seit, hinweis_stand, letzte_bestellung, kategorien, gesperrt) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .bind(z.email, zufall(16), z.datum, k.werbehinweis, z.datum, JSON.stringify(kat), k.keine_werbung ? jetzt() : "").run();
+    if (k.keine_werbung) await ereignis(env, "widerspruch");
+  } else {
+    const alle = [...new Set([...JSON.parse(da.kategorien || "[]"), ...kat])];
+    await env.DB.prepare("UPDATE bestandskunden SET letzte_bestellung = ?, kategorien = ? WHERE email = ?").bind(z.datum, JSON.stringify(alle), z.email).run();
+    if (k.keine_werbung && !da.gesperrt) await werbungSperren(env, z.email);
+  }
 }
 
 // Täglich: unbestätigte Anmeldungen nach 30 Tagen löschen (Datensparsamkeit). Wer schon einen Code bekam, bleibt als „abgemeldet“ stehen (ein Code je Adresse).
@@ -142,7 +178,12 @@ export async function verwaltungListe(env) {
       (SELECT COUNT(*) FROM newsletter_versand v WHERE v.ausgabe_id = a.id AND v.ergebnis = 'fehler') AS fehler,
       (SELECT COUNT(*) FROM newsletter_versand v WHERE v.ausgabe_id = a.id AND v.gesendet = '') AS offen
     FROM newsletter_ausgaben a ORDER BY a.id DESC LIMIT 24`).all()).results;
-  return { liste: r.results, anzahl, mindestwert: mindestwert(), prozent: NL.prozent, statistik: await statistik(env), ausgaben,
+  const bk = (await env.DB.prepare("SELECT email, seit, hinweis_stand, letzte_bestellung, kategorien, gesperrt FROM bestandskunden ORDER BY seit DESC").all()).results;
+  const katZahl = {};
+  for (const x of bk) if (!x.gesperrt) for (const k of JSON.parse(x.kategorien || "[]")) katZahl[k] = (katZahl[k] || 0) + 1;
+  const bestandskunden = { aktiv: bk.filter((x) => !x.gesperrt).length, gesperrt: bk.filter((x) => x.gesperrt).length, kategorien: katZahl, liste: bk, hinweis_stand: WERBEHINWEIS_STAND };
+  for (const a of ausgaben) a.gruppe = (await env.DB.prepare("SELECT gruppe FROM newsletter_ausgabe_gruppe WHERE ausgabe_id = ?").bind(a.id).first())?.gruppe || "newsletter";
+  return { liste: r.results, anzahl, mindestwert: mindestwert(), prozent: NL.prozent, statistik: await statistik(env), ausgaben, bestandskunden,
     tageslimit: tageslimit(env), heute_gesendet: await heuteGesendet(env) };
 }
 
@@ -153,7 +194,7 @@ async function statistik(env) {
     const g = (await env.DB.prepare(`SELECT substr(eingeloest_am, 1, ?1) AS t, COUNT(*) AS n FROM gutscheine WHERE code LIKE ?3 AND eingeloest_nr <> '' AND eingeloest_am >= ?2 GROUP BY t`)
       .bind(laenge, seit, PRAEFIX + "%").all()).results;
     const nach = {};
-    const zeile = (t) => (nach[t] ||= { zeit: t, anmeldung: 0, bestaetigung: 0, abmeldung: 0, eingeloest: 0 });
+    const zeile = (t) => (nach[t] ||= { zeit: t, anmeldung: 0, bestaetigung: 0, abmeldung: 0, widerspruch: 0, eingeloest: 0 });
     for (const x of e) zeile(x.t)[x.art] = x.n;
     for (const x of g) zeile(x.t).eingeloest = x.n;
     return Object.values(nach).sort((a, b) => (a.zeit < b.zeit ? 1 : -1));
@@ -176,25 +217,49 @@ function ausgabePruefen(d) {
   if (inhalt.length < 20) throw new Fehler("Bitte den Text des Newsletters eingeben.");
   return { betreff, inhalt };
 }
-export const newsletterMail = (env, inhalt, s) => `${inhalt}${fuss(env, s)}\nSie bekommen diesen Newsletter, weil Sie ihn bei Domo Gastro bestellt und bestätigt haben.`;
+export const newsletterMail = (env, inhalt, s, gruppe = "newsletter") => gruppe === "bestandskunden"
+  ? `${inhalt}\n\n—\nSie erhalten diese E-Mail, weil Sie bei Domo Gastro (T&S Systemtechnik GmbH) eingekauft haben, mit Angeboten zu ähnlichen Produkten. Sie können der Verwendung Ihrer E-Mail-Adresse für Werbung jederzeit widersprechen, ohne dass Ihnen andere als die Übermittlungskosten nach den Basistarifen entstehen: mit einem Klick unter ${abmeldeLink(env, s)} oder per E-Mail an ${env.BESTELL_EMAIL}.`
+  : `${inhalt}${fuss(env, s)}\nSie bekommen diesen Newsletter, weil Sie ihn bei Domo Gastro bestellt und bestätigt haben.`;
+const GRUPPEN = ["newsletter", "bestandskunden"];
 
 export async function testSenden(env, d) {
   const { betreff, inhalt } = ausgabePruefen(d);
   const s = "0".repeat(32);  // Testlink, meldet niemanden ab
-  const ok = await senden(env, env.BESTELL_EMAIL, `[TEST] ${betreff}`, newsletterMail(env, inhalt, s), { kopf: kopf(env, s) });
+  const gruppe = GRUPPEN.includes(d?.gruppe) ? d.gruppe : "newsletter";
+  const ok = await senden(env, env.BESTELL_EMAIL, `[TEST${gruppe === "bestandskunden" ? ", Bestandskunden" : ""}] ${betreff}`, newsletterMail(env, inhalt, s, gruppe), { kopf: kopf(env, s) });
   if (!ok) throw new Fehler("Die Testmail konnte nicht verschickt werden (Resend).", 502);
   return { ok: true, an: env.BESTELL_EMAIL };
 }
 
+// gruppe "newsletter" = alle mit bestätigter Einwilligung. gruppe "bestandskunden" = § 7 Abs. 3 UWG, nur Käufer der gewählten Kategorien
+// (Werbung nur für ähnliche Produkte!), ohne Gesperrte und ohne Newsletter-Abonnenten (die bekommen den Newsletter ohnehin).
 export async function versandStarten(env, d) {
   if (d?.sicher !== true) throw new Fehler("Bitte den Versand bestätigen.");
   const { betreff, inhalt } = ausgabePruefen(d);
+  const gruppe = GRUPPEN.includes(d.gruppe) ? d.gruppe : "newsletter";
+  const kategorien = Array.isArray(d.kategorien) ? d.kategorien.map((x) => text(x, 80)).filter(Boolean) : [];
+  if (gruppe === "bestandskunden" && !kategorien.length) throw new Fehler("Bitte die Kategorie(n) wählen, zu denen der Newsletter Angebote macht. Bestandskunden dürfen nur Angebote zu ähnlichen Produkten bekommen.");
   if (await env.DB.prepare("SELECT id FROM newsletter_ausgaben WHERE status = 'laeuft'").first()) throw new Fehler("Es läuft schon ein Newsletter-Versand. Bitte warten oder ihn abbrechen.", 409);
   const id = (await env.DB.prepare("INSERT INTO newsletter_ausgaben (betreff, text, status, gestartet) VALUES (?, ?, 'laeuft', ?)").bind(betreff, inhalt, jetzt()).run()).meta.last_row_id;
-  const n = (await env.DB.prepare("INSERT INTO newsletter_versand (ausgabe_id, email) SELECT ?, email FROM newsletter WHERE status = 'bestaetigt'").bind(id).run()).meta.changes;
+  await env.DB.prepare("INSERT INTO newsletter_ausgabe_gruppe (ausgabe_id, gruppe, kategorien) VALUES (?, ?, ?)").bind(id, gruppe, JSON.stringify(kategorien)).run();
+  let n = 0;
+  if (gruppe === "newsletter") {
+    n = (await env.DB.prepare("INSERT INTO newsletter_versand (ausgabe_id, email) SELECT ?, email FROM newsletter WHERE status = 'bestaetigt'").bind(id).run()).meta.changes;
+  } else {
+    for (const x of await bestandskundenFuer(env, kategorien)) {
+      await env.DB.prepare("INSERT INTO newsletter_versand (ausgabe_id, email) VALUES (?, ?)").bind(id, x.email).run();
+      n++;
+    }
+  }
   await env.DB.prepare("UPDATE newsletter_ausgaben SET empfaenger = ? WHERE id = ?").bind(n, id).run();
   if (!n) await env.DB.prepare("UPDATE newsletter_ausgaben SET status = 'fertig', fertig = ? WHERE id = ?").bind(jetzt(), id).run();
   return { ok: true, id, empfaenger: n, tageslimit: tageslimit(env) };
+}
+
+async function bestandskundenFuer(env, kategorien) {
+  const r = (await env.DB.prepare(`SELECT email, kategorien FROM bestandskunden WHERE gesperrt = ''
+    AND email NOT IN (SELECT email FROM newsletter WHERE status = 'bestaetigt')`).all()).results;
+  return r.filter((x) => JSON.parse(x.kategorien || "[]").some((k) => kategorien.includes(k)));
 }
 
 export async function versandAbbrechen(env, d) {
@@ -210,14 +275,19 @@ export async function versandWeiter(env, { proLauf = 25, pause = 150 } = {}) {
   const frei = Math.min(proLauf, tageslimit(env) - await heuteGesendet(env));
   let gesendet = 0;
   if (frei > 0) {
-    const r = (await env.DB.prepare(`SELECT v.email, n.status, n.abmelde_schluessel FROM newsletter_versand v LEFT JOIN newsletter n ON n.email = v.email
-      WHERE v.ausgabe_id = ? AND v.gesendet = '' LIMIT ?`).bind(a.id, frei + 200).all()).results;  // Abgemeldete zählen nicht mit
+    const gruppe = (await env.DB.prepare("SELECT gruppe FROM newsletter_ausgabe_gruppe WHERE ausgabe_id = ?").bind(a.id).first())?.gruppe || "newsletter";
+    const sql = gruppe === "bestandskunden"
+      ? `SELECT v.email, CASE WHEN b.gesperrt = '' THEN 'bestaetigt' ELSE 'gesperrt' END AS status, b.schluessel AS abmelde_schluessel
+           FROM newsletter_versand v LEFT JOIN bestandskunden b ON b.email = v.email WHERE v.ausgabe_id = ? AND v.gesendet = '' LIMIT ?`
+      : `SELECT v.email, n.status, n.abmelde_schluessel FROM newsletter_versand v LEFT JOIN newsletter n ON n.email = v.email
+           WHERE v.ausgabe_id = ? AND v.gesendet = '' LIMIT ?`;
+    const r = (await env.DB.prepare(sql).bind(a.id, frei + 200).all()).results;  // Abgemeldete/Gesperrte zählen nicht mit
     for (const x of r) {
       if (gesendet >= frei) break;
       const markieren = (ergebnis) => env.DB.prepare("UPDATE newsletter_versand SET gesendet = ?, ergebnis = ? WHERE ausgabe_id = ? AND email = ?").bind(jetzt(), ergebnis, a.id, x.email).run();
       if (x.status !== "bestaetigt") { await markieren("uebersprungen"); continue; }
       let status = 0;
-      const ok = await senden(env, x.email, a.betreff, newsletterMail(env, a.text, x.abmelde_schluessel),
+      const ok = await senden(env, x.email, a.betreff, newsletterMail(env, a.text, x.abmelde_schluessel, gruppe),
         { kopf: kopf(env, x.abmelde_schluessel), abruf: (u, o) => fetch(u, o).then((res) => { status = res.status; return res; }) });
       if (!ok && (status === 0 || status === 429 || status >= 500)) break;
       await markieren(ok ? "ok" : "fehler");

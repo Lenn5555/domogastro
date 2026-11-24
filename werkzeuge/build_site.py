@@ -470,6 +470,8 @@ def warenkorb():
 <label>Straße und Hausnummer <input type="text" name="strasse" required autocomplete="billing street-address"></label>
 <div class="zwei"><label>PLZ <input type="text" name="plz" required pattern="[0-9]{{5}}" autocomplete="billing postal-code" inputmode="numeric"></label><label>Ort <input type="text" name="ort" required autocomplete="billing address-level2"></label></div>
 <label>E-Mail (Pflicht, für die Bestellbestätigung) <input type="email" name="email" required autocomplete="email"></label>
+<p class="klein werbehinweis">Wir nutzen Ihre E-Mail-Adresse auch, um Ihnen Angebote zu ähnlichen Produkten aus unserem Shop zu senden. Sie können dem jederzeit widersprechen, z. B. per Abmeldelink in jeder Mail oder an <a href="mailto:{e(CFG['anfrage_email'])}">{e(CFG['anfrage_email'])}</a>, ohne dass andere als die Übermittlungskosten nach den Basistarifen entstehen.</p>
+<label class="check klein"><input type="checkbox" name="keine_werbung"> Ich möchte keine Angebote per E-Mail erhalten.</label>
 <label>Telefon (für Spedition und Paketdienst) <input type="tel" name="telefon" autocomplete="tel"></label></fieldset>
 <fieldset><legend>Lieferadresse</legend>
 <label class="check"><input type="checkbox" name="gleich" checked> Lieferadresse ist gleich Rechnungsadresse</label>
@@ -655,7 +657,8 @@ def main():
 
     # Katalog für den Shop-Server: Preise prüft der Server selbst, nie der Browser
     worker = ROOT / "worker/src"
-    katalog = {"artikel": {sku: {"n": a["n"], "p": a["p"], "s": a["s"], "g": a["g"], "sp": a["sp"], "el": a["el"]} for sku, a in artikel.items()},
+    kat_von = {x["s"]: x["k"] for x in liste}  # Kategorie je Produkt: Bestandskunden-Werbung nur zu ähnlichen Produkten (§ 7 Abs. 3 UWG)
+    katalog = {"artikel": {sku: {"n": a["n"], "p": a["p"], "s": a["s"], "g": a["g"], "sp": a["sp"], "el": a["el"], "k": kat_von.get(a["s"], "")} for sku, a in artikel.items()},
                "produkte": {x["s"]: x["skus"] for x in liste}}
     (worker / "katalog.json").write_text(json.dumps(katalog, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     # Katalog für den KI-Berater: nur öffentliche Angaben (Name, Kategorie, Hersteller, Merkmale, Maße, Netto-Preis)
