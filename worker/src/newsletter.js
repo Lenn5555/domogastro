@@ -73,7 +73,7 @@ Ihr Domo-Gastro-Team${fuss(env, s)}`;
 export async function anmelden(env, d, { ip = "", quelle = "fuss", api = "" } = {}) {
   if (d?.einwilligung !== true) throw new Fehler("Bitte bestätigen Sie, dass Sie den Newsletter erhalten möchten.");
   const mail = email(d.email);
-  const q = quelle === "kasse" ? "kasse" : "fuss";
+  const q = ["kasse", "bewertung"].includes(quelle) ? quelle : "fuss";
   const z = await env.DB.prepare("SELECT * FROM newsletter WHERE email = ?").bind(mail).first();
   // Gleiche Antwort in jedem Fall: Ob jemand schon eingetragen ist, verraten wir nicht.
   const antwort = { ok: true };

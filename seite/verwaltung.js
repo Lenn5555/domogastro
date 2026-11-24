@@ -65,7 +65,8 @@
     let d;
     try { d = await rufen("/verwaltung"); } catch (err) { schluessel = ""; try { sessionStorage.removeItem("dg-verwaltung"); } catch {} return anmelden(err.message); }
     const bew = d.bewertungen.length ? d.bewertungen.map((b) => `<div class="v-karte"><b>${"★".repeat(b.sterne)}${"☆".repeat(5 - b.sterne)} ${esc(b.titel)}</b>
-      ${b.text ? `<p>${esc(b.text)}</p>` : ""}<p class="klein">${esc(b.name)} · <a href="${DG.basis || ""}/produkt/${esc(b.produkt)}/">${esc(b.produkt)}</a> · ${esc(b.datum.slice(0, 10))}</p>
+      ${b.text ? `<p>${esc(b.text)}</p>` : ""}<p class="klein">${esc(b.name)} · <a href="${DG.basis || ""}/produkt/${esc(b.produkt)}/">${esc(b.produkt)}</a> · ${esc(b.datum.slice(0, 16).replace("T", " "))}</p>
+      <p class="klein">Verifizierter Kauf: <b>${b.verifiziert ? "ja" : "nein"}</b> · E-Mail: ${b.email ? esc(b.email) : "–"} · E-Mail bestätigt: ${b.herkunft === "konto" ? "über Kundenkonto" : "nein (ohne Konto abgegeben)"}</p>
       <button class="btn sec" data-bew="${b.id}">Löschen</button></div>`).join("")
       : "<p>Noch keine Bewertungen.</p>";
     const best = d.bestellungen.length ? d.bestellungen.map((b) => `<div class="v-karte"><b>${esc(b.nr)}</b> · ${esc(b.datum.slice(0, 16).replace("T", " "))} · ${b.modus === "gewerbe" ? "Gewerbe" : "Privat"} · ${esc(b.zahlart)} · <b>${euro(b.brutto)}</b>
@@ -83,7 +84,7 @@
       <button class="btn sec">Speichern</button></form></details></div>`).join("")
       : "<p>Noch keine Bestellungen.</p>";
     const g = d.gutscheine;
-    const gut = g ? `<div class="v-karte"><b>Bewertungs-Gutscheine (5 %)</b>
+    const gut = g ? `<div class="v-karte"><b>Bewertungs-Gutscheine (5 %, seit 24.11.2026 nicht mehr vergeben)</b>
       <p>Vergeben: <b>${g.vergeben}</b> · eingelöst: <b>${g.eingeloest}</b>${g.vergeben ? ` (${Math.round(g.eingeloest / g.vergeben * 100)} %)` : ""}</p>
       <p>Bestellungen mit Code: <b>${g.alle.anzahl}</b> · Umsatz <b>${euro(g.alle.brutto)}</b> brutto (${euro(g.alle.netto)} netto) · gewährter Rabatt ${euro(g.alle.rabatt)} netto</p>
       <p class="klein">Davon bezahlt: ${g.bezahlt.anzahl} Bestellungen, ${euro(g.bezahlt.brutto)} brutto (${euro(g.bezahlt.netto)} netto). Stornierte Bestellungen zählen nicht mit.</p></div>` : "";
@@ -142,7 +143,7 @@
       ${n.mindestwert ? ` · Mindestwert für den Code: ${euro(n.mindestwert)} netto` : " · Code ohne Mindestwert"}</p>
       ${n.liste.length ? `<p><button class="btn sec" id="v-nl-csv">Bestätigte Adressen als CSV herunterladen</button></p>
       <details class="klein"><summary>Liste anzeigen (${n.liste.length})</summary><table class="v-tabelle"><tr><th>E-Mail</th><th>Bestätigt</th><th>Quelle</th><th>Code</th></tr>
-      ${n.liste.map((x) => `<tr><td>${esc(x.email)}</td><td>${esc(x.bestaetigt.slice(0, 16).replace("T", " "))}</td><td>${x.quelle === "kasse" ? "Kasse" : "Anmeldefeld"}</td><td>${esc(x.code)}${x.eingeloest_nr ? ` ✓ ${esc(x.eingeloest_nr)}` : ""}</td></tr>`).join("")}</table></details>
+      ${n.liste.map((x) => `<tr><td>${esc(x.email)}</td><td>${esc(x.bestaetigt.slice(0, 16).replace("T", " "))}</td><td>${({ kasse: "Kasse", bewertung: "Bewertung" })[x.quelle] || "Anmeldefeld"}</td><td>${esc(x.code)}${x.eingeloest_nr ? ` ✓ ${esc(x.eingeloest_nr)}` : ""}</td></tr>`).join("")}</table></details>
       <p class="klein">Die CSV enthält je Adresse den Nachweis der Einwilligung (Zeitpunkt und IP von Anmeldung und Bestätigung, Wortlaut). Bitte sicher aufbewahren und nur für den Newsletter nutzen.</p>` : "<p>Noch keine bestätigten Anmeldungen.</p>"}`;
     // Statistik und Versand darunter
     const tab = (zeilen, fmt) => zeilen.length ? `<table class="v-tabelle"><tr><th>${fmt === "tag" ? "Tag" : "Monat"}</th><th>Anmeldungen</th><th>Bestätigt</th><th>Abmeldungen</th><th>Codes eingelöst</th></tr>

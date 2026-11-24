@@ -2,7 +2,7 @@
 import KATALOG from "./katalog.json" with { type: "json" };
 import { Fehler, text, email, jetzt, runden, zufall, sha256, gleich } from "./hilfe.js";
 import { anlegen as kontoAnlegen, oeffentlich } from "./konto.js";
-import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail, gutscheinmail, zahlungsmail, rechtsAnhaenge } from "./mail.js";
+import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail, zahlungsmail, rechtsAnhaenge } from "./mail.js";
 import * as paypal from "./paypal.js";
 import { widerrufeVon } from "./widerruf.js";
 import LAENDER from "../../daten/laender.json" with { type: "json" };
@@ -12,7 +12,6 @@ import { ustidPruefen } from "./ustid.js";
 import { mindestwertFehler, mindestwert, PRAEFIX as NL_PRAEFIX } from "./newsletter.js";
 
 export const MWST = 0.19;
-export const GUTSCHEIN_PROZENT = 5;
 const ZAHLARTEN = ["Vorkasse", "Kreditkarte", "PayPal"];
 const SOFORT = ["Kreditkarte", "PayPal"]; // beide laufen über PayPal
 export const STATI = ["eingegangen", "zahlung_offen", "bezahlt", "in_bearbeitung", "versendet", "zugestellt", "storniert"];
@@ -196,18 +195,22 @@ export async function status(env, d) {
 }
 
 /* ---------- Bewertungen ---------- */
-// Hat der Kunde einen Artikel dieses Produkts gekauft UND bezahlt? (Vorkasse zählt erst, wenn in der Verwaltung „bezahlt“ gesetzt ist)
+// Lenn 2026-11-24: Jeder kann bewerten, ohne Gutschein. Ohne Konto erscheint die Bewertung erst nach Klick auf einen Bestätigungslink per E-Mail.
+// „Verifizierter Kauf“, wenn dieses Produkt mit demselben Konto bzw. derselben E-Mail-Adresse gekauft und bezahlt wurde.
+const BEZAHLT = "status IN ('bezahlt', 'in_bearbeitung', 'versendet', 'zugestellt')";
+const enthaelt = (zeilen, skus) => zeilen.some((z) => JSON.parse(z.positionen).some((p) => skus.includes(p.sku)));
 async function gekauft(env, kundeId, skus) {
-  const b = await env.DB.prepare("SELECT positionen FROM bestellungen WHERE kunde_id = ? AND status IN ('bezahlt', 'in_bearbeitung', 'versendet', 'zugestellt')").bind(kundeId).all();
-  return b.results.some((z) => JSON.parse(z.positionen).some((p) => skus.includes(p.sku)));
+  return enthaelt((await env.DB.prepare(`SELECT positionen FROM bestellungen WHERE kunde_id = ? AND ${BEZAHLT}`).bind(kundeId).all()).results, skus);
+}
+async function gekauftMail(env, mail, skus) {
+  return enthaelt((await env.DB.prepare(`SELECT positionen FROM bestellungen WHERE email = ? AND ${BEZAHLT}`).bind(mail).all()).results, skus);
 }
 
-// darf: "anmelden" | "nicht_gekauft" | "schon_bewertet" | "ja"  – steuert, ob die Produktseite das Formular zeigt
+// darf: "ja" (angemeldet, Formular ohne Name/E-Mail) | "offen" (Gast: Formular mit Vorname und E-Mail) | "schon_bewertet"
 async function darfBewerten(env, kunde, slug) {
-  const skus = KATALOG.produkte[slug];
-  if (!kunde || !skus) return "anmelden";
+  if (!kunde) return "offen";
   if (await env.DB.prepare("SELECT id FROM bewertungen WHERE produkt = ? AND kunde_id = ?").bind(slug, kunde.id).first()) return "schon_bewertet";
-  return (await gekauft(env, kunde.id, skus)) ? "ja" : "nicht_gekauft";
+  return "ja";
 }
 
 export async function bewertungenLesen(env, slug, kunde = null) {
@@ -222,35 +225,81 @@ export async function bewertungenLesen(env, slug, kunde = null) {
       EXISTS (SELECT 1 FROM gutscheine g WHERE g.bewertung_id = bewertungen.id) AS belohnt
     FROM bewertungen WHERE produkt = ? AND freigegeben = 1 AND (titel <> '' OR text <> '') ORDER BY datum DESC LIMIT 100`)
     .bind(p).all();
-  return { anzahl, schnitt: Math.round(schnitt * 10) / 10, verteilung, liste: r.results, darf: await darfBewerten(env, kunde, p) };
+  return { anzahl, schnitt: Math.round(schnitt * 10) / 10, verteilung, liste: r.results, darf: KATALOG.produkte[p] ? await darfBewerten(env, kunde, p) : "nein" };
 }
 
-export async function bewerten(env, ctx, kunde, d) {
+function bewertungDaten(d) {
   const slug = text(d.produkt, 120);
   const skus = KATALOG.produkte[slug];
   if (!skus) throw new Fehler("Produkt nicht gefunden.", 404);
   const sterne = parseInt(d.sterne, 10);
   if (!(sterne >= 1 && sterne <= 5)) throw new Fehler("Bitte 1 bis 5 Sterne wählen.");
-  const titel = text(d.titel, 80), inhalt = text(d.text, 2000);  // beides freiwillig, Pflicht sind nur die Sterne
-  // Nur wer das Produkt gekauft und bezahlt hat
-  if (!(await gekauft(env, kunde.id, skus))) throw new Fehler("Bewerten können Sie Produkte, die Sie bei uns gekauft haben.", 403);
+  return { slug, skus, sterne, titel: text(d.titel, 80), inhalt: text(d.text, 2000) };  // Überschrift und Text freiwillig
+}
+
+// Angemeldet: erscheint sofort
+export async function bewerten(env, ctx, kunde, d) {
+  const { slug, skus, sterne, titel, inhalt } = bewertungDaten(d);
   const teile = (kunde.name || "Kunde").trim().split(/\s+/);
   const name = teile.length > 1 ? `${teile[0]} ${teile[teile.length - 1][0]}.` : teile[0];
-  let bewertungId;
   try {
-    bewertungId = (await env.DB.prepare("INSERT INTO bewertungen (produkt, kunde_id, name, sterne, titel, text, freigegeben, datum) VALUES (?, ?, ?, ?, ?, ?, 1, ?)")
-      .bind(slug, kunde.id, name, sterne, titel, inhalt, jetzt()).run()).meta.last_row_id;
+    await env.DB.prepare("INSERT INTO bewertungen (produkt, kunde_id, name, sterne, titel, text, verifiziert, freigegeben, datum) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)")
+      .bind(slug, kunde.id, name, sterne, titel, inhalt, (await gekauft(env, kunde.id, skus)) ? 1 : 0, jetzt()).run();
   } catch (err) {
     if (String(err).includes("UNIQUE")) throw new Fehler("Sie haben dieses Produkt schon bewertet.", 409);
     throw err;
   }
-  // Keine Mail an uns bei neuen Bewertungen (Lenn 2026-11-18); Übersicht in /verwaltung/
-  // Dankeschön für JEDE Bewertung, unabhängig von den Sternen: persönlicher 5-%-Code per Mail
-  const code = `DG5-${gutscheinZufall()}`;
-  await env.DB.prepare("INSERT INTO gutscheine (code, kunde_id, bewertung_id, prozent, erstellt) VALUES (?, ?, ?, ?, ?)")
-    .bind(code, kunde.id, bewertungId, GUTSCHEIN_PROZENT, jetzt()).run();
-  ctx.waitUntil(senden(env, kunde.email, `Danke für Ihre Bewertung – Ihr ${GUTSCHEIN_PROZENT}-%-Gutschein`, gutscheinmail(env, kunde.name || "liebe Kundin, lieber Kunde", code, GUTSCHEIN_PROZENT)));
-  return { ok: true };
+  // Keine Mail an uns bei neuen Bewertungen (Lenn 2026-11-18); Übersicht und Löschen in /verwaltung/
+  return { ok: true, sichtbar: true, mail: kunde.email };
+}
+
+// Link aus der Bewertungs-Erinnerung: beweist den Kauf ohne Konto (Bestellnummer + Prüfwert, nur wir können ihn erzeugen)
+export async function kaufSchluessel(env, nr) {
+  return (await sha256(`bewertung:${nr}:${env.VERWALTUNG_SCHLUESSEL || ""}`)).slice(0, 32);
+}
+
+// Ohne Konto (Lenn 2026-11-24: ohne E-Mail-Bestätigung, erscheint sofort). Vorname und E-Mail Pflicht, E-Mail nie öffentlich.
+// Spamschutz, den Kunden nicht merken: verstecktes Feld (Honigtopf), mindestens 5 Sekunden zwischen Seitenaufruf und Absenden,
+// höchstens 3 Bewertungen je IP und Tag, eine Bewertung je E-Mail und Produkt.
+// „Verifizierter Kauf“ ohne Konto nur über den persönlichen Link aus der Erinnerungsmail: Eine eingetippte E-Mail-Adresse beweist nichts.
+export const BEWERTUNGEN_JE_IP_UND_TAG = 3;
+export async function bewertenOffen(env, d, ip = "") {
+  if (text(d.website, 200)) return { ok: true, sichtbar: true };      // Bot hat das versteckte Feld ausgefüllt: still verwerfen
+  if (!(Number(d.dauer) >= 5000)) throw new Fehler("Bitte prüfen Sie Ihre Angaben und senden Sie die Bewertung noch einmal ab.");
+  const { slug, skus, sterne, titel, inhalt } = bewertungDaten(d);
+  const name = text(d.name, 40);
+  if (!name) throw new Fehler("Bitte Ihren Vornamen angeben.");
+  let mail = "", verifiziert = 0;
+  const nr = text(d.bestellung, 30).toUpperCase();
+  if (nr && gleich(text(d.k, 40), await kaufSchluessel(env, nr))) {
+    const z = await env.DB.prepare(`SELECT email, positionen FROM bestellungen WHERE nr = ? AND ${BEZAHLT}`).bind(nr).first();
+    if (z && enthaelt([z], skus)) { verifiziert = 1; mail = z.email; }
+  }
+  if (!mail) {
+    if (nr && !text(d.email)) throw new Fehler("Den Kauf konnten wir über diesen Link nicht bestätigen. Bitte geben Sie Ihre E-Mail-Adresse an.");
+    mail = email(d.email);
+  }
+  if (await env.DB.prepare("SELECT 1 FROM bewertung_mail WHERE produkt = ? AND email = ?").bind(slug, mail).first())
+    throw new Fehler("Mit dieser E-Mail-Adresse wurde dieses Produkt schon bewertet.", 409);
+  // IP nur als Tages-Prüfwert (mit Datum gehasht), wird täglich gelöscht
+  const tag = jetzt().slice(0, 10), iph = await sha256(`${tag}:${ip}`);
+  if ((await env.DB.prepare("SELECT COUNT(*) AS n FROM bewertung_ip WHERE ip = ? AND tag = ?").bind(iph, tag).first()).n >= BEWERTUNGEN_JE_IP_UND_TAG)
+    throw new Fehler("Heute sind von hier aus schon mehrere Bewertungen eingegangen. Bitte versuchen Sie es morgen noch einmal.", 429);
+  await env.DB.prepare("INSERT INTO bewertung_ip (ip, tag) VALUES (?, ?)").bind(iph, tag).run();
+  const id = (await env.DB.prepare("INSERT INTO bewertungen (produkt, kunde_id, name, sterne, titel, text, verifiziert, freigegeben, datum) VALUES (?, NULL, ?, ?, ?, ?, ?, 1, ?)")
+    .bind(slug, name, sterne, titel, inhalt, verifiziert, jetzt()).run()).meta.last_row_id;
+  try {
+    await env.DB.prepare("INSERT INTO bewertung_mail (bewertung_id, produkt, email, erstellt) VALUES (?, ?, ?, ?)").bind(id, slug, mail, jetzt()).run();
+  } catch (err) {
+    await env.DB.prepare("DELETE FROM bewertungen WHERE id = ?").bind(id).run();
+    if (String(err).includes("UNIQUE")) throw new Fehler("Mit dieser E-Mail-Adresse wurde dieses Produkt schon bewertet.", 409);
+    throw err;
+  }
+  return { ok: true, sichtbar: true, verifiziert: Boolean(verifiziert), mail };
+}
+
+export async function bewertungIpAufraeumen(env) {
+  await env.DB.prepare("DELETE FROM bewertung_ip WHERE tag < ?").bind(jetzt().slice(0, 10)).run();
 }
 
 /* ---------- Verwaltung (nur mit VERWALTUNG_SCHLUESSEL) ---------- */
@@ -261,7 +310,11 @@ export async function verwaltungPruefen(env, request) {
 
 export async function verwaltungListe(env) {
   const b = await env.DB.prepare("SELECT * FROM bestellungen ORDER BY datum DESC LIMIT 200").all();
-  const r = await env.DB.prepare("SELECT id, produkt, name, sterne, titel, text, datum FROM bewertungen ORDER BY datum DESC LIMIT 100").all();
+  // Für Lenn zum Erkennen von Fakes: verifizierter Kauf, E-Mail (Konto oder bestätigte Adresse), Datum
+  const r = await env.DB.prepare(`SELECT b.id, b.produkt, b.name, b.sterne, b.titel, b.text, b.datum, b.verifiziert,
+      COALESCE(m.email, k.email, '') AS email, CASE WHEN m.email IS NOT NULL THEN 'mail' WHEN b.kunde_id IS NOT NULL THEN 'konto' ELSE '' END AS herkunft
+    FROM bewertungen b LEFT JOIN bewertung_mail m ON m.bewertung_id = b.id LEFT JOIN kunden k ON k.id = b.kunde_id
+    ORDER BY b.datum DESC LIMIT 300`).all();
   const w = await env.DB.prepare("SELECT * FROM widerrufe ORDER BY id DESC LIMIT 300").all();
   const wNach = {};
   for (const x of w.results) (wNach[x.nr] ||= []).unshift({ ...x, positionen: JSON.parse(x.positionen) });
@@ -298,10 +351,6 @@ export async function verwaltungStatus(env, ctx, d) {
 }
 
 /* ---------- Gutscheine ---------- */
-const ZEICHEN = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";  // ohne 0/O, 1/I
-function gutscheinZufall(n = 8) {
-  return [...crypto.getRandomValues(new Uint8Array(n))].map((x) => ZEICHEN[x % ZEICHEN.length]).join("");
-}
 function gutscheinCode(v) {
   return text(v, 30).toUpperCase().replace(/\s+/g, "");
 }
@@ -354,7 +403,7 @@ export async function bewertungsanfragenSenden(env) {
         const slug = KATALOG.artikel[String(p.sku)]?.s;
         if (slug && !schon.includes(slug) && !produkte.some((x) => x.slug === slug)) produkte.push({ slug, name: p.name });
       }
-      if (produkte.length && await senden(env, b.email, "Wie zufrieden sind Sie mit Ihrer Bestellung?", bewertungsmail(env, b, produkte))) ergebnis = jetzt();
+      if (produkte.length && await senden(env, b.email, "Wie zufrieden sind Sie mit Ihrer Bestellung?", bewertungsmail(env, b, produkte, await kaufSchluessel(env, b.nr)))) ergebnis = jetzt();
       // Versand fehlgeschlagen: morgen erneut versuchen, aber höchstens 14 Tage lang
       else if (produkte.length && Date.parse(faellig) > Date.now() - 14 * TAG) continue;
     }
@@ -365,6 +414,9 @@ export async function bewertungsanfragenSenden(env) {
 export async function verwaltungBewertung(env, d) {
   const id = parseInt(d.id, 10);
   if (d.freigeben) await env.DB.prepare("UPDATE bewertungen SET freigegeben = 1 WHERE id = ?").bind(id).run();
-  else await env.DB.prepare("DELETE FROM bewertungen WHERE id = ?").bind(id).run();
+  else {
+    await env.DB.prepare("DELETE FROM bewertungen WHERE id = ?").bind(id).run();
+    await env.DB.prepare("DELETE FROM bewertung_mail WHERE bewertung_id = ?").bind(id).run();
+  }
   return { ok: true };
 }

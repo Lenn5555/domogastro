@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS bewertungen (
 CREATE INDEX IF NOT EXISTS bewertungen_produkt ON bewertungen(produkt, freigegeben);
 -- Einmalige Bitte um Bewertung per Mail (nur mit Kundenkonto und Zustimmung beim Bestellen)
 CREATE TABLE IF NOT EXISTS bewertungsanfragen (nr TEXT PRIMARY KEY, faellig TEXT NOT NULL, gesendet TEXT NOT NULL DEFAULT '');
--- Gutscheine: 5 % für jede Bewertung (egal wie viele Sterne), einmal einlösbar
+-- Gutscheine, einmal einlösbar: DG5- = Dank für Bewertung (bis 24.11.2026, nicht mehr vergeben), DGN- = Newsletter
 CREATE TABLE IF NOT EXISTS gutscheine (
   code TEXT PRIMARY KEY, kunde_id INTEGER, bewertung_id INTEGER, prozent INTEGER NOT NULL,
   erstellt TEXT NOT NULL, eingeloest_nr TEXT NOT NULL DEFAULT '', eingeloest_am TEXT NOT NULL DEFAULT ''
@@ -88,3 +88,10 @@ CREATE TABLE IF NOT EXISTS newsletter_versand (
   PRIMARY KEY (ausgabe_id, email)
 );
 CREATE INDEX IF NOT EXISTS newsletter_versand_gesendet ON newsletter_versand(gesendet);
+-- Bewertungen ohne Konto (Lenn 2026-11-24, ohne E-Mail-Bestätigung): Adresse je Bewertung (nie öffentlich, eine je Produkt) und Tageszähler je IP (gehasht, täglich gelöscht)
+CREATE TABLE IF NOT EXISTS bewertung_mail (
+  bewertung_id INTEGER PRIMARY KEY, produkt TEXT NOT NULL, email TEXT NOT NULL, erstellt TEXT NOT NULL,
+  UNIQUE(produkt, email)
+);
+CREATE TABLE IF NOT EXISTS bewertung_ip (ip TEXT NOT NULL, tag TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS bewertung_ip_tag ON bewertung_ip(ip, tag);

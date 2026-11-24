@@ -152,33 +152,17 @@ ${b.kunde.hinweis ? `\nHinweis: ${b.kunde.hinweis}` : ""}${vertriebSteuer(b)}
 Status ändern: ${env.SITE_URL}/verwaltung/`;
 }
 
-// Dank für die Bewertung mit persönlichem Gutscheincode
-export function gutscheinmail(env, name, code, prozent) {
-  return `Guten Tag ${name},
-
-vielen Dank für Ihre Bewertung! Als Dankeschön erhalten Sie ${prozent} % Rabatt auf Ihre nächste Bestellung bei Domo Gastro.
-
-Ihr persönlicher Gutscheincode: ${code}
-
-So lösen Sie ihn ein: Geben Sie den Code im Warenkorb unter „Gutscheincode“ ein. Er gilt einmal, für den gesamten Warenwert einer Bestellung, und ist nicht mit anderen Gutscheinen oder laufenden Rabattaktionen kombinierbar. Eine Barauszahlung ist nicht möglich.
-
-Zum Shop: ${env.SITE_URL}/
-
-Freundliche Grüße
-Ihr Domo-Gastro-Team`;
-}
-
 // Einmalige Bitte um Bewertung, nur nach Zustimmung beim Bestellen
-export function bewertungsmail(env, b, produkte) {
+export function bewertungsmail(env, b, produkte, k = "") {
   return `Guten Tag ${b.kunde.name},
 
 Ihre Bestellung ${b.nr} sollte inzwischen bei Ihnen angekommen sein. Wir hoffen, Sie sind zufrieden!
 
 Würden Sie Ihre Artikel kurz bewerten? Ein paar Sterne genügen, ein Kommentar ist freiwillig. Damit helfen Sie anderen Kundinnen und Kunden bei der Auswahl.
 
-${produkte.map((p) => `  ${p.name}\n  ${env.SITE_URL}/produkt/${p.slug}/#bewertungen`).join("\n\n")}
+${produkte.map((p) => `  ${p.name}\n  ${env.SITE_URL}/produkt/${p.slug}/${k ? `?bestellung=${encodeURIComponent(b.nr)}&k=${k}` : ""}#bewertungen`).join("\n\n")}
 
-Zum Bewerten melden Sie sich mit Ihrem Kundenkonto an.
+Über diese Links wird Ihre Bewertung als „Verifizierter Kauf“ gekennzeichnet. Eine Anmeldung ist nicht nötig.
 
 Freundliche Grüße
 Ihr Domo-Gastro-Team

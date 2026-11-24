@@ -386,16 +386,22 @@ def produktseite(p):
 <ul class="merkmale">{''.join(f'<li>{e(x)}</li>' for x in p['merkmale'])}</ul>
 <table class="tabelle">{tabelle}</table></div>
 <div class="beschreibung"><h2 class="titel" style="font-size:28px">Beschreibung</h2>{text}</div>
-<div class="bewertungen" id="bewertungen" hidden><h2 class="titel" style="font-size:28px">Bewertungen <span class="schnitt sterne"></span></h2>
-<p class="klein">Bewerten können nur angemeldete Kundinnen und Kunden, die dieses Produkt bei uns gekauft haben. So stammt jede Bewertung von einem echten Kauf. Bewertungen erscheinen sofort; wir veröffentlichen positive wie negative und entfernen nur Beiträge, die gegen unsere Regeln verstoßen. Als Dankeschön erhält jede Person, die bewertet, einen Gutschein über 5 % für die nächste Bestellung, unabhängig davon, wie sie bewertet.</p>
+<div class="bewertungen" id="bewertungen"><h2 class="titel" style="font-size:28px">Bewertungen <span class="schnitt sterne"></span></h2>
 <div class="liste"></div>
 <p class="klein bew-hinweis" style="margin-top:18px"></p>
-<form class="kasten" hidden style="margin-top:18px"><b>Produkt bewerten</b>
-<fieldset class="sternwahl" style="border:0;padding:0"><legend class="sr">Sterne</legend>{''.join(f'<input type="radio" id="s{i}" name="sterne" value="{i}" required><label for="s{i}" title="{i} Sterne">★</label>' for i in range(5, 0, -1))}</fieldset>
-<label>Überschrift (optional) <input type="text" name="titel" maxlength="80"></label>
+<form class="kasten" hidden style="margin-top:18px"><b>Bewertung schreiben</b>
+<p class="klein bew-verifiziert" hidden>Sie kommen über den Link aus unserer E-Mail: Ihre Bewertung wird als „Verifizierter Kauf“ gekennzeichnet.</p>
+<fieldset class="sternwahl" style="border:0;padding:0"><legend style="font-weight:600;font-size:14px;margin-bottom:2px;width:100%">Gesamtbewertung *</legend>{''.join(f'<input type="radio" id="s{i}" name="sterne" value="{i}" required><label for="s{i}" title="{i} Sterne">★</label>' for i in range(5, 0, -1))}</fieldset>
+<div class="bew-gast"><label>Vorname * <input type="text" name="name" maxlength="40" autocomplete="given-name"></label>
+<label class="bew-mail-feld">E-Mail * (wird nicht veröffentlicht) <input type="email" name="email" autocomplete="email"></label></div>
+<label class="hp" aria-hidden="true">Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+<label>Zusammenfassung (optional) <input type="text" name="titel" maxlength="80"></label>
 <label>Ihre Erfahrung (optional) <textarea name="text" rows="4" maxlength="2000"></textarea></label>
-<p class="klein">Als Dankeschön schicken wir Ihnen einen persönlichen Gutscheincode über 5 % per E-Mail, egal wie Sie bewerten.</p>
-<button class="btn pri" type="submit">Bewertung senden</button><p class="status" role="status"></p></form></div>
+<label class="check nl-kasse"><input type="checkbox" name="newsletter"> <span>Newsletter (freiwillig, mit {NEWSLETTER['prozent']} % Willkommensrabatt): {nl_einwilligung()} Sie bekommen zuerst eine E-Mail zur Bestätigung.</span></label>
+<button class="btn pri" type="submit">Bewertung abschicken</button><p class="status" role="status"></p>
+<p class="klein bew-gast">oder <a href="{u('/konto/')}">mit Ihrem Konto anmelden</a></p></form>
+<details class="klein bew-echtheit" style="margin-top:14px"><summary>Wie prüfen wir Bewertungen?</summary>
+<p>Bewerten kann jede Person, ohne Kauf und ohne Kundenkonto. Bewertungen erscheinen sofort. Das Zeichen „Verifizierter Kauf“ erhalten nur Bewertungen, bei denen wir den Kauf dieses Produkts bei uns geprüft haben: über das Kundenkonto, mit dem das Produkt gekauft und bezahlt wurde, oder über den persönlichen Link in unserer E-Mail nach der Lieferung. Bei allen anderen Bewertungen prüfen wir nicht, ob die Person das Produkt gekauft oder genutzt hat. Die E-Mail-Adresse veröffentlichen wir nicht. Wir zeigen positive wie negative Bewertungen und löschen nur Beiträge, die gegen unsere Regeln verstoßen oder erkennbar gefälscht sind. Für Bewertungen gewähren wir keine Gegenleistung; ältere Bewertungen, für die wir uns bis zum 24.11.2026 mit einem Gutschein bedankt haben, sind gekennzeichnet.</p></details></div>
 </article></div></div>"""
     return seite(f"{p['name']} | Domo Gastro", inhalt, f"/produkt/{p['slug']}/", p["text"][:155], p["kategorie"])
 
@@ -480,7 +486,7 @@ def warenkorb():
 <label class="check zahlart"><input type="radio" name="zahlart" value="Vorkasse" checked> <span><b>Überweisung (Vorkasse)</b><br><span class="klein">Die Bankverbindung kommt per E-Mail, wir versenden nach Zahlungseingang.</span></span></label>
 <label class="check zahlart sofort-art" hidden><input type="radio" name="zahlart" value="Kreditkarte"> <span><b>Kreditkarte</b><br><span class="klein">Sofort bezahlen mit Visa, Mastercard und weiteren Karten, sicher abgewickelt über PayPal. Ein PayPal-Konto ist nicht nötig.</span></span></label>
 <label class="check zahlart sofort-art" hidden><input type="radio" name="zahlart" value="PayPal"> <span><b>PayPal</b><br><span class="klein">Sofort bezahlen mit Ihrem PayPal-Konto.</span></span></label></fieldset>
-<label class="check"><input type="checkbox" name="konto_anlegen"> Kundenkonto anlegen (Bestellungen verfolgen, Produkte bewerten)</label>
+<label class="check"><input type="checkbox" name="konto_anlegen"> Kundenkonto anlegen (Bestellungen verfolgen)</label>
 <label id="pw-feld" hidden>Passwort für Ihr Konto (mind. 10 Zeichen) <input type="password" name="passwort" minlength="10" autocomplete="new-password"></label>
 <label class="check nl-kasse"><input type="checkbox" name="newsletter"> <span>Newsletter (freiwillig, mit {NEWSLETTER['prozent']} % Willkommensrabatt): {nl_einwilligung()} Sie bekommen zuerst eine E-Mail zur Bestätigung.</span></label>
 <label class="check" id="bew-mail" hidden><input type="checkbox" name="bewertungsmail"> Ja, erinnern Sie mich nach der Lieferung einmal per E-Mail daran, die Artikel zu bewerten (freiwillig).</label>

@@ -207,7 +207,7 @@ legend{padding:0 6px;font-weight:700}
 .bestellstatus span.an{background:var(--cyan);color:var(--n0);font-weight:700}
 .sternwahl{display:flex;gap:4px;flex-direction:row-reverse;justify-content:flex-end}
 .sternwahl input{position:absolute;opacity:0}
-.sternwahl label{font-size:28px;color:var(--n3);cursor:pointer}
+.sternwahl label{font-size:28px;color:var(--mute);cursor:pointer}
 .sternwahl input:checked~label,.sternwahl label:hover,.sternwahl label:hover~label{color:var(--warn)}
 
 footer.fuss{background:var(--n0);padding-block:48px 32px;color:var(--soft);font-size:14px}
@@ -354,3 +354,7 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 .aktion-band{margin:0;background:var(--warn);color:var(--n0);text-align:center;font-weight:700;font-size:14px;line-height:1.4;padding:8px 16px}
 .pr s.vorher{font-weight:500;opacity:.7;font-size:.78em;margin-right:2px}
 .pr .minus{display:inline-block;background:var(--warn);color:var(--n0);border-radius:6px;padding:1px 6px;font-size:.62em;line-height:1.5;vertical-align:middle}
+
+/* Bewertungen: verstecktes Feld gegen Bots, Zeichen „Verifizierter Kauf“ */
+.hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}
+.bewertung .verifiziert{color:var(--ok)}

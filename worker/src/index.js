@@ -3,7 +3,7 @@
 //             GET/PUT/DELETE /konto
 // Bestellung: POST /bestellung (Überweisung), /bestellung/status; Kreditkarte/PayPal: GET /bezahlen, POST /bezahlen/start, /bezahlen/abschluss
 // Widerruf:   POST /widerruf (Widerrufsbutton), Verwaltung: POST /verwaltung/widerruf
-// Bewertung:  GET /bewertungen?produkt=…, POST /bewertungen (danach 5-%-Gutschein per Mail)
+// Bewertung:  GET /bewertungen?produkt=…, POST /bewertungen (mit Konto oder Vorname + E-Mail, erscheint sofort)
 // Gutschein:  POST /gutschein/pruefen; USt-IdNr.: POST /ustid/pruefen (EU-Abfrage VIES)
 // Zeitplan:   täglich fällige Bitten um Bewertung verschicken (wrangler.toml [triggers])
 // Berater:    GET /beraten (eingerichtet?), POST /beraten (KI-Produktberater mit Claude, Schlüssel ANTHROPIC_API_KEY)
@@ -66,7 +66,16 @@ async function verteilen(request, env, ctx) {
     case "GET /bewertungen": return shop.bewertungenLesen(env, url.searchParams.get("produkt"), await konto.kundeAusAnfrage(env, request));
     case "POST /gutschein/pruefen": return shop.gutscheinPruefen(env, d);
     case "POST /ustid/pruefen": return shop.ustidAnfrage(env, d);
-    case "POST /bewertungen": return shop.bewerten(env, ctx, await konto.pflichtKunde(env, request), d);
+    case "POST /bewertungen": {
+      const kunde = await konto.kundeAusAnfrage(env, request);
+      const { mail, ...antwort } = kunde ? await shop.bewerten(env, ctx, kunde, d) : await shop.bewertenOffen(env, d, ipVon(request));
+      // Freiwilliges Häkchen „Newsletter“ im Bewertungsformular: nur Bestätigungsmail (Double-Opt-in), nie automatisch eintragen
+      if (d.newsletter === true && mail) {
+        ctx.waitUntil(newsletter.anmelden(env, { email: mail, einwilligung: true }, { ip: ipVon(request), quelle: "bewertung", api: url.origin })
+          .catch((err) => console.error("Newsletter (Bewertung):", err)));
+      }
+      return antwort;
+    }
     case "POST /newsletter/anmelden":
       if (env.NEWSLETTER_BREMSE && !(await env.NEWSLETTER_BREMSE.limit({ key: `nl:${ipVon(request)}` })).success) throw new Fehler("Zu viele Anmeldungen auf einmal. Bitte kurz warten.", 429);
       return newsletter.anmelden(env, d, { ip: ipVon(request), quelle: "fuss", api: url.origin });
@@ -108,6 +117,7 @@ export default {
     if (ereignis.cron === "*/10 * * * *") { ctx.waitUntil(newsletter.versandWeiter(env)); return; }
     ctx.waitUntil(shop.bewertungsanfragenSenden(env));
     ctx.waitUntil(newsletter.aufraeumen(env));
+    ctx.waitUntil(shop.bewertungIpAufraeumen(env));
   },
   async fetch(request, env, ctx) {
     const herkunft = herkunftVon(env, request);

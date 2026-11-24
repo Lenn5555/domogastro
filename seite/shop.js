@@ -254,14 +254,11 @@
   function sterne(n) { var s = ""; for (var i = 1; i <= 5; i++) s += i <= Math.round(n) ? "★" : "☆"; return s; }
   function bewertungen(slug) {
     var box = $("#bewertungen"); if (!box) return;
-    var liste = $(".liste", box), form = $("form", box), hinweis = $(".bew-hinweis", box);
+    var liste = $(".liste", box), form = $("form", box), hinweis = $(".bew-hinweis", box), start = Date.now();
     if (!DG.api) { liste.innerHTML = '<p class="klein">Bewertungen werden freigeschaltet, sobald der Shop-Server läuft.</p>'; return; }
-    // Das Formular erscheint nur, wenn der Server bestätigt: angemeldet, gekauft und bezahlt, noch nicht bewertet
-    var HINWEIS = {
-      anmelden: '<a href="' + B + '/konto/">Melden Sie sich an</a>, um ein gekauftes Produkt zu bewerten.',
-      nicht_gekauft: "Bewerten können Sie dieses Produkt, sobald Sie es bei uns gekauft und bezahlt haben.",
-      schon_bewertet: "Sie haben dieses Produkt bereits bewertet. Vielen Dank!",
-    };
+    // Link aus der Bewertungs-Erinnerung: ?bestellung=…&k=… kennzeichnet die Bewertung als verifizierten Kauf
+    var q = new URLSearchParams(location.search), kauf = q.get("bestellung") && q.get("k") ? { bestellung: q.get("bestellung"), k: q.get("k") } : null;
+    // darf: "ja" = angemeldet, "offen" = ohne Konto (Vorname + E-Mail), "schon_bewertet"
     function laden() {
       return api("/bewertungen?produkt=" + encodeURIComponent(slug)).then(function (d) {
         $(".schnitt", box).textContent = d.anzahl ? sterne(d.schnitt) + " " + d.schnitt.toFixed(1).replace(".", ",") + " von 5 (" + d.anzahl + ")" : "";
@@ -271,24 +268,39 @@
         }).join("") + "</div>" : "";
         liste.innerHTML = balken + (d.liste.length ? d.liste.map(function (b) {
           return '<div class="bewertung"><span class="sterne">' + sterne(b.sterne) + "</span>" + (b.titel ? " <b>" + esc(b.titel) + "</b>" : "") +
-            (b.verifiziert ? ' <span class="klein">· Verifizierter Kauf</span>' : "") + (b.belohnt ? ' <span class="klein">· mit 5-%-Gutschein bedankt</span>' : "") +
+            (b.verifiziert ? ' <span class="klein verifiziert">✓ Verifizierter Kauf</span>' : "") + (b.belohnt ? ' <span class="klein">· mit 5-%-Gutschein bedankt</span>' : "") +
             (b.text ? "<p>" + esc(b.text) + "</p>" : "<br>") + '<span class="klein">' + esc(b.name) + " am " + new Date(b.datum).toLocaleDateString("de-DE") + "</span></div>";
         }).join("") : d.anzahl ? "" : '<p class="klein">Noch keine Bewertungen. Seien Sie die oder der Erste!</p>');
-        form.hidden = d.darf !== "ja";
-        hinweis.innerHTML = HINWEIS[d.darf] || "";
-        // Ohne Bewertungen bleibt der Bereich unsichtbar, außer der Kunde darf gerade bewerten
-        var vorher = box.hidden;
-        box.hidden = !(d.anzahl || d.darf === "ja");
-        if (vorher && !box.hidden && location.hash === "#bewertungen") box.scrollIntoView();
+        var gast = d.darf === "offen";
+        form.hidden = !(gast || d.darf === "ja");
+        form.querySelectorAll(".bew-gast").forEach(function (x) { x.hidden = !gast; });
+        form.elements.name.required = gast;
+        $(".bew-mail-feld", form).hidden = !gast || !!kauf; form.elements.email.required = gast && !kauf;
+        $(".bew-verifiziert", form).hidden = !(gast && kauf);
+        hinweis.textContent = d.darf === "schon_bewertet" ? "Sie haben dieses Produkt bereits bewertet. Vielen Dank!" : "";
+        if (location.hash === "#bewertungen") box.scrollIntoView();
       }).catch(function () { liste.innerHTML = '<p class="klein">Bewertungen konnten nicht geladen werden.</p>'; });
     }
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var f = new FormData(form), st = $(".status", form);
-      api("/bewertungen", { produkt: slug, sterne: +f.get("sterne"), titel: f.get("titel"), text: f.get("text") })
-        .then(function () { form.reset(); return laden(); })
-        .then(function () { hinweis.textContent = "Danke! Ihre Bewertung ist jetzt sichtbar. Ihren persönlichen 5-%-Gutscheincode haben wir Ihnen per E-Mail geschickt."; })
-        .catch(function (err) { st.className = "status meldung fehler"; st.textContent = err.message; });
+      var f = new FormData(form), st = $(".status", form), k = $("button[type=submit]", form);
+      var daten = { produkt: slug, sterne: +f.get("sterne"), titel: f.get("titel"), text: f.get("text"), name: f.get("name") || "", email: f.get("email") || "",
+        website: f.get("website") || "", dauer: Date.now() - start, newsletter: !!f.get("newsletter") };
+      // Über den Link aus der Mail zählt die Adresse der Bestellung; das Feld ist dann ausgeblendet
+      if (kauf) { daten.bestellung = kauf.bestellung; daten.k = kauf.k; }
+      var nl = daten.newsletter;
+      k.disabled = true;
+      api("/bewertungen", daten)
+        .then(function () { form.reset(); st.textContent = ""; return laden(); })
+        .then(function () {
+          form.hidden = true;
+          hinweis.textContent = "Danke! Ihre Bewertung ist jetzt sichtbar." + (nl ? " Für den Newsletter haben wir Ihnen eine E-Mail zur Bestätigung geschickt." : "");
+        })
+        .catch(function (err) {
+          st.className = "status meldung fehler"; st.textContent = err.message;
+          if (kauf && /E-Mail-Adresse an/.test(err.message)) { kauf = null; $(".bew-mail-feld", form).hidden = false; form.elements.email.required = true; $(".bew-verifiziert", form).hidden = true; }
+        })
+        .then(function () { k.disabled = false; });
     });
     laden();
   }
