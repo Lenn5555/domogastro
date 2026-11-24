@@ -116,7 +116,10 @@ def shopping_feed():
              verf, f"<g:price>{brutto(netto)}</g:price>", "<g:condition>new</g:condition>",
              f"<g:brand>{x(marke(p['hersteller']))}</g:brand>",
              f"<g:product_type>{x(p['kategorie'] + ' > ' + p['unterkategorie'])}</g:product_type>"]
-        if aktion:
+        if aktion and sku in AKTION.get("ohne_streichpreis", []):
+            # Preis während der Aktion erhöht: rabattierten Preis als normalen Preis melden, kein sale_price (kein Streichpreis)
+            t = [z.replace(f"<g:price>{brutto(netto)}</g:price>", f"<g:price>{brutto(r2(netto * (100 - AKTION['prozent']) / 100))}</g:price>") for z in t]
+        elif aktion:
             neu = r2(netto * (100 - AKTION["prozent"]) / 100)
             t += [f"<g:sale_price>{brutto(neu)}</g:sale_price>",
                   f"<g:sale_price_effective_date>{AKTION['von']}/{AKTION['bis']}</g:sale_price_effective_date>"]

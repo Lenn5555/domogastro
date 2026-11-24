@@ -1,8 +1,12 @@
 {
-  "hinweis": "Preisaktion für den ganzen Shop (Lenn 2026-11-20: Black Week, 15 % auf alles, ohne Code, an jedem Produkt sichtbar). Gilt automatisch nur zwischen von und bis (UTC), für alle Artikel auf den Stückpreis, nicht auf Versand. Durchgestrichen wird der bisherige Preis = niedrigster Preis der letzten 30 Tage (§ 11 PAngV): Preise vor und während der Aktion nicht erhöhen. Aus: prozent auf 0 setzen.",
+  "hinweis": "Preisaktion für den ganzen Shop (Lenn 2026-11-20: Black Week, 15 % auf alles, ohne Code, an jedem Produkt sichtbar). Gilt automatisch nur zwischen von und bis (UTC), für alle Artikel auf den Stückpreis, nicht auf Versand. Durchgestrichen wird der bisherige Preis = niedrigster Preis der letzten 30 Tage (§ 11 PAngV): Preise vor und während der Aktion nicht erhöhen. Aus: prozent auf 0 setzen. ohne_streichpreis: Artikel, deren Preis während der Aktion erhöht wurde (Lenn 2026-11-24, EasyLine-Wand 700 1800/3000 mm): Rabatt gilt, aber ohne durchgestrichenen Preis und ohne −%-Hinweis, im Feed ohne sale_price (Streichpreis wäre höher als der 30-Tage-Tiefstpreis).",
   "name": "Black Week",
   "prozent": 15,
   "von": "2026-11-20T15:00:00Z",
   "bis": "2026-11-30T22:59:59Z",
-  "bis_text": "Montag, 30.11., 23:59 Uhr"
+  "bis_text": "Montag, 30.11., 23:59 Uhr",
+  "ohne_streichpreis": [
+    "7002-AR12-5116",
+    "7002-AR12-5122"
+  ]
 }

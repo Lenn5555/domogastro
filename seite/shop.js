@@ -31,6 +31,7 @@
     return (istGewerbe() ? "zzgl. " : "inkl. ") + satzText() + " % MwSt.";
   }
   // Nur Anzeige aktualisieren, ohne Ereignis (Seiten rufen das in ihrem eigenen Neuzeichnen auf)
+  function ohneStreich(sku) { return !!(DG.aktion && (DG.aktion.ohne_streichpreis || []).indexOf(sku) >= 0); }
   function preiseSetzen() {
     var akt = window.DGR && DGR.aktionAktiv(DG.aktion);
     $$(".pr[data-netto]").forEach(function (e) {
@@ -39,7 +40,9 @@
       var ab = e.dataset.ab ? "ab " : "";
       // Preisaktion (Black Week): bisheriger Preis durchgestrichen = niedrigster Preis der letzten 30 Tage (§ 11 PAngV)
       var neu = e.dataset.neu ? parseFloat(e.dataset.neu) : (akt ? DGR.stueckpreis(akt, n) : n);
-      if (akt && neu < n) e.innerHTML = '<s class="vorher" title="Niedrigster Preis der letzten 30 Tage">' + esc(preisText(n)) + '</s> <span class="neu">' + esc(ab + preisText(neu)) + '</span> <span class="minus">−' + akt.prozent + ' %</span>';
+      // Preis während der Aktion erhöht: Rabatt gilt, aber ohne Streichpreis (sonst irreführend, § 11 PAngV)
+      if (akt && neu < n && e.dataset.ohne) e.textContent = ab + preisText(neu);
+      else if (akt && neu < n) e.innerHTML = '<s class="vorher" title="Niedrigster Preis der letzten 30 Tage">' + esc(preisText(n)) + '</s> <span class="neu">' + esc(ab + preisText(neu)) + '</span> <span class="minus">−' + akt.prozent + ' %</span>';
       else e.textContent = ab + preisText(n);
     });
     $$(".aktion-hinweis").forEach(function (e) {
@@ -219,7 +222,7 @@
       var o = variante(); if (!o) return;
       $(".sku", art).textContent = o.value;
       var pr = $(".preis-gross .pr", art);
-      if (o.dataset.netto) { pr.dataset.netto = o.dataset.netto; pr.hidden = false; $(".preis-gross .steuer", art).hidden = false; $(".anfrage", art).hidden = true; $(".kaufen", art).disabled = false; }
+      if (o.dataset.netto) { pr.dataset.netto = o.dataset.netto; if (ohneStreich(o.value)) pr.dataset.ohne = "1"; else delete pr.dataset.ohne; pr.hidden = false; $(".preis-gross .steuer", art).hidden = false; $(".anfrage", art).hidden = true; $(".kaufen", art).disabled = false; }
       else { pr.hidden = true; $(".preis-gross .steuer", art).hidden = true; $(".anfrage", art).hidden = false; $(".kaufen", art).disabled = true; }
       $(".masse", art).textContent = o.dataset.masse || "";
       $(".lieferzeit", art).textContent = o.dataset.lieferzeit || "";
@@ -360,7 +363,7 @@
           return '<div class="posten" data-sku="' + esc(p.sku) + '">' + (p.a.b ? '<img src="' + esc(p.a.b) + '" alt="">' : "<span></span>") +
             '<div><a href="' + B + "/produkt/" + p.a.s + '/">' + esc(p.a.n) + '</a><div class="klein">Art.-Nr. ' + esc(p.sku) + " · Lieferzeit " + esc(p.a.l || "auf Anfrage") + (p.a.sp ? " · Spedition" : "") +
             '</div><div class="menge"><label class="sr" for="m-' + esc(p.sku) + '">Menge</label><input id="m-' + esc(p.sku) + '" type="number" min="1" max="99" value="' + p.menge + '"><button class="weg" type="button">Entfernen</button></div></div>' +
-            '<div><span class="pr" data-netto="' + (p.a.p * p.menge).toFixed(2) + '" data-neu="' + (DGR.stueckpreis(DG.aktion, p.a.p) * p.menge).toFixed(2) + '"></span></div></div>';
+            '<div><span class="pr" data-netto="' + (p.a.p * p.menge).toFixed(2) + '" data-neu="' + (DGR.stueckpreis(DG.aktion, p.a.p) * p.menge).toFixed(2) + '"' + (ohneStreich(p.sku) ? ' data-ohne="1"' : '') + '></span></div></div>';
         }).join("");
         var g = istGewerbe();
         var faktor = g ? 1 : 1 + r.satz / 100;
