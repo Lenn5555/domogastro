@@ -144,6 +144,47 @@
       <details class="klein"><summary>Liste anzeigen (${n.liste.length})</summary><table class="v-tabelle"><tr><th>E-Mail</th><th>Bestätigt</th><th>Quelle</th><th>Code</th></tr>
       ${n.liste.map((x) => `<tr><td>${esc(x.email)}</td><td>${esc(x.bestaetigt.slice(0, 16).replace("T", " "))}</td><td>${x.quelle === "kasse" ? "Kasse" : "Anmeldefeld"}</td><td>${esc(x.code)}${x.eingeloest_nr ? ` ✓ ${esc(x.eingeloest_nr)}` : ""}</td></tr>`).join("")}</table></details>
       <p class="klein">Die CSV enthält je Adresse den Nachweis der Einwilligung (Zeitpunkt und IP von Anmeldung und Bestätigung, Wortlaut). Bitte sicher aufbewahren und nur für den Newsletter nutzen.</p>` : "<p>Noch keine bestätigten Anmeldungen.</p>"}`;
+    // Statistik und Versand darunter
+    const tab = (zeilen, fmt) => zeilen.length ? `<table class="v-tabelle"><tr><th>${fmt === "tag" ? "Tag" : "Monat"}</th><th>Anmeldungen</th><th>Bestätigt</th><th>Abmeldungen</th><th>Codes eingelöst</th></tr>
+      ${zeilen.map((z) => `<tr><td>${fmt === "tag" ? esc(z.zeit.split("-").reverse().join(".")) : esc(z.zeit.split("-").reverse().join("/"))}</td><td>${z.anmeldung}</td><td>${z.bestaetigung}</td><td>${z.abmeldung}</td><td>${z.eingeloest}</td></tr>`).join("")}</table>` : "<p>Noch keine Daten.</p>";
+    const quote = (() => { const t = n.statistik.monate.reduce((x, z) => ({ an: x.an + z.anmeldung, be: x.be + z.bestaetigung }), { an: 0, be: 0 }); return t.an ? Math.round(t.be / t.an * 100) : null; })();
+    const STATUS_A = { laeuft: "läuft", fertig: "fertig", abgebrochen: "abgebrochen" };
+    const ausg = n.ausgaben.length ? n.ausgaben.map((x) => `<div class="v-aufgabe"><span><b>${esc(x.betreff)}</b> · ${esc(x.gestartet.slice(0, 16).replace("T", " "))} · ${STATUS_A[x.status] || esc(x.status)} ·
+      ${x.gesendet} von ${x.empfaenger} verschickt${x.fehler ? `, ${x.fehler} Fehler` : ""}${x.status === "laeuft" ? `, noch ${x.offen} offen` : ""}</span>
+      ${x.status === "laeuft" ? `<button class="btn sec" data-nl-stop="${x.id}">Abbrechen</button>` : ""}</div>`).join("") : "<p>Noch kein Newsletter verschickt.</p>";
+    ziel.insertAdjacentHTML("afterend", `
+      <div class="v-karte"><b>Statistik</b>${quote != null ? `<p class="klein">Bestätigungsquote der letzten 12 Monate: ${quote} %. Unbestätigte Anmeldungen werden nach 30 Tagen gelöscht.</p>` : ""}
+        <details open><summary>Je Monat</summary>${tab(n.statistik.monate, "monat")}</details>
+        <details><summary>Je Tag (letzte 31 Tage)</summary>${tab(n.statistik.tage, "tag")}</details></div>
+      <div class="v-karte"><b>Newsletter verschicken</b>
+        <p class="klein">Erst Testmail an ${esc(DG.mail || "sales@")} schicken und prüfen, dann an alle ${a.bestaetigt} bestätigten Adressen. Abmeldelink und Impressum kommen automatisch dazu.
+        Versand gedrosselt: höchstens ${n.tageslimit} Newsletter-Mails pro Tag (heute schon ${n.heute_gesendet}), alle 10 Minuten ein Schwung.</p>
+        <form id="v-nl-form"><label>Betreff <input type="text" name="betreff" maxlength="150" required></label>
+        <label>Text (Links einfach als https://… einfügen) <textarea name="text" rows="14" required></textarea></label>
+        <p><button class="btn sec" type="button" id="v-nl-test">Testmail senden</button> <button class="btn pri" type="button" id="v-nl-los">An alle bestätigten Adressen senden</button></p>
+        <p class="klein" id="v-nl-meldung" role="status"></p></form>
+        <h3 style="font-size:15px;margin:14px 0 6px">Bisherige Newsletter</h3>${ausg}</div>`);
+    const form = document.getElementById("v-nl-form"), meld = document.getElementById("v-nl-meldung");
+    try { const e = JSON.parse(localStorage.getItem("dg-nl-entwurf") || "null"); if (e) { form.betreff.value = e.betreff || ""; form.text.value = e.text || ""; } } catch {}
+    form.addEventListener("input", () => { try { localStorage.setItem("dg-nl-entwurf", JSON.stringify({ betreff: form.betreff.value, text: form.text.value })); } catch {} });
+    const daten = () => ({ betreff: form.betreff.value.trim(), text: form.text.value });
+    document.getElementById("v-nl-test").addEventListener("click", async (ev) => {
+      ev.target.disabled = true;
+      try { const r = await rufen("/verwaltung/newsletter/test", daten()); meld.textContent = `Testmail an ${r.an} verschickt. Bitte im Postfach prüfen.`; }
+      catch (err) { meld.textContent = err.message; }
+      ev.target.disabled = false;
+    });
+    document.getElementById("v-nl-los").addEventListener("click", async (ev) => {
+      if (!confirm(`Newsletter „${form.betreff.value}“ jetzt an alle ${a.bestaetigt} bestätigten Adressen verschicken? Das lässt sich nicht zurückholen (nur noch nicht verschickte Mails lassen sich abbrechen).`)) return;
+      ev.target.disabled = true;
+      try { const r = await rufen("/verwaltung/newsletter/senden", { ...daten(), sicher: true }); try { localStorage.removeItem("dg-nl-entwurf"); } catch {}
+        alert(`Versand gestartet: ${r.empfaenger} Empfänger, höchstens ${r.tageslimit} pro Tag.`); laden(); }
+      catch (err) { meld.textContent = err.message; ev.target.disabled = false; }
+    });
+    box.querySelectorAll("[data-nl-stop]").forEach((k) => k.addEventListener("click", async () => {
+      if (!confirm("Versand abbrechen? Bereits verschickte Mails bleiben verschickt.")) return;
+      try { await rufen("/verwaltung/newsletter/abbrechen", { id: k.dataset.nlStop }); laden(); } catch (err) { alert(err.message); }
+    }));
     const k = document.getElementById("v-nl-csv");
     if (k) k.addEventListener("click", () => {
       const spalten = ["email", "bestaetigt", "bestaetigt_ip", "angemeldet", "anmelde_ip", "quelle", "einwilligung", "code", "eingeloest_nr"];

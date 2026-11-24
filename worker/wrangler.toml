@@ -12,6 +12,11 @@ account_id = "4b855f0470ebca3d071a170d0a9b51df"
 HERKUNFT = "https://domogastro.de,https://www.domogastro.de,https://lenn5555.github.io,http://localhost:8000"
 # Öffentliche Adresse der Website (für Links in Mails und die Rückkehr von PayPal)
 SITE_URL = "https://domogastro.de"
+# Öffentliche Adresse dieses Servers (Ein-Klick-Abmeldung im Newsletter, List-Unsubscribe)
+API_URL = "https://domogastro-shop.beinundfuss.workers.dev"
+# Newsletter-Versand: höchstens so viele Newsletter-Mails pro Tag (UTC). Resend Free: 100 Mails/Tag INSGESAMT, Rest bleibt für Bestellmails.
+# Mit Resend Pro (50.000/Monat, kein Tageslimit) z. B. auf 2000 erhöhen.
+NEWSLETTER_TAGESLIMIT = "60"
 BESTELL_EMAIL = "sales@ts-systec.de"
 # Absender muss bei Resend als Domain bestätigt sein (SPF, DKIM, DMARC). Bis dahin werden keine Mails verschickt.
 ABSENDER = "Domo Gastro <bestellung@domogastro.de>"
@@ -21,9 +26,9 @@ BANK_IBAN = "DE17 5084 0005 0610 6090 00"
 # "ja" = PayPal-Testumgebung, "nein" = echtes PayPal (Lenn 2026-11-19: direkt live)
 PAYPAL_SANDBOX = "nein"
 
-# Täglich 8 Uhr UTC: fällige Bitten um Bewertung verschicken
+# Täglich 8 Uhr UTC: fällige Bitten um Bewertung verschicken. Alle 10 Minuten: laufenden Newsletter gedrosselt weiterverschicken.
 [triggers]
-crons = ["0 8 * * *"]
+crons = ["0 8 * * *", "*/10 * * * *"]
 
 [[d1_databases]]
 binding = "DB"

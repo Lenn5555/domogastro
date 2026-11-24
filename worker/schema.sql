@@ -74,3 +74,17 @@ CREATE TABLE IF NOT EXISTS newsletter (
 );
 CREATE INDEX IF NOT EXISTS newsletter_bestaetigen ON newsletter(bestaetigen_hash);
 CREATE UNIQUE INDEX IF NOT EXISTS newsletter_abmelden ON newsletter(abmelde_schluessel);
+-- Statistik ohne personenbezogene Daten: je Ereignis nur Zeitpunkt und Art (anmeldung, bestaetigung, abmeldung)
+CREATE TABLE IF NOT EXISTS newsletter_ereignisse (id INTEGER PRIMARY KEY AUTOINCREMENT, datum TEXT NOT NULL, art TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS newsletter_ereignisse_datum ON newsletter_ereignisse(datum);
+-- Monatlicher Newsletter (Lenn 2026-11-24): Ausgabe + Warteschlange, gedrosselt verschickt (Cron alle 10 Minuten)
+CREATE TABLE IF NOT EXISTS newsletter_ausgaben (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, betreff TEXT NOT NULL, text TEXT NOT NULL,
+  status TEXT NOT NULL,          -- laeuft, fertig, abgebrochen
+  empfaenger INTEGER NOT NULL DEFAULT 0, gestartet TEXT NOT NULL, fertig TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS newsletter_versand (
+  ausgabe_id INTEGER NOT NULL, email TEXT NOT NULL, gesendet TEXT NOT NULL DEFAULT '', ergebnis TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (ausgabe_id, email)
+);
+CREATE INDEX IF NOT EXISTS newsletter_versand_gesendet ON newsletter_versand(gesendet);

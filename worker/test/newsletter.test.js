@@ -82,3 +82,37 @@ test("Mindestwert nur für Newsletter-Codes", () => {
   // daten/newsletter.json: mindestwert_netto 0 = kein Mindestwert
   assert.equal(nl.mindestwertFehler("DGN-ABCDEFGH", 1), nl.mindestwert() ? nl.mindestwertFehler("DGN-ABCDEFGH", 1) : "");
 });
+
+test("Monatlicher Versand: Testmail, gedrosselt an Bestätigte, Abgemeldete übersprungen, Statistik", async () => {
+  const { env, post } = umgebung();
+  env.API_URL = "https://api.test"; env.NEWSLETTER_TAGESLIMIT = "2";
+  for (const m of ["a@x.de", "b@x.de", "c@x.de", "d@x.de"]) await nl.anmelden(env, { email: m, einwilligung: true });
+  for (const m of post.slice(0, 4)) await nl.bestaetigen(env, { token: link(m, "bestaetigen") });
+  await nl.anmelden(env, { email: "offen@x.de", einwilligung: true });  // unbestätigt: bekommt nichts
+  post.length = 0;
+  const neu = { betreff: "Neuheiten im Dezember", text: "Guten Tag,\n\nhier sind unsere Neuheiten im Dezember." };
+  await nl.testSenden(env, neu);
+  assert.equal(post[0].to[0], "sales@ts-systec.de"); assert.match(post[0].subject, /^\[TEST\]/);
+  await assert.rejects(nl.versandStarten(env, neu), /bestätigen/);
+  const v = await nl.versandStarten(env, { ...neu, sicher: true });
+  assert.equal(v.empfaenger, 4);
+  await assert.rejects(nl.versandStarten(env, { ...neu, sicher: true }), /läuft schon/);
+  post.length = 0;
+  // b meldet sich ab, bevor er dran ist
+  const sB = env.DB.roh.prepare("SELECT abmelde_schluessel AS s FROM newsletter WHERE email = 'b@x.de'").get().s;
+  await nl.abmelden(env, sB);
+  let r = await nl.versandWeiter(env, { pause: 0 });
+  assert.equal(post.length, 2);  // Tageslimit 2
+  assert.ok(post.every((m) => m.to[0] !== "b@x.de" && m.headers["List-Unsubscribe"].startsWith("<https://api.test/newsletter/ein-klick?s=")));
+  assert.match(post[0].text, /abmelden=/);
+  r = await nl.versandWeiter(env, { pause: 0 });
+  assert.equal(post.length, 2);  // heute nichts mehr
+  env.NEWSLETTER_TAGESLIMIT = "100";
+  r = await nl.versandWeiter(env, { pause: 0 });
+  assert.equal(r.rest, 0); assert.equal(post.length, 3);
+  const l = await nl.verwaltungListe(env);
+  assert.equal(l.ausgaben[0].status, "fertig"); assert.equal(l.ausgaben[0].gesendet, 3);
+  const heute = l.statistik.tage[0];
+  assert.equal(heute.anmeldung, 5); assert.equal(heute.bestaetigung, 4); assert.equal(heute.abmeldung, 1);
+  assert.equal(l.statistik.monate[0].anmeldung, 5);
+});

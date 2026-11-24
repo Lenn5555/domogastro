@@ -29,7 +29,7 @@ async function gebremst(env, request, art) {
 }
 
 async function koerper(request) {
-  if ((request.headers.get("Content-Length") | 0) > 20000) throw new Fehler("Anfrage zu groß.", 413);
+  if ((request.headers.get("Content-Length") | 0) > 60000) throw new Fehler("Anfrage zu groß.", 413);
   try { return await request.json(); } catch { throw new Fehler("Ungültige Anfrage."); }
 }
 
@@ -76,6 +76,9 @@ async function verteilen(request, env, ctx) {
     case "POST /beraten": return beratenAnfrage(env, d, request);
     case "GET /verwaltung": await shop.verwaltungPruefen(env, request); return shop.verwaltungListe(env);
     case "GET /verwaltung/newsletter": await shop.verwaltungPruefen(env, request); return newsletter.verwaltungListe(env);
+    case "POST /verwaltung/newsletter/test": await shop.verwaltungPruefen(env, request); return newsletter.testSenden(env, d);
+    case "POST /verwaltung/newsletter/senden": await shop.verwaltungPruefen(env, request); return newsletter.versandStarten(env, d);
+    case "POST /verwaltung/newsletter/abbrechen": await shop.verwaltungPruefen(env, request); return newsletter.versandAbbrechen(env, d);
     case "POST /verwaltung/status": await shop.verwaltungPruefen(env, request); return shop.verwaltungStatus(env, ctx, d);
     case "POST /verwaltung/widerruf": await shop.verwaltungPruefen(env, request); return widerruf.verwaltungWiderruf(env, ctx, d);
     case "POST /verwaltung/bewertung": await shop.verwaltungPruefen(env, request); return shop.verwaltungBewertung(env, d);
@@ -102,6 +105,7 @@ async function beratenAnfrage(env, d, request) {
 
 export default {
   async scheduled(ereignis, env, ctx) {
+    if (ereignis.cron === "*/10 * * * *") { ctx.waitUntil(newsletter.versandWeiter(env)); return; }
     ctx.waitUntil(shop.bewertungsanfragenSenden(env));
     ctx.waitUntil(newsletter.aufraeumen(env));
   },
