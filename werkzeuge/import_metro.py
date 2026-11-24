@@ -59,6 +59,12 @@ REGELN = [
 ]
 
 
+# Bilder, die Google ablehnt (z. B. zu groß, über 64 Megapixel), durch kleinere Fassungen ersetzen
+BILD_ERSATZ = {
+    "https://ts-systemtechnik.de/wp-content/uploads/2024/03/8005.png": "https://ts-systemtechnik.de/wp-content/uploads/2024/03/8005-2048x1536.png",
+}
+
+
 def ohne_html(text):
     t = re.sub(r"<\s*(br|/p|/li)\s*/?>", "\n", str(text or ""), flags=re.I)
     t = html.unescape(re.sub(r"<[^>]+>", " ", t))
@@ -153,7 +159,7 @@ def main():
         sku = str(feld(z, "MPN")).strip()
         k, u = kategorie(name)
         ang = angebote.get(sku, {})
-        bilder = [str(b) for b in alle(z, "Image")]
+        bilder = [BILD_ERSATZ.get(str(b), str(b)) for b in alle(z, "Image")]
         a = {
             "sku": sku,
             "gtin": gtins.get(sku) or feld(z, "GTIN"),
