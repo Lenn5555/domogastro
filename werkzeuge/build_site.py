@@ -337,8 +337,7 @@ def karriere_seite():
     link = f"mailto:{mail}?subject=" + betreff.replace(" ", "%20")
     return (f'<div class="seite g"><div class="in karriere" style="max-width:860px">'
             f'<div class="karriere-kopf"><div><h1 class="titel">Karriere bei Domo Gastro</h1>'
-            f'<p>Domo Gastro ist ein Onlineshop für Gastronomie-Ausstattung: Profigeräte, Lüftungstechnik und Zubehör für Gastronomie, Hotellerie '
-            f'und alle, die zu Hause wie Profis kochen.</p></div>'
+            f'</div>'
             f'<img src="{u("/bilder/domo-start.webp")}" alt="Domo, das Erdmännchen von Domo Gastro" width="138" height="250" loading="lazy"></div>'
             f'<h2>Offene Stellen</h2>'
             f'<p>Gerade schreiben wir keine feste Stelle aus.</p>'
