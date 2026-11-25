@@ -347,7 +347,7 @@ def karriere_seite():
             f'<li><b>Echte Verantwortung:</b> Bei uns zählt, was du anpackst.</li>'
             f'<li><b>Kurze Wege:</b> Entscheidungen fallen schnell und direkt.</li>'
             f'<li><b>Raum für Ideen:</b> Wir probieren gern Neues aus.</li>'
-            f'<li><b>Ein Team, das zusammenhält</b> – und ein Erdmännchen, das dir zuwinkt.</li></ul>'
+            f'<li><b>Zusammenhalt:</b> Ein Team, das füreinander da ist.</li></ul>'
             f'<p>Schick uns ein paar Zeilen über dich und deinen Lebenslauf.</p>'
             f'<p><a class="btn pri" href="{e(link)}">Jetzt bewerben</a></p>'
             f'<p class="klein">Per E-Mail an {e(mail)}. Wir freuen uns über jede Bewerbung (m/w/d), unabhängig von Herkunft, Geschlecht, Alter, Religion, Behinderung oder sexueller Identität. '
