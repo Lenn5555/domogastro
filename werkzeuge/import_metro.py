@@ -47,6 +47,7 @@ REGELN = [
     ("Spülen & Wasser", "Armaturen & Füller", r"füller|Brause|Schlauch|Wasserhahn|Spüler"),
     ("Spülen & Wasser", "Handwaschbecken", r"Handwaschbecken"),
     ("Hygiene & Waschraum", "Händetrockner", r"Händetrockner|Hände-?trock"),
+    ("Bar & Getränke", "Mixer & Bar", r"Glühwein|Heißgetränk"),  # vor „Spender“, sonst landen Glühweinspender bei Hygiene
     ("Hygiene & Waschraum", "Spender", r"spender|Spender"),
     ("Hygiene & Waschraum", "Waschraum-Ausstattung", r"Wickel|Haltegriff|Handgriff|Damenhygien"),
     ("Hygiene & Waschraum", "Abfall", r"Müll|Papierkorb|Abfall"),
