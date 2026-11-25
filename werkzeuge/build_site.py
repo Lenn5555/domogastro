@@ -349,8 +349,7 @@ def karriere_seite():
             f'<li><b>Zusammenhalt:</b> Ein Team, das füreinander da ist.</li></ul>'
             f'<p>Schick uns ein paar Zeilen über dich und deinen Lebenslauf.</p>'
             f'<p><a class="btn pri" href="{e(link)}">Jetzt bewerben</a></p>'
-            f'<p class="klein">Per E-Mail an {e(mail)}. Wir freuen uns über jede Bewerbung (m/w/d), unabhängig von Herkunft, Geschlecht, Alter, Religion, Behinderung oder sexueller Identität. '
-            f'Wie wir mit deinen Daten umgehen, steht in unserer <a href="{u("/datenschutz/#bewerbungen")}">Datenschutzerklärung</a>.</p></div>'
+            f'</div>'
             f'</div></div>')
 
 
