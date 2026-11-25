@@ -370,4 +370,4 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 
 /* Sterne unter den Produktkacheln */
 .p .bew-k{font-size:12px;color:var(--soft);white-space:nowrap}
-.p .bew-k .sterne{color:var(--mute);letter-spacing:1px}
+.p .bew-k .sterne{color:var(--warn);letter-spacing:1px}
