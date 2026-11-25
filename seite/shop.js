@@ -32,7 +32,25 @@
   }
   // Nur Anzeige aktualisieren, ohne Ereignis (Seiten rufen das in ihrem eigenen Neuzeichnen auf)
   function ohneStreich(sku) { return !!(DG.aktion && (DG.aktion.ohne_streichpreis || []).indexOf(sku) >= 0); }
+  // Sterne unter den Produktkacheln (Lenn 2026-11-25): eine Abfrage je Seite, nur Produkte mit Bewertungen
+  var bewUebersicht = null;
+  function kachelSterne() {
+    if (!DG.api || !document.querySelector("a.p:not([data-bew])")) return;
+    bewUebersicht = bewUebersicht || api("/bewertungen/uebersicht").catch(function () { return {}; });
+    bewUebersicht.then(function (u) {
+      $$("a.p:not([data-bew])").forEach(function (k) {
+        k.dataset.bew = "1";
+        var m = (k.getAttribute("href") || "").match(/\/produkt\/([^/]+)\//), b = m && u[m[1]];
+        if (!b || !b[1]) return;
+        var s = document.createElement("span"); s.className = "bew-k";
+        s.setAttribute("aria-label", b[0].toFixed(1).replace(".", ",") + " von 5 Sternen, " + b[1] + (b[1] === 1 ? " Bewertung" : " Bewertungen"));
+        s.innerHTML = '<span class="sterne">' + sterne(b[0]) + "</span> " + b[0].toFixed(1).replace(".", ",") + " (" + b[1] + ")";
+        var t = $(".t", k); (t || $(".n", k)).insertAdjacentElement("afterend", s);
+      });
+    });
+  }
   function preiseSetzen() {
+    kachelSterne();
     var akt = window.DGR && DGR.aktionAktiv(DG.aktion);
     $$(".pr[data-netto]").forEach(function (e) {
       var n = parseFloat(e.dataset.netto);

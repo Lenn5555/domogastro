@@ -216,6 +216,14 @@ async function darfBewerten(env, kunde, slug) {
   return "ja";
 }
 
+// Für die Produktkacheln (Lenn 2026-11-25): je Produkt Schnitt und Anzahl, nur Produkte mit Bewertungen
+export async function bewertungenUebersicht(env) {
+  const r = await env.DB.prepare("SELECT produkt, AVG(sterne) AS schnitt, COUNT(*) AS n FROM bewertungen WHERE freigegeben = 1 GROUP BY produkt").all();
+  const aus = {};
+  for (const z of r.results) aus[z.produkt] = [Math.round(z.schnitt * 10) / 10, z.n];
+  return aus;
+}
+
 export async function bewertungenLesen(env, slug, kunde = null) {
   const p = text(slug, 120);
   // Öffentlich: nur wie viele Personen wie viele Sterne gegeben haben. Einzeln (mit Namen) erscheinen nur Bewertungen mit Kommentar.

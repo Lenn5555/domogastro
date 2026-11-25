@@ -65,6 +65,7 @@ async function verteilen(request, env, ctx) {
     case "GET /bezahlen": return shop.bezahlenInfo(env);
     case "POST /bezahlen/start": return shop.bezahlenStart(env, d, await konto.kundeAusAnfrage(env, request));
     case "POST /bezahlen/abschluss": return mitNewsletter(env, ctx, request, d, await shop.bezahlenAbschluss(env, ctx, d, await konto.kundeAusAnfrage(env, request)));
+    case "GET /bewertungen/uebersicht": return shop.bewertungenUebersicht(env);
     case "GET /bewertungen": return shop.bewertungenLesen(env, url.searchParams.get("produkt"), await konto.kundeAusAnfrage(env, request));
     case "POST /gutschein/pruefen": return shop.gutscheinPruefen(env, d);
     case "POST /ustid/pruefen": return shop.ustidAnfrage(env, d);

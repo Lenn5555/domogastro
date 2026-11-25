@@ -367,3 +367,7 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 .karriere-trotzdem ul{padding-left:20px}
 .karriere-trotzdem li{margin:6px 0}
 @media (max-width:640px){.karriere-kopf{flex-direction:column-reverse;align-items:flex-start}.karriere-kopf img{height:130px;align-self:center}}
+
+/* Sterne unter den Produktkacheln */
+.p .bew-k{font-size:12px;color:var(--soft);white-space:nowrap}
+.p .bew-k .sterne{color:var(--mute);letter-spacing:1px}

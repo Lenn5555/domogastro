@@ -52,3 +52,12 @@ test("E-Mail freiwillig: ohne Adresse sofort sichtbar, ohne Kauf-Zeichen", async
   assert.equal(e.DB.roh.prepare("SELECT COUNT(*) AS n FROM bewertung_mail").get().n, 0);
   await assert.rejects(shop.bewertenOffen(e, neu({ email: "kaputt" }), "6.6.6.6"), /gültige E-Mail/);
 });
+
+test("Übersicht für die Produktkacheln: Schnitt und Anzahl je Produkt", async () => {
+  const e = env();
+  assert.deepEqual(await shop.bewertungenUebersicht(e), {});
+  await shop.bewertenOffen(e, neu({ sterne: 5, email: "a@x.de" }), "1.1.1.1");
+  await shop.bewertenOffen(e, neu({ sterne: 4, email: "b@x.de" }), "2.2.2.2");
+  await shop.bewertenOffen(e, neu({ sterne: 4, email: "c@x.de" }), "3.3.3.3");
+  assert.deepEqual(await shop.bewertungenUebersicht(e), { [slug]: [4.3, 3] });
+});
