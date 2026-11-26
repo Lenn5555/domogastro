@@ -1,7 +1,7 @@
 /* Domo Gastro – Shop-Logik im Browser.
    Preise in den Seiten sind NETTO (data-netto). Der Schalter Privat/Gewerbe zeigt brutto oder netto.
    Warenkorb und Anmeldung liegen im localStorage dieses Browsers (technisch erforderlich, § 25 Abs. 2 Nr. 2 TDDDG),
-   keine Cookies, kein Tracking. Server (Konto, Bestellung, Bewertungen): window.DG.api; leer = noch nicht freigeschaltet. */
+   keine Cookies, kein Tracking (nur eigene Tageszähler ohne Kennung, siehe zaehlen). Server (Konto, Bestellung, Bewertungen): window.DG.api; leer = noch nicht freigeschaltet. */
 (function () {
   "use strict";
   var DG = window.DG || {};
@@ -9,6 +9,33 @@
   var B = DG.basis || "";
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  // Persönliches aus der Adresszeile nehmen (E-Mail, Bestätigungs-/Abmelde-/Passwort-Links), BEVOR irgendetwas
+  // die Adresse weitergeben kann (Google Ads sendet nach Einwilligung die aktuelle Seitenadresse). Die Werte bleiben in URLQ.
+  var URLQ = new URLSearchParams(location.search);
+  (function () {
+    var u = new URL(location.href), weg = false;
+    ["email", "bestaetigen", "abmelden", "reset"].forEach(function (n) { if (u.searchParams.has(n)) { u.searchParams.delete(n); weg = true; } });
+    if (weg) try { history.replaceState(history.state, "", u.pathname + u.search + u.hash); } catch (e) {}
+  })();
+  function urlq() { return new URLSearchParams(URLQ); }
+
+  // Eigene Statistik ohne Cookies (Lenn 2026-11-26): nur „Ereignis + Quelle“ an unseren Server, keine Kennung, nichts im Browser gespeichert
+  function zaehlen(e, q) {
+    if (!DG.api || navigator.webdriver || /^\/verwaltung/.test(location.pathname)) return;
+    var body = JSON.stringify({ e: e, q: q || "" });
+    try { if (navigator.sendBeacon && navigator.sendBeacon(DG.api + "/zaehlen", new Blob([body], { type: "text/plain" }))) return; } catch (x) {}
+    try { fetch(DG.api + "/zaehlen", { method: "POST", body: body, keepalive: true, headers: { "Content-Type": "text/plain" } }).catch(function () {}); } catch (x) {}
+  }
+  function besuchZaehlen() {
+    zaehlen("seite");
+    var ref = "", intern = false;
+    try { if (document.referrer) { var r = new URL(document.referrer); ref = r.hostname; intern = r.origin === location.origin; } } catch (e) {}
+    if (intern) return;
+    var q = URLQ.has("gclid") || URLQ.has("gbraid") || URLQ.has("wbraid") || /cpc|ppc|paid/i.test(URLQ.get("utm_medium") || "") ? "ads"
+      : /(^|\.)google\./.test(ref) ? "google" : ref ? "andere" : "direkt";
+    zaehlen("einstieg", q);
+  }
 
   function lies(k, std) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : std; } catch (e) { return std; } }
   function schreib(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -87,7 +114,7 @@
   function inDenKorb(sku, menge) {
     var k = korb(), p = k.filter(function (x) { return x.sku === sku; })[0];
     if (p) p.menge = Math.min(99, p.menge + menge); else k.push({ sku: sku, menge: menge });
-    korbSpeichern(k);
+    korbSpeichern(k); zaehlen("warenkorb");
     var c = $(".korb"); if (c) { c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
   }
 
@@ -231,6 +258,7 @@
     var art = $(".produkt"); if (!art) return;
     var m = location.pathname.match(/\/produkt\/([^/]+)\/?$/);
     if (m) verlaufMerken("dg-gesehen", decodeURIComponent(m[1]));
+    zaehlen("produkt");
     var wahl = $(".variante", art);
     function variante() {
       if (!wahl) return null;
@@ -275,7 +303,7 @@
     var liste = $(".liste", box), form = $("form", box), hinweis = $(".bew-hinweis", box), start = Date.now();
     if (!DG.api) { liste.innerHTML = '<p class="klein">Bewertungen werden freigeschaltet, sobald der Shop-Server läuft.</p>'; return; }
     // Link aus der Bewertungs-Erinnerung: ?bestellung=…&k=… kennzeichnet die Bewertung als verifizierten Kauf
-    var q = new URLSearchParams(location.search), kauf = q.get("bestellung") && q.get("k") ? { bestellung: q.get("bestellung"), k: q.get("k") } : null;
+    var q = urlq(), kauf = q.get("bestellung") && q.get("k") ? { bestellung: q.get("bestellung"), k: q.get("k") } : null;
     // darf: "ja" = angemeldet, "offen" = ohne Konto (Vorname + E-Mail), "schon_bewertet"
     function laden() {
       return api("/bewertungen?produkt=" + encodeURIComponent(slug)).then(function (d) {
@@ -389,6 +417,7 @@
   function kasse() {
     var ziel = $("#korb-liste"); if (!ziel) return;
     var form = $("#bestellung"), sum = $("#summe");
+    if (form) { var kasseGezaehlt = false; form.addEventListener("focusin", function () { if (!kasseGezaehlt) { kasseGezaehlt = true; zaehlen("kasse"); } }); }
     index().then(function (ix) {
       function zeichnen() {
         var r = rechnen(ix);
@@ -467,7 +496,9 @@
         index().then(function (ix) {
           korb().forEach(function (p) { var a = ix.artikel[p.sku]; if (a) verlaufMerken("dg-gekauft", a.s); });
         }).catch(function () {}).then(function () { korbSpeichern([]); });
-        location.href = B + "/bestellung/?nr=" + encodeURIComponent(d.nr) + "&email=" + encodeURIComponent(d.email || email) + "&neu=1";
+        // E-Mail nicht in die Adresse (sonst ginge sie mit der Seitenadresse an Google), sondern nur für diesen Tab merken
+        try { sessionStorage.setItem("dg-bestellung", JSON.stringify({ nr: d.nr, email: d.email || email })); } catch (e) {}
+        location.href = B + "/bestellung/?nr=" + encodeURIComponent(d.nr) + "&neu=1";
       }
 
       // Kreditkarte und PayPal: wie bei beinundfuss.de erscheinen die PayPal-Knöpfe statt „Zahlungspflichtig bestellen“.
@@ -643,7 +674,8 @@
   }
   function bestellseite() {
     var ziel = $("#bestell-ergebnis"); if (!ziel) return;
-    var form = $("#bestell-suche"), q = new URLSearchParams(location.search);
+    var form = $("#bestell-suche"), q = urlq();
+    if (q.get("nr") && !q.get("email")) try { var gem = JSON.parse(sessionStorage.getItem("dg-bestellung") || "null"); if (gem && gem.nr === q.get("nr")) q.set("email", gem.email); } catch (e) {}
     if (!DG.api) { offlineHinweis(ziel); form.hidden = true; return; }
     function laden(nr, email) {
       api("/bestellung/status", { nr: nr, email: email }).then(function (b) {
@@ -662,7 +694,7 @@
   /* ---------- Widerruf (Widerrufsbutton) ---------- */
   function widerrufseite() {
     var ziel = $("#widerruf-ergebnis"); if (!ziel) return;
-    var form = $("#widerruf-suche"), q = new URLSearchParams(location.search);
+    var form = $("#widerruf-suche"), q = urlq();
     if (!DG.api) { ziel.innerHTML = '<p class="meldung">Bitte widerrufen Sie per E-Mail an ' + esc(DG.mail || "") + '.</p>'; form.hidden = true; return; }
     function laden(nr, email) {
       ziel.innerHTML = "";
@@ -700,7 +732,7 @@
   function kontoseite() {
     var box = $("#konto"); if (!box) return;
     if (!DG.api) { offlineHinweis($("#konto-meldung")); $$("form", box).forEach(function (f) { f.hidden = true; }); $(".reiter", box).hidden = true; return; }
-    var q = new URLSearchParams(location.search);
+    var q = urlq();
     function meld(t, ok) { var m = $("#konto-meldung"); m.innerHTML = t ? '<p class="meldung ' + (ok ? "ok" : "fehler") + '">' + esc(t) + "</p>" : ""; }
     function reiter(name) {
       $$(".reiter button", box).forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.ziel === name)); });
@@ -869,7 +901,7 @@
     });
     var ziel = $("#nl-seite");
     if (!ziel) return;
-    var q = new URLSearchParams(location.search), token = q.get("bestaetigen"), s = q.get("abmelden");
+    var q = urlq(), token = q.get("bestaetigen"), s = q.get("abmelden");
     if (!token && !s) return;
     try { history.replaceState(null, "", location.pathname); } catch (e) {}
     function zeigen(art, html) { ziel.innerHTML = '<div class="meldung ' + art + '" style="margin:0 0 22px">' + html + "</div>"; }
@@ -900,5 +932,6 @@
   });
   korbZaehler(); kontoKopf(); preiseZeigen();
   if (!einwilligung()) banner(false); else googleLaden();
+  besuchZaehlen();
   produktseite(); startseiteAuswahl(); kategorieseite(); suchseite(); kasse(); bestellseite(); widerrufseite(); kontoseite(); berater(); newsletter();
 })();

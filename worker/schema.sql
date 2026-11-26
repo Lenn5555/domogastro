@@ -102,3 +102,6 @@ CREATE TABLE IF NOT EXISTS bestandskunden (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS bestandskunden_schluessel ON bestandskunden(schluessel);
 CREATE TABLE IF NOT EXISTS newsletter_ausgabe_gruppe (ausgabe_id INTEGER PRIMARY KEY, gruppe TEXT NOT NULL, kategorien TEXT NOT NULL DEFAULT '[]');
+
+-- Eigene Besucherstatistik ohne Cookies (Lenn 2026-11-26): nur Tageszähler, keine IP, keine Kennung
+CREATE TABLE IF NOT EXISTS statistik (tag TEXT NOT NULL, ereignis TEXT NOT NULL, quelle TEXT NOT NULL DEFAULT '', n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tag, ereignis, quelle));

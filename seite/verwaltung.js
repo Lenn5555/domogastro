@@ -95,7 +95,7 @@
     const nZahlung = d.bestellungen.filter(offen).length, nVersand = d.bestellungen.filter(zuVersenden).length;
     const nWiderruf = d.bestellungen.reduce((n, b) => n + (b.widerrufe || []).filter((w) => w.status !== "erstattet").length, 0);
     const todo = `<div class="v-karte"><b>Zu erledigen</b><p>${nZahlung || nVersand || nWiderruf ? `${nZahlung} Überweisung${nZahlung === 1 ? "" : "en"} abwarten · ${nVersand} Bestellung${nVersand === 1 ? "" : "en"} versenden${nWiderruf ? ` · <b>${nWiderruf} Widerruf${nWiderruf === 1 ? "" : "e"} erstatten</b>` : ""}` : "Alles erledigt."}</p></div>`;
-    box.innerHTML = `${todo}<h2>Gutscheine</h2>${gut}${nlGut}<h2 id="v-newsletter">Newsletter</h2><div id="v-nl" class="v-karte">Lädt …</div><h2>Neueste Bewertungen (${d.bewertungen.length})</h2>${bew}<h2 id="v-bestellungen">Bestellungen (${d.bestellungen.length})</h2>${best}
+    box.innerHTML = `${todo}<h2 id="v-statistik">Besucher und Käufe</h2><div id="v-stat" class="v-karte">Lädt …</div><h2>Gutscheine</h2>${gut}${nlGut}<h2 id="v-newsletter">Newsletter</h2><div id="v-nl" class="v-karte">Lädt …</div><h2>Neueste Bewertungen (${d.bewertungen.length})</h2>${bew}<h2 id="v-bestellungen">Bestellungen (${d.bestellungen.length})</h2>${best}
       <p><button class="btn sec" id="v-ab">Abmelden</button></p>`;
     box.querySelectorAll("[data-bew]").forEach((k) => k.addEventListener("click", async () => {
       if (!confirm("Diese Bewertung endgültig löschen?")) return;
@@ -129,8 +129,26 @@
       const k = f.querySelector("button"); k.disabled = true;
       try { await rufen("/verwaltung/widerruf", { id: f.dataset.wid, schritt: "erstattet", betrag }); laden(); } catch (err) { alert(err.message); k.disabled = false; }
     }));
-    newsletterLaden();
+    newsletterLaden(); statistikLaden();
     document.getElementById("v-ab").addEventListener("click", () => { schluessel = ""; try { sessionStorage.removeItem("dg-verwaltung"); } catch {} anmelden(); });
+  }
+  // Eigene Statistik ohne Cookies: Trichter für 7 und 30 Tage, Einstiege nach Quelle, Tage einzeln
+  async function statistikLaden() {
+    const ziel = document.getElementById("v-stat");
+    let s;
+    try { s = await rufen("/verwaltung/statistik"); } catch (err) { ziel.textContent = err.message; return; }
+    const SCHRITTE = [["einstieg", "Besuche"], ["seite", "Seitenaufrufe"], ["produkt", "Produktseiten angesehen"], ["warenkorb", "In den Warenkorb gelegt"], ["kasse", "Kasse begonnen"], ["bestellung", "Bestellungen"]];
+    const QUELLEN = [["ads", "Google-Anzeigen"], ["google", "Google-Suche (unbezahlt)"], ["andere", "Andere Websites"], ["direkt", "Direkt / unbekannt"]];
+    const proz = (a, b) => (b ? ` <span class="klein">(${(a / b * 100).toFixed(1).replace(".", ",")} %)</span>` : "");
+    const spalte = (t) => SCHRITTE.map(([k], i) => `<td>${s.summe[t][k] || 0}${i >= 2 ? proz(s.summe[t][k] || 0, s.summe[t].einstieg) : ""}</td>`);
+    const zeilen = SCHRITTE.map(([, name], i) => `<tr><td>${name}</td>${spalte(7)[i]}${spalte(30)[i]}</tr>`).join("");
+    const qz = QUELLEN.map(([k, name]) => `<tr><td>${name}</td><td>${s.quellen[7][k] || 0}</td><td>${s.quellen[30][k] || 0}</td></tr>`).join("");
+    const tage = s.tage.map((x) => `<tr><td>${new Date(x.tag + "T12:00:00").toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" })}</td>${SCHRITTE.map(([k]) => `<td>${x[k] || 0}</td>`).join("")}</tr>`).join("");
+    ziel.innerHTML = `<p class="klein">Eigene Zählung ohne Cookies und ohne Einwilligung: nur Tageszähler, keine IP-Adressen, keine Kennung. Prozente = Anteil an den Besuchen. Ein Besuch = Aufruf, der von außen kommt (Google, Anzeige, andere Seite oder direkt eingetippt).</p>
+      <table class="v-tabelle"><tr><th></th><th>7 Tage</th><th>30 Tage</th></tr>${zeilen}</table>
+      <p><b>Woher kommen die Besuche?</b></p>
+      <table class="v-tabelle"><tr><th></th><th>7 Tage</th><th>30 Tage</th></tr>${qz}</table>
+      ${tage ? `<details><summary>Tage einzeln</summary><table class="v-tabelle"><tr><th>Tag</th>${SCHRITTE.map(([, n]) => `<th>${n}</th>`).join("")}</tr>${tage}</table></details>` : "<p class=\"klein\">Noch keine Zahlen.</p>"}`;
   }
   // Newsletter: nur bestätigte Adressen (Double-Opt-in) mit Nachweis; CSV für einen späteren Versanddienst
   const csvFeld = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;

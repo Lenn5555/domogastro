@@ -16,6 +16,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import * as berater from "./berater.js";
 import * as widerruf from "./widerruf.js";
 import * as newsletter from "./newsletter.js";
+import * as statistik from "./statistik.js";
 
 function herkunftVon(env, request) {
   const h = request.headers.get("Origin") || "";
@@ -39,6 +40,7 @@ const ipVon = (request) => request.headers.get("CF-Connecting-IP") || "";
 function mitNewsletter(env, ctx, request, d, ergebnis) {
   // Bestandskunden-Gruppe (§ 7 Abs. 3 UWG): nur mit Hinweis an der Kasse, siehe newsletter.bestandskundeMerken
   if (ergebnis?.nr) ctx.waitUntil(newsletter.bestandskundeMerken(env, ergebnis.nr).catch((err) => console.error("Bestandskunde:", err)));
+  if (ergebnis?.nr) ctx.waitUntil(statistik.zaehlen(env, "bestellung").catch((err) => console.error("Statistik:", err)));
   if (d.newsletter === true && ergebnis?.email) {
     ctx.waitUntil(newsletter.anmelden(env, { email: ergebnis.email, einwilligung: true }, { ip: ipVon(request), quelle: "kasse", api: new URL(request.url).origin })
       .catch((err) => console.error("Newsletter (Kasse):", err)));
@@ -87,6 +89,8 @@ async function verteilen(request, env, ctx) {
     case "GET /beraten": return { aktiv: Boolean(env.ANTHROPIC_API_KEY) };
     case "POST /beraten": return beratenAnfrage(env, d, request);
     case "GET /verwaltung": await shop.verwaltungPruefen(env, request); return shop.verwaltungListe(env);
+    case "POST /zaehlen": return statistik.zaehlen(env, String(d.e || ""), String(d.q || ""));
+    case "GET /verwaltung/statistik": await shop.verwaltungPruefen(env, request); return statistik.verwaltungStatistik(env);
     case "GET /verwaltung/newsletter": await shop.verwaltungPruefen(env, request); return newsletter.verwaltungListe(env);
     case "POST /verwaltung/newsletter/test": await shop.verwaltungPruefen(env, request); return newsletter.testSenden(env, d);
     case "POST /verwaltung/newsletter/senden": await shop.verwaltungPruefen(env, request); return newsletter.versandStarten(env, d);
@@ -121,6 +125,7 @@ export default {
     ctx.waitUntil(shop.bewertungsanfragenSenden(env));
     ctx.waitUntil(newsletter.aufraeumen(env));
     ctx.waitUntil(shop.bewertungIpAufraeumen(env));
+    ctx.waitUntil(statistik.aufraeumen(env));
   },
   async fetch(request, env, ctx) {
     const herkunft = herkunftVon(env, request);
