@@ -263,6 +263,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
         SEITEN.append(pfad)
     nav = "".join(f'<a href="{u("/" + slug(k) + "/")}"{" aria-current=page" if k == aktiv else ""}>{e(k)}</a>' for k in kategorien())
     nav += f'<a href="{u("/stellfuesse/")}"{" aria-current=page" if aktiv == BF_TITEL else ""}>{e(BF_TITEL)}</a>'
+    nav += f'<a href="{u("/raumplaner/")}"{" aria-current=page" if aktiv == "Raumplaner" else ""}>Raumplaner</a>'
     dg = {"mwst": CFG["mwst"], "modus": CFG["standard_modus"], "api": API, "mail": CFG["anfrage_email"], "basis": BASIS, "versand": LAENDER, "ads": CFG.get("google_ads_id", ""), "adsKauf": CFG.get("google_ads_kauf_label", ""), "aktion": AKTION}
     return f"""<!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -288,7 +289,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <footer class="fuss g"><div class="in">{newsletter_fuss()}<div class="spalten">
 <div><img src="{u('/logo.svg')}" alt="Domo Gastro"><p>Zuhause in der Gastronomie. Profigeräte, Ausstattung und Zubehör für Gastronomie, Hotellerie und alle, die zu Hause wie Profis kochen.</p><p>{e(CFG['betreiber_zeile'])}</p><p class="klein">WEEE-Reg.-Nr. {e(CFG['weee'])}</p></div>
 <div><h3>Shop</h3><ul>{''.join(f'<li><a href="{u("/" + slug(k) + "/")}">{e(k)}</a></li>' for k in kategorien()[:6])}</ul></div>
-<div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/widerrufen/')}">Vertrag widerrufen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li><li><a href="{u('/newsletter/')}">Newsletter</a></li><li><a href="{u('/karriere/')}">Karriere</a></li><li><a href="#" class="einw-oeffnen">Cookie-Einstellungen</a></li></ul></div>
+<div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/widerrufen/')}">Vertrag widerrufen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li><li><a href="{u('/newsletter/')}">Newsletter</a></li><li><a href="{u('/raumplaner/')}">Raumplaner</a></li><li><a href="{u('/karriere/')}">Karriere</a></li><li><a href="#" class="einw-oeffnen">Cookie-Einstellungen</a></li></ul></div>
 <div><h3>Rechtliches</h3><ul><li><a href="{u('/impressum/')}">Impressum</a></li><li><a href="{u('/datenschutz/')}">Datenschutz</a></li><li><a href="{u('/agb/')}">AGB</a></li><li><a href="{u('/widerruf/')}">Widerrufsbelehrung</a></li><li><a href="{u('/entsorgung/')}">Entsorgung und Batterien</a></li></ul></div>
 </div><p class="steuerhinweis"></p></div></footer>
 </body></html>"""
@@ -351,6 +352,29 @@ def karriere_seite():
             f'<p><a class="btn pri" href="{e(link)}">Jetzt bewerben</a></p>'
             f'</div>'
             f'</div></div>')
+
+
+def planer_seite():
+    return f"""<div class="seite g"><div class="in planer-in"><h1 class="titel">Raumplaner</h1>
+<p class="planer-intro">Planen Sie Ihre Küche, Ihre Theke oder Ihren Waschraum: Raumgröße eingeben, Geräte aus unserem Sortiment maßstabsgetreu hineinsetzen,
+verschieben und drehen. Am Ende legen Sie alles mit einem Klick in den Warenkorb oder schicken den Plan als Link weiter.</p>
+<div id="planer" class="planer">
+<aside class="pl-links">
+<div class="kasten"><b>1. Raum</b><div class="pl-raumfelder"><label>Breite (m) <input name="raum-b" type="number" min="1.5" max="30" step="0.1" inputmode="decimal"></label>
+<label>Tiefe (m) <input name="raum-t" type="number" min="1.5" max="30" step="0.1" inputmode="decimal"></label></div></div>
+<div class="kasten"><b>2. Geräte hinzufügen</b>
+<input name="pl-suche" type="search" placeholder="Suchen, z. B. Fritteuse" aria-label="Geräte suchen"><select name="pl-kat" aria-label="Bereich"></select>
+<div class="pl-katalog"></div></div>
+</aside>
+<div class="pl-mitte"><div class="pl-flaeche"></div><p class="klein pl-tipp">Raster: 0,5 m. Geräte rasten an Wänden und aneinander ein. Rot = überschneidet sich oder steht außerhalb. Hauben (gestrichelt, blau) hängen über den Geräten und dürfen darüber liegen.</p></div>
+<aside class="pl-rechts">
+<div class="kasten pl-wahl"></div>
+<div class="kasten"><b>3. Ihre Liste</b><div class="pl-liste"></div>
+<p class="pl-knoepfe"><button type="button" class="btn pri pl-korb">Alles in den Warenkorb</button></p>
+<p class="pl-knoepfe"><button type="button" class="btn sec pl-link">Link kopieren</button><button type="button" class="btn sec pl-druck">Drucken</button><button type="button" class="btn sec pl-neu">Neu</button></p>
+<p class="klein">Ihr Plan steht nur in der Adresse dieser Seite. Wir speichern nichts. Mit dem Link können Sie ihn später wieder öffnen oder weitergeben.</p></div>
+</aside>
+</div></div></div><script src="{uv('/planer.js')}" defer></script>"""
 
 
 def karte(p):
@@ -650,6 +674,8 @@ def main():
     schreib("/widerrufen/", seite("Vertrag widerrufen | Domo Gastro", widerrufen(), "/widerrufen/", index=False))
     schreib("/newsletter/", seite(f"Newsletter mit {NEWSLETTER['prozent']} % Willkommensrabatt | Domo Gastro", newsletter_seite(), "/newsletter/",
                                    f"Angebote, Neuheiten und Tipps für die Gastronomie, {NEWSLETTER['haeufigkeit']}. Nach der Anmeldung einmalig {NEWSLETTER['prozent']} % Rabatt."))
+    schreib("/raumplaner/", seite("Raumplaner für Gastroküche und Theke | Domo Gastro", planer_seite(), "/raumplaner/",
+                                   "Gastroküche online planen: Raum anlegen, Geräte maßstabsgetreu platzieren, Liste mit Preisen in den Warenkorb.", "Raumplaner"))
     schreib("/karriere/", seite("Karriere | Domo Gastro", karriere_seite(), "/karriere/",
                                  "Jobs bei Domo Gastro in Pfungstadt: Keine passende Stelle dabei? Bewirb dich trotzdem."))
     schreib("/suche/", seite("Suche | Domo Gastro", suche(), "/suche/", index=False))
@@ -677,6 +703,18 @@ def main():
                                  "l": lieferzeit(p.get("lieferzeit_tage")).replace("Lieferzeit ", ""), **versandangaben(p)}
         liste.append({"s": p["slug"], "n": p["name"], "k": p["kategorie"], "u": p["unterkategorie"], "h": p["hersteller"], "p": ab_preis(p),
                       "ab": len(set(preise(p))) > 1, "b": b, "skus": [v["sku"] for v in p["varianten"]] or [p["sku"]]})
+    # Raumplaner: nur Geräte mit Preis, Breite und Tiefe (eine Zeile je Artikelnummer)
+    planer = []
+    for p in PRODUKTE:
+        b = p["bilder"][0] if p["bilder"] else ""
+        for v in (p["varianten"] or [p]):
+            mm_ = v.get("masse_mm") or p.get("masse_mm") or {}
+            if not (v.get("preis_netto") and mm_.get("breite") and mm_.get("tiefe")):
+                continue
+            n = f'{p["name"]}, Breite {v["breite_mm"]} mm' if p["varianten"] else p["name"]
+            planer.append({"i": v["sku"], "n": n, "s": p["slug"], "k": p["kategorie"], "b": b,
+                           "w": round(mm_["breite"]), "d": round(mm_["tiefe"]), "h": round(mm_["hoehe"]) if mm_.get("hoehe") else 0, "p": v["preis_netto"]})
+    (OUT / "planer.json").write_text(json.dumps(planer, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     (OUT / "produkte-index.json").write_text(json.dumps({"artikel": artikel, "produkte": liste}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
     # Katalog für den Shop-Server: Preise prüft der Server selbst, nie der Browser

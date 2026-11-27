@@ -371,3 +371,58 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 /* Sterne unter den Produktkacheln */
 .p .bew-k{font-size:12px;color:var(--soft);white-space:nowrap}
 .p .bew-k .sterne{color:var(--warn);letter-spacing:1px}
+
+/* Raumplaner */
+.planer-in{max-width:1500px}
+.planer-intro{max-width:820px;color:var(--soft)}
+.planer{display:grid;grid-template-columns:300px 1fr 300px;gap:16px;align-items:start;margin-top:12px}
+.planer .kasten{margin:0 0 12px;padding:14px}
+.planer input[type=search],.planer select{width:100%;margin:8px 0 0}
+.pl-raumfelder{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.pl-raumfelder input{width:100%}
+.pl-katalog{max-height:58vh;overflow:auto;margin-top:8px;display:grid;gap:6px}
+.pl-ger{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:center;text-align:left;background:var(--n2);border:1px solid var(--n3);border-radius:10px;padding:6px;color:var(--ink);cursor:pointer;font:inherit;font-size:13px;line-height:1.3}
+.pl-ger:hover{border-color:var(--cyan)}
+.pl-ger img{width:44px;height:44px;object-fit:contain;background:#fff;border-radius:6px}
+.pl-ger .klein{display:block;margin-top:2px}
+.pl-ico{display:grid;place-items:center;width:44px;height:44px;border-radius:6px;background:var(--n3);font-size:20px;color:var(--cyan)}
+.pl-flaeche{background:var(--n0);border:1px solid var(--n3);border-radius:14px;overflow:hidden}
+.pl-svg{display:block;width:100%;height:auto;max-height:76vh;aspect-ratio:3/2;touch-action:none;user-select:none}
+.pl-raster line{stroke:#2a3f60;stroke-width:6}
+.pl-raster line.fein{stroke:#16263f;stroke-width:4}
+.pl-raum{fill:none;stroke:var(--soft)}
+.pl-mass{fill:var(--soft)}
+.pl-teil{cursor:grab}
+.pl-teil rect{fill:#24456f;stroke:#8fb3dd}
+.pl-teil.frei rect{fill:rgba(61,220,151,.10);stroke:var(--ok);stroke-dasharray:40 25}
+.pl-teil.tuer rect{fill:rgba(245,185,66,.08);stroke:var(--warn);stroke-dasharray:40 25}
+.pl-bogen{fill:none;stroke:var(--warn)}
+.pl-teil.gewaehlt rect{stroke:var(--cyan);fill:#2b5689}
+.pl-teil.konflikt rect{fill:rgba(255,122,122,.35);stroke:var(--err)}
+.pl-name{fill:var(--ink);pointer-events:none;font-family:var(--sans)}
+.pl-abstand line{stroke:var(--cyan)}
+.pl-abstand text{fill:var(--cyan);font-family:var(--sans)}
+.pl-knoepfe{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.pl-knoepfe .btn{padding:8px 12px;font-size:13px}
+.pl-tabelle{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.pl-tabelle td{padding:5px 4px;border-bottom:1px solid var(--n3);vertical-align:top}
+.pl-tabelle td:last-child{text-align:right;white-space:nowrap}
+.pl-tabelle .summe td{font-weight:700;border-bottom:0}
+.pl-tipp{margin:6px 2px 0}
+@media (max-width:1200px){.planer{grid-template-columns:280px 1fr}.pl-rechts{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}}
+@media (max-width:900px){.planer{grid-template-columns:1fr}.pl-mitte{order:-1}.pl-rechts{grid-template-columns:1fr}.pl-katalog{max-height:46vh}.pl-svg{aspect-ratio:4/3}}
+@media print{
+  header,footer,.aktion,.pl-links,.pl-knoepfe,.pl-tipp,.planer-intro,.einw,.ki-knopf,.pl-wahl{display:none!important}
+  body{background:#fff;color:#000}.planer{display:block}.pl-flaeche{background:#fff;border:0}
+  .pl-raster line{stroke:#ddd}.pl-raster line.fein{stroke:#eee}.pl-raum{stroke:#000}.pl-mass,.pl-name{fill:#000}
+  .pl-teil rect{fill:#e8eef6;stroke:#333}.pl-svg{max-height:none}.kasten{border:0;background:none}
+}
+.pl-teil.oben rect{fill:rgba(34,195,230,.07);stroke:var(--cyan);stroke-dasharray:60 30}
+.pl-teil.oben .pl-name{fill:var(--cyan)}
+.planer input[type=search],.planer select,.pl-raumfelder input{background:var(--n2);color:var(--ink);border:1px solid var(--n3);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px}
+.pl-tabelle td:first-child{white-space:nowrap;width:1%;padding-right:8px}
+.pl-tabelle td:nth-child(2){width:100%;overflow-wrap:anywhere}
+.pl-zeile{display:grid;grid-template-columns:auto 1fr auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--n3);font-size:13px;line-height:1.35}
+.pl-zeile b{white-space:nowrap;font-weight:600}
+.pl-zeile.summe{border-bottom:0;font-weight:700}
+.pl-zeile.summe b{font-weight:700}
