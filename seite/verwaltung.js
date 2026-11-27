@@ -37,7 +37,7 @@
   const offen = (b) => ["eingegangen", "zahlung_offen"].includes(b.status);
   const zuVersenden = (b) => ["bezahlt", "in_bearbeitung"].includes(b.status);
   function aufgabe(b) {
-    if (offen(b)) return `<p class="v-aufgabe">⏳ Wartet auf Überweisung von <b>${euro(b.brutto)}</b> (Verwendungszweck ${esc(b.nr)})
+    if (offen(b)) return `<p class="v-aufgabe">⏳ Wartet auf Überweisung von <b>${euro(b.brutto - (b.kunde.guthaben?.betrag || 0))}</b> (Verwendungszweck ${esc(b.nr)})
       <button class="btn pri" data-schritt="bezahlt" data-nr="${esc(b.nr)}">Zahlung ist eingegangen</button></p>`;
     if (zuVersenden(b)) return `<form class="v-aufgabe v-versand" data-nr="${esc(b.nr)}">📦 Bezahlt, bitte versenden:
       <input name="sendung" placeholder="GLS-Sendungsnummer (optional)"> <button class="btn pri">Als versendet melden</button></form>`;
@@ -74,6 +74,7 @@
       <p class="klein">Lieferung: ${b.kunde.liefer ? esc([b.kunde.liefer.firma, b.kunde.liefer.name, b.kunde.liefer.strasse, `${b.kunde.liefer.plz} ${b.kunde.liefer.ort}`].filter(Boolean).join(" · ")) : "wie Rechnungsadresse"}</p>
       <p class="klein">${b.positionen.map((p) => `${p.menge} × ${esc(p.name)} (${esc(p.sku)})`).join("<br>")}</p>
       ${b.kunde.gutschein ? `<p class="klein">Gutschein ${esc(b.kunde.gutschein.code)}: −${b.kunde.gutschein.prozent} % (−${euro(b.kunde.gutschein.rabatt)} netto)</p>` : ""}
+      ${b.kunde.guthaben ? `<p class="klein">Shop-Gutschein ${esc(b.kunde.guthaben.code)}: −${euro(b.kunde.guthaben.betrag)} vom Zahlbetrag. Bei Widerruf diesen Teil NICHT in Geld erstatten: bei vollständigem Widerruf oder Storno geht er automatisch zurück auf den Gutschein, bei Teilwiderruf bitte Lenn/Claude fragen.</p>` : ""}
       ${b.kunde.hinweis ? `<p class="klein">Hinweis: ${esc(b.kunde.hinweis)}</p>` : ""}
       ${aufgabe(b)}
       ${widerrufe(b)}
@@ -95,7 +96,7 @@
     const nZahlung = d.bestellungen.filter(offen).length, nVersand = d.bestellungen.filter(zuVersenden).length;
     const nWiderruf = d.bestellungen.reduce((n, b) => n + (b.widerrufe || []).filter((w) => w.status !== "erstattet").length, 0);
     const todo = `<div class="v-karte"><b>Zu erledigen</b><p>${nZahlung || nVersand || nWiderruf ? `${nZahlung} Überweisung${nZahlung === 1 ? "" : "en"} abwarten · ${nVersand} Bestellung${nVersand === 1 ? "" : "en"} versenden${nWiderruf ? ` · <b>${nWiderruf} Widerruf${nWiderruf === 1 ? "" : "e"} erstatten</b>` : ""}` : "Alles erledigt."}</p></div>`;
-    box.innerHTML = `${todo}<h2 id="v-statistik">Besucher und Käufe</h2><div id="v-stat" class="v-karte">Lädt …</div><h2>Gutscheine</h2>${gut}${nlGut}<h2 id="v-newsletter">Newsletter</h2><div id="v-nl" class="v-karte">Lädt …</div><h2>Neueste Bewertungen (${d.bewertungen.length})</h2>${bew}<h2 id="v-bestellungen">Bestellungen (${d.bestellungen.length})</h2>${best}
+    box.innerHTML = `${todo}<h2 id="v-statistik">Besucher und Käufe</h2><div id="v-stat" class="v-karte">Lädt …</div><h2>Gutscheine</h2>${gut}${nlGut}<h2 id="v-partner">Partnerprogramm</h2><div id="v-partner-box" class="v-karte">Lädt …</div><h2 id="v-newsletter">Newsletter</h2><div id="v-nl" class="v-karte">Lädt …</div><h2>Neueste Bewertungen (${d.bewertungen.length})</h2>${bew}<h2 id="v-bestellungen">Bestellungen (${d.bestellungen.length})</h2>${best}
       <p><button class="btn sec" id="v-ab">Abmelden</button></p>`;
     box.querySelectorAll("[data-bew]").forEach((k) => k.addEventListener("click", async () => {
       if (!confirm("Diese Bewertung endgültig löschen?")) return;
@@ -129,8 +130,49 @@
       const k = f.querySelector("button"); k.disabled = true;
       try { await rufen("/verwaltung/widerruf", { id: f.dataset.wid, schritt: "erstattet", betrag }); laden(); } catch (err) { alert(err.message); k.disabled = false; }
     }));
-    newsletterLaden(); statistikLaden();
+    newsletterLaden(); statistikLaden(); partnerLaden();
     document.getElementById("v-ab").addEventListener("click", () => { schluessel = ""; try { sessionStorage.removeItem("dg-verwaltung"); } catch {} anmelden(); });
+  }
+  // Partnerprogramm: Summen, offene Auszahlungen, jeder Partnerverkauf, Partnerliste
+  const ZUSTAND = { vorgemerkt: "vorgemerkt", verfuegbar: "verfügbar", storniert: "entfallen" };
+  const tag = (t) => (t ? new Date(t).toLocaleDateString("de-DE") : "");
+  async function partnerLaden() {
+    const ziel = document.getElementById("v-partner-box");
+    let p;
+    try { p = await rufen("/verwaltung/partner"); } catch (err) { ziel.textContent = err.message; return; }
+    const g = p.gesamt;
+    const offen = p.antraege.filter((a) => a.status === "beantragt");
+    const STEUER = { privat: "Privatperson, ohne USt.", klein: "Kleinunternehmer, ohne USt.", ust: "USt.-pflichtig: Gutschrift mit 19 % USt." };
+    const antrag = (a) => `<div class="v-aufgabe"><span>💸 <b>${euro(a.betrag)}</b> an ${esc(a.name || a.email)} (${esc(a.code)}) ·
+      ${a.ziel.art === "paypal" ? `PayPal ${esc(a.ziel.paypal)}` : `IBAN ${esc(a.ziel.iban)}, ${esc(a.ziel.inhaber)}`} · ${esc(STEUER[a.ziel.steuer] || "")}${a.ziel.steuernr ? ` ${esc(a.ziel.steuernr)}` : ""} · beantragt ${tag(a.beantragt)}</span>
+      <button class="btn pri" data-pa="ausgezahlt" data-id="${a.id}">Ausgezahlt</button> <button class="btn sec" data-pa="abgelehnt" data-id="${a.id}">Ablehnen</button></div>`;
+    const verk = p.verkaeufe.length ? `<table class="v-tabelle"><tr><th>Datum</th><th>Bestellung</th><th>Partner</th><th>Warenwert netto</th><th>Provision</th><th>Stand</th><th></th></tr>
+      ${p.verkaeufe.map((v) => `<tr><td>${tag(v.datum)}</td><td>${esc(v.nr)}</td><td>${esc(v.code)}</td><td>${euro(v.basis)}</td><td>${euro(v.betrag)}</td>
+        <td>${v.grund ? `keine (${esc(v.grund)})` : ZUSTAND[v.zustand]}${v.zustand === "vorgemerkt" && v.frei_ab ? ` bis ${tag(v.frei_ab)}` : ""}</td>
+        <td>${v.grund ? "" : v.zustand === "storniert" ? `<button class="klein" data-pv="provision_wiederherstellen" data-nr="${esc(v.nr)}">wiederherstellen</button>` : `<button class="klein" data-pv="provision_stornieren" data-nr="${esc(v.nr)}">stornieren</button>`}</td></tr>`).join("")}</table>` : "<p>Noch keine Verkäufe über Partner.</p>";
+    const liste = p.partner.length ? `<details><summary>Partner (${p.partner.length})</summary><table class="v-tabelle"><tr><th>Code</th><th>Name</th><th>seit</th><th>Verkäufe</th><th>Umsatz netto</th><th>Guthaben</th><th>ausgezahlt</th><th></th></tr>
+      ${p.partner.map((x) => `<tr><td>${esc(x.code)}</td><td>${esc(x.name)}<br><span class="klein">${esc(x.email)}</span></td><td>${tag(x.seit)}</td><td>${x.verkaeufe}</td><td>${euro(x.umsatz_netto)}</td><td>${euro(x.guthaben)}</td><td>${euro(x.ausgezahlt)}</td>
+        <td>${x.status === "geloescht" ? "Konto gelöscht" : `<button class="klein" data-ps="${x.status === "aktiv" ? "sperren" : "entsperren"}" data-code="${esc(x.code)}">${x.status === "aktiv" ? "sperren" : "entsperren"}</button>`}</td></tr>`).join("")}</table></details>` : "";
+    const gs = p.antraege.filter((a) => a.ziel.art === "gutschein");
+    ziel.innerHTML = `<p>Aktive Partner: <b>${g.partner}</b> · Verkäufe über Partner: <b>${g.verkaeufe}</b> · Umsatz <b>${euro(g.umsatz_netto)}</b> netto · Provision gesamt <b>${euro(g.provision)}</b></p>
+      <p class="klein">Vorgemerkt ${euro(g.vorgemerkt)} · verfügbar ${euro(g.verfuegbar)} · ausgezahlt ${euro(g.ausgezahlt)} (davon ${gs.length} als Shop-Gutschein über ${euro(gs.reduce((t, a) => t + a.ziel.wert, 0))}) · beantragt ${euro(g.beantragt)}${g.eigenkaeufe ? ` · ${g.eigenkaeufe} Eigenkauf${g.eigenkaeufe === 1 ? "" : "e"} ohne Provision` : ""}</p>
+      ${offen.length ? `<p><b>Offene Auszahlungen</b> (erst überweisen bzw. per PayPal senden, dann „Ausgezahlt“ klicken; Partner bekommt eine Mail)</p>${offen.map(antrag).join("")}` : "<p class=\"klein\">Keine offenen Auszahlungen.</p>"}
+      <p><b>Verkäufe über Partner</b></p>${verk}${liste}`;
+    ziel.querySelectorAll("[data-pa]").forEach((k) => k.addEventListener("click", async () => {
+      const notiz = k.dataset.pa === "abgelehnt" ? prompt("Grund für den Partner (optional):") : "";
+      if (notiz === null) return;
+      if (k.dataset.pa === "ausgezahlt" && !confirm("Hast du das Geld wirklich schon geschickt? Der Partner bekommt jetzt eine Mail.")) return;
+      k.disabled = true;
+      try { await rufen("/verwaltung/partner", { aktion: k.dataset.pa, id: k.dataset.id, notiz }); partnerLaden(); } catch (err) { alert(err.message); k.disabled = false; }
+    }));
+    ziel.querySelectorAll("[data-pv]").forEach((k) => k.addEventListener("click", async () => {
+      if (!confirm(k.dataset.pv === "provision_stornieren" ? "Provision für diese Bestellung streichen?" : "Provision wiederherstellen?")) return;
+      try { await rufen("/verwaltung/partner", { aktion: k.dataset.pv, nr: k.dataset.nr }); partnerLaden(); } catch (err) { alert(err.message); }
+    }));
+    ziel.querySelectorAll("[data-ps]").forEach((k) => k.addEventListener("click", async () => {
+      if (!confirm(`Partner ${k.dataset.code} ${k.dataset.ps}?`)) return;
+      try { await rufen("/verwaltung/partner", { aktion: k.dataset.ps, code: k.dataset.code }); partnerLaden(); } catch (err) { alert(err.message); }
+    }));
   }
   // Eigene Statistik ohne Cookies: Trichter für 7 und 30 Tage, Einstiege nach Quelle, Tage einzeln
   async function statistikLaden() {

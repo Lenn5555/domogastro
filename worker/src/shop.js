@@ -5,6 +5,7 @@ import { anlegen as kontoAnlegen, oeffentlich } from "./konto.js";
 import { senden, kundenmail, vertriebsmail, statusmail, bewertungsmail, zahlungsmail, rechtsAnhaenge } from "./mail.js";
 import * as paypal from "./paypal.js";
 import { widerrufeVon } from "./widerruf.js";
+import * as partner from "./partner.js";
 import LAENDER from "../../daten/laender.json" with { type: "json" };
 import AKTION from "../../daten/aktion.json" with { type: "json" };
 import { gesamtRechnen, landVon, aktionAktiv, stueckpreis } from "./steuer.js";
@@ -80,6 +81,8 @@ async function vorbereiten(env, d, kunde) {
   const k = kundendaten(d.kunde, modus);
   const code = gutscheinCode(d.gutschein);
   const g = code ? await gutscheinLesen(env, code) : null;
+  // Shop-Guthaben (DGP-, aus dem Partnerprogramm): Euro-Betrag, wird vom Zahlbetrag abgezogen (Zahlungsmittel, kein Rabatt)
+  const wg = d.guthaben ? await partner.wertLesen(env, d.guthaben) : null;
   // Unternehmer aus einem anderen EU-Land mit gültiger USt-IdNr.: steuerfreie innergemeinschaftliche Lieferung (Prüfung bei der EU, VIES)
   const land = landVon(LAENDER, k.land);
   let ust = null;
@@ -88,16 +91,19 @@ async function vorbereiten(env, d, kunde) {
     if (!ust.gueltig) throw new Fehler(ust.fehler || "Die USt-IdNr. ist laut EU-Prüfung (VIES) nicht gültig. Bitte prüfen Sie sie oder bestellen Sie ohne USt-IdNr. mit Umsatzsteuer.");
   }
   const r = rechnen(d.positionen, g ? g.prozent : 0, k.land, Boolean(ust?.gueltig));
+  r.zahlbetrag = r.brutto;
+  if (wg) { const an = runden(Math.min(wg.rest, r.brutto)); r.zahlbetrag = runden(r.brutto - an); r.guthaben = { code: wg.code, betrag: an }; }
   const mw = g ? mindestwertFehler(g.code, r.warenwert) : "";
   if (mw) throw new Fehler(mw);
   // Der Browser zeigt den Betrag vor dem Absenden an; weicht er ab (z. B. Preisänderung), lieber neu bestätigen lassen
   if (d.gesamt_brutto != null && Math.abs(Number(d.gesamt_brutto) - r.brutto) > 0.01)
     throw new Fehler("Die Preise haben sich geändert. Bitte laden Sie den Warenkorb neu und prüfen Sie den Betrag.", 409);
   // Fingerabdruck für PayPal: dieselben Daten beim Start und beim Abschluss
-  const abdruck = await paypal.fingerabdruck([modus, mail, k, r.positionen.map((p) => [p.sku, p.menge]), g?.code || "", d.zahlart,
+  const abdruck = await paypal.fingerabdruck([modus, mail, k, r.positionen.map((p) => [p.sku, p.menge]), g?.code || "", wg?.code || "", d.zahlart,
     kunde?.id || "", Boolean(d.konto_anlegen), Boolean(d.bewertungsmail)]);
   // erst nach dem Fingerabdruck: Prüfnachweis enthält eine Uhrzeit
   k.steuer = r.steuer;
+  if (r.guthaben) k.guthaben = r.guthaben;
   if (ust) k.ustid_pruefung = ust.nachweis;
   return { modus, mail, k, g, r, abdruck };
 }
@@ -119,23 +125,30 @@ async function speichern(env, ctx, d, kunde, v, nr, zahlung = null) {
     if (!u.meta.changes) throw new Fehler("Dieser Gutscheincode wurde bereits eingelöst.");
     k.gutschein = { code: g.code, prozent: g.prozent, rabatt: r.rabatt };
   }
+  const freigeben = async () => {
+    if (g) await env.DB.prepare("UPDATE gutscheine SET eingeloest_nr = '', eingeloest_am = '' WHERE code = ? AND eingeloest_nr = ?").bind(g.code, nr).run();
+    await partner.wertFreigeben(env, nr);
+  };
+  if (r.guthaben) {
+    try { await partner.wertReservieren(env, nr, r.guthaben.code, r.guthaben.betrag); }
+    catch (err) { await freigeben(); throw err; }
+  }
   let bezahlt = null;
   if (zahlung) {
     bezahlt = await zahlung();
-    if (bezahlt.fehler) {
-      if (g) await env.DB.prepare("UPDATE gutscheine SET eingeloest_nr = '', eingeloest_am = '' WHERE code = ? AND eingeloest_nr = ?").bind(g.code, nr).run();
-      throw new Fehler(bezahlt.fehler);
-    }
+    if (bezahlt.fehler) { await freigeben(); throw new Fehler(bezahlt.fehler); }
   }
   const b = {
     nr, kunde_id: kundeId, email: kunde?.email || mail, modus, kunde: k, ...r,
-    zahlart: d.zahlart, status: bezahlt ? "bezahlt" : "eingegangen", datum: jetzt(),
+    zahlart: d.zahlart, status: bezahlt || r.zahlbetrag === 0 ? "bezahlt" : "eingegangen", datum: jetzt(),
     paypal_id: bezahlt ? text(d.paypal_id, 40) : "", transaktion: bezahlt?.transaktion || "",
   };
   await env.DB.prepare(`INSERT INTO bestellungen (nr, kunde_id, email, modus, kunde, positionen, netto, mwst, brutto, zahlart, status, paypal_id, transaktion, datum, aktualisiert)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .bind(b.nr, b.kunde_id, b.email, b.modus, JSON.stringify(b.kunde), JSON.stringify(b.positionen), b.netto, b.mwst, b.brutto,
           b.zahlart, b.status, b.paypal_id, b.transaktion, b.datum, b.datum).run();
+  // Partnerprogramm: Code aus dem Partnerlink (Browser) oder von Hand an der Kasse eingegeben. Fehler hier dürfen die Bestellung nie kippen.
+  if (d.partner) b.partner = await partner.zuordnen(env, b, d.partner).catch((err) => { console.error("Partner:", err); return null; });
   benachrichtigen(env, ctx, b);
   return { nr: b.nr, email: b.email, sitzung };
 }
@@ -151,7 +164,7 @@ function benachrichtigen(env, ctx, b) {
   ctx.waitUntil(Promise.all([
     // Bestätigung zuerst, bei Vorkasse danach die Bankverbindung als eigene kurze Mail
     senden(env, b.email, `Ihre Bestellung ${b.nr} bei Domo Gastro`, kundenmail(env, b), { anhaenge: rechtsAnhaenge(b) })
-      .then(() => b.zahlart === "Vorkasse" && senden(env, b.email, `Zahlungsinformationen zu Ihrer Bestellung ${b.nr}`, zahlungsmail(env, b))),
+      .then(() => b.zahlart === "Vorkasse" && b.status !== "bezahlt" && senden(env, b.email, `Zahlungsinformationen zu Ihrer Bestellung ${b.nr}`, zahlungsmail(env, b))),
     senden(env, env.BESTELL_EMAIL, `Bestellung ${b.nr} (${b.modus}) ${b.zahlart}`, vertriebsmail(env, b)),
   ]));
 }
@@ -175,7 +188,8 @@ export function bezahlenInfo(env) {
 export async function bezahlenStart(env, d, kunde, abruf = fetch) {
   if (!SOFORT.includes(d.zahlart)) throw new Fehler("Bitte eine Zahlungsart wählen.");
   const v = await vorbereiten(env, d, kunde);
-  return paypal.anlegen(env, { nr: bestellnummer(), brutto: v.r.brutto, abdruck: v.abdruck }, abruf);
+  if (v.r.zahlbetrag === 0) throw new Fehler("Ihr Gutschein deckt den ganzen Betrag. Bitte wählen Sie „Überweisung“; Sie müssen nichts überweisen.");
+  return paypal.anlegen(env, { nr: bestellnummer(), brutto: v.r.zahlbetrag, abdruck: v.abdruck }, abruf);
 }
 
 export async function bezahlenAbschluss(env, ctx, d, kunde, abruf = fetch) {
@@ -185,7 +199,7 @@ export async function bezahlenAbschluss(env, ctx, d, kunde, abruf = fetch) {
   if (da) return { nr: da.nr, email: da.email };
   if (!SOFORT.includes(d.zahlart)) throw new Fehler("Bitte eine Zahlungsart wählen.");
   const v = await vorbereiten(env, d, kunde);
-  const p = await paypal.pruefen(env, id, { brutto: v.r.brutto, abdruck: v.abdruck }, abruf);
+  const p = await paypal.pruefen(env, id, { brutto: v.r.zahlbetrag, abdruck: v.abdruck }, abruf);
   if (p.fehler) throw new Fehler(p.fehler);
   return speichern(env, ctx, d, kunde, v, p.nr, () => paypal.einziehen(env, id, abruf));
 }
@@ -352,6 +366,7 @@ export async function verwaltungStatus(env, ctx, d) {
   const sendung = text(d.sendung ?? z.sendung, 200);
   await env.DB.prepare("UPDATE bestellungen SET status = ?, sendung = ?, aktualisiert = ? WHERE nr = ?").bind(d.status, sendung, jetzt(), z.nr).run();
   await bewertungsanfrageVormerken(env, z, d.status);
+  await partner.bestellstatus(env, z.nr, d.status);
   if (d.status !== z.status && d.benachrichtigen !== false) {
     const b = { ...ausZeile(z), status: d.status, sendung };
     ctx.waitUntil(senden(env, b.email, `Ihre Bestellung ${b.nr}: Status geändert`, statusmail(env, b)));
@@ -376,6 +391,7 @@ async function gutscheinLesen(env, code) {
   return g;
 }
 export async function gutscheinPruefen(env, d) {
+  if (partner.istWertCode(gutscheinCode(d.code))) { const w = await partner.wertLesen(env, d.code); return { code: w.code, art: "wert", rest: w.rest }; }
   const g = await gutscheinLesen(env, gutscheinCode(d.code));
   return { code: g.code, prozent: g.prozent, ...(g.code.startsWith(NL_PRAEFIX) && mindestwert() ? { mindestwert: mindestwert() } : {}) };
 }
@@ -385,8 +401,9 @@ const TAG = 86400000;
 async function bewertungsanfrageVormerken(env, z, status) {
   if (status === "storniert") {
     await env.DB.prepare("DELETE FROM bewertungsanfragen WHERE nr = ? AND gesendet = ''").bind(z.nr).run();
-    // Gutschein einer stornierten Bestellung wieder freigeben
+    // Gutschein und Shop-Guthaben einer stornierten Bestellung wieder freigeben
     await env.DB.prepare("UPDATE gutscheine SET eingeloest_nr = '', eingeloest_am = '' WHERE eingeloest_nr = ?").bind(z.nr).run();
+    await partner.wertFreigeben(env, z.nr);
     return;
   }
   if (!z.kunde_id || !JSON.parse(z.kunde).bewertungsmail) return;

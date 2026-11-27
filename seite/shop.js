@@ -124,10 +124,11 @@
   var EINW_VERSION = 1;
   function einwilligung() { var e = lies("dg-einwilligung", null); return e && e.v === EINW_VERSION ? e : null; }
   function darf(k) { var e = einwilligung(); return !!(e && e[k]); }
-  function einwilligungSetzen(komfort, marketing) {
+  function einwilligungSetzen(komfort, marketing, partner) {
     var vorher = einwilligung();
-    schreib("dg-einwilligung", { v: EINW_VERSION, komfort: !!komfort, marketing: !!(marketing && DG.ads), zeit: new Date().toISOString() });
+    schreib("dg-einwilligung", { v: EINW_VERSION, komfort: !!komfort, marketing: !!(marketing && DG.ads), partner: !!partner, zeit: new Date().toISOString() });
     if (!komfort) { schreib("dg-gesehen", null); schreib("dg-gekauft", null); }
+    if (!partner) schreib("dg-partner", null); else partnerMerken();
     if (vorher && vorher.marketing && !marketing) {
       // Google-Cookies löschen und neu laden, damit nichts mehr läuft
       document.cookie.split(";").forEach(function (c) {
@@ -140,6 +141,20 @@
     }
     googleLaden();
     if ($("#auswahl")) startseiteAuswahl();
+  }
+  /* ---------- Partnerprogramm (Lenn 2026-11-27) ----------
+     Partnerlink …/?p=CODE. Der Code bleibt 30 Tage im Browser, aber NUR mit Einwilligung „Partner-Empfehlung“ (§ 25 TDDDG).
+     Ohne Einwilligung gilt er nur auf dieser Seite; an der Kasse kann man ihn immer von Hand eintragen. */
+  var PARTNER_TAGE = 30;
+  var partnerAusLink = (function () { var c = (URLQ.get("p") || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); return /^[A-Z0-9]{4,12}$/.test(c) ? c : ""; })();
+  function partnerMerken() {
+    if (partnerAusLink && darf("partner")) schreib("dg-partner", { code: partnerAusLink, bis: Date.now() + PARTNER_TAGE * 864e5 });
+  }
+  function partnerCode() {
+    var p = darf("partner") ? lies("dg-partner", null) : null;
+    if (p && p.bis > Date.now() && p.code) return p.code;
+    if (p) schreib("dg-partner", null);
+    return partnerAusLink;
   }
   function googleLaden() {
     if (!DG.ads || !darf("marketing") || window.gtag) return;
@@ -160,12 +175,13 @@
     }
     box.innerHTML = '<div class="einw-in"><p><b>Cookies und Speicher</b> Wir speichern in Ihrem Browser nur, was der Shop braucht (Warenkorb, Anmeldung, Preisanzeige). ' +
       "Mit Ihrer Zustimmung merken wir uns zusätzlich, welche Produkte Sie angesehen und gekauft haben, um sie Ihnen auf der Startseite wieder zu zeigen" +
-      (DG.ads ? ", und messen mit Google Ads, ob Käufe über unsere Anzeigen kamen" : "") + '. Sie können das jederzeit unter „Cookie-Einstellungen“ unten auf der Seite ändern. ' +
+      (DG.ads ? ", messen mit Google Ads, ob Käufe über unsere Anzeigen kamen," : "") + " und merken uns den Code eines Partners, über dessen Link Sie kamen" + '. Sie können das jederzeit unter „Cookie-Einstellungen“ unten auf der Seite ändern. ' +
       '<a href="' + B + '/datenschutz/">Datenschutz</a></p>' +
       '<div class="einw-wahl"' + (mitEinstellungen ? "" : " hidden") + ">" +
       zeile("noetig", "Notwendig", "Warenkorb, Anmeldung, Privat/Gewerbe, Lieferland. Immer aktiv.", true, true) +
       zeile("komfort", "Komfort", "Zuletzt angesehene und gekaufte Produkte auf der Startseite. Bleibt nur in Ihrem Browser.", e.komfort) +
       (DG.ads ? zeile("marketing", "Marketing", "Google Ads Conversion-Messung (Google Ireland Ltd.; Übermittlung in die USA möglich).", e.marketing) : "") +
+      zeile("partner", "Partner-Empfehlung", "Kamen Sie über den Link eines Partners, merken wir uns dessen Code " + PARTNER_TAGE + " Tage in Ihrem Browser, damit er für Ihre Bestellung eine Provision bekommt.", e.partner) +
       "</div>" +
       '<div class="einw-knoepfe"><button type="button" class="btn sec" data-a="alle">Alle akzeptieren</button>' +
       '<button type="button" class="btn sec" data-a="noetig">Nur notwendige</button>' +
@@ -177,9 +193,9 @@
       if (a === "einst") { $(".einw-wahl", box).hidden = false; k.dataset.a = "speichern"; k.textContent = "Auswahl speichern"; return; }
       var f = function (n) { var i = $('input[name="' + n + '"]', box); return !!(i && i.checked); };
       box.remove();
-      if (a === "alle") einwilligungSetzen(true, true);
-      else if (a === "noetig") einwilligungSetzen(false, false);
-      else einwilligungSetzen(f("komfort"), f("marketing"));
+      if (a === "alle") einwilligungSetzen(true, true, true);
+      else if (a === "noetig") einwilligungSetzen(false, false, false);
+      else einwilligungSetzen(f("komfort"), f("marketing"), f("partner"));
     });
   }
   document.addEventListener("click", function (ev) {
@@ -216,7 +232,7 @@
         titel.innerHTML = 'Für Sie ausgewählt <button type="button" class="verlauf-weg klein">Verlauf löschen</button>';
         $(".verlauf-weg", titel).addEventListener("click", function () {
           var e = einwilligung() || {};
-          einwilligungSetzen(false, !!e.marketing);
+          einwilligungSetzen(false, !!e.marketing, !!e.partner);
         });
       } else titel.textContent = "Ausgewählte Produkte";
       preiseSetzen();
@@ -406,12 +422,15 @@
 
   /* ---------- Warenkorb und Kasse ---------- */
   var gutschein = null;  // { code, prozent } nach erfolgreicher Prüfung
+  var guthaben = null;   // { code, rest } Shop-Guthaben aus dem Partnerprogramm (DGP-…), wird vom Zahlbetrag abgezogen
   var ustidOk = false;   // Unternehmer mit von der EU bestätigter USt-IdNr. (steuerfreie innergemeinschaftliche Lieferung)
   function r2(x) { return Math.round(x * 100) / 100; }
   function rechnen(ix) {
     var pos = korb().map(function (p) { var a = ix.artikel[p.sku]; return a && a.p ? { sku: p.sku, menge: p.menge, a: a } : null; }).filter(Boolean);
     var g = DGR.gesamtRechnen(VERSAND, landCode, pos, gutschein ? gutschein.prozent : 0, istGewerbe() && ustidOk, DG.aktion);
     g.pos = pos;
+    g.anrechnung = guthaben ? r2(Math.min(guthaben.rest, g.brutto)) : 0;
+    g.zahlbetrag = r2(g.brutto - g.anrechnung);
     return g;
   }
   function kasse() {
@@ -445,6 +464,7 @@
           (r.satz === 0 ? "<div><span>Umsatzsteuer</span><b>0,00 €</b></div>" :
             g ? "<div><span>zzgl. " + st + " % MwSt.</span><b>" + eur(r.mwst) + "</b></div>" : "<div><span>darin " + st + " % MwSt.</span><b>" + eur(r.mwst) + "</b></div>") +
           '<div class="gesamt"><span>Gesamtbetrag</span><span>' + eur(r.brutto) + "</span></div>" +
+          (guthaben ? "<div><span>Gutschein " + esc(guthaben.code) + "</span><b>−" + eur(r.anrechnung) + '</b></div><div class="gesamt"><span>Zu zahlen</span><span>' + eur(r.zahlbetrag) + "</span></div>" : "") +
           (hinweis ? '<p class="klein">' + hinweis + "</p>" : "") +
           (r.gesperrt.length ? '<p class="meldung fehler">' + esc(r.gesperrt[0].a.n) + " können wir nach " + esc(r.land.n) + " noch nicht liefern.</p>" : "") +
           '<p class="klein">' + (de ? "Speditionsware wird bis Bordsteinkante geliefert." : "Fester Versandpreis je Bestellung. Bei sehr großen Mengen oder schweren und sperrigen Geräten können höhere Versandkosten anfallen. Dann melden wir uns vor dem Versand mit dem Mehrbetrag und einer gesonderten Zahlungsaufforderung; sind Sie nicht einverstanden, können Sie kostenlos stornieren. <a href=\"" + B + "/versand/\">Alle Versandpreise</a>") + "</p>";
@@ -465,6 +485,7 @@
       document.addEventListener("dg:modus", zeichnen);
       zeichnen();
 
+      if (form.elements.partner && !form.elements.partner.value) form.elements.partner.value = partnerCode();
       // Mit Konto: Adresse vorbelegen
       var s = sitzung();
       if (s && DG.api) api("/konto").then(function (d) {
@@ -480,7 +501,7 @@
           kunde: { land: landCode, name: f.get("name"), firma: f.get("firma") || "", ustid: f.get("ustid") || "", strasse: f.get("strasse"), plz: f.get("plz"), ort: f.get("ort"),
                    email: f.get("email"), telefon: f.get("telefon") || "", hinweis: f.get("hinweis") || "", werbehinweis: true, keine_werbung: !!f.get("keine_werbung"),
                    liefer: f.get("gleich") ? null : { firma: f.get("l_firma") || "", name: f.get("l_name"), strasse: f.get("l_strasse"), plz: f.get("l_plz"), ort: f.get("l_ort") } },
-          zahlart: f.get("zahlart"), agb: !!f.get("agb"), gesamt_brutto: r.brutto, gutschein: gutschein ? gutschein.code : "",
+          zahlart: f.get("zahlart"), agb: !!f.get("agb"), gesamt_brutto: r.brutto, gutschein: gutschein ? gutschein.code : "", guthaben: guthaben ? guthaben.code : "", partner: (f.get("partner") || "").trim(),
           konto_anlegen: !!f.get("konto_anlegen"), passwort: f.get("passwort") || "", bewertungsmail: !!f.get("bewertungsmail"), newsletter: !!f.get("newsletter"),
         };
       }
@@ -521,7 +542,7 @@
         var knopf = $("button[type=submit]", form), box = $("#sofort"), feld = $("#paypal-knoepfe");
         knopf.hidden = sofort; box.hidden = !sofort;
         if (!sofort) return;
-        $(".sofort-summe", box).innerHTML = "Jetzt zu zahlen: <b>" + eur(rechnen(ix).brutto) + "</b>" + (rechnen(ix).satz ? " inkl. MwSt." : "") + (rechnen(ix).versand ? " inkl. Versand." : ", Versand kostenlos.") + "<br>Mit der Zahlung ist Ihre Bestellung verbindlich.";
+        $(".sofort-summe", box).innerHTML = "Jetzt zu zahlen: <b>" + eur(rechnen(ix).zahlbetrag) + "</b>" + (rechnen(ix).satz ? " inkl. MwSt." : "") + (rechnen(ix).versand ? " inkl. Versand." : ", Versand kostenlos.") + "<br>Mit der Zahlung ist Ihre Bestellung verbindlich.";
         var neu = art === "Kreditkarte" ? "card" : "paypal";
         if (quelle === neu) return;
         quelle = neu; feld.textContent = "PayPal wird geladen …";
@@ -582,12 +603,17 @@
       var gs = $("#gutschein-status");
       $("#gutschein-los").addEventListener("click", function () {
         var code = form.elements.gutschein.value.trim();
-        if (!code) { gutschein = null; gs.textContent = ""; zeichnen(); return; }
+        if (!code) { gutschein = null; guthaben = null; gs.textContent = ""; zeichnen(); return; }
         api("/gutschein/pruefen", { code: code }).then(function (d) {
+          if (d.art === "wert") {
+            // Shop-Guthaben: zusätzlich zu einem Rabatt-Gutschein möglich, Feld wird für einen weiteren Code frei
+            guthaben = d; form.elements.gutschein.value = gutschein ? gutschein.code : ""; gs.className = "klein ok";
+            gs.textContent = "Gutschein " + d.code + " eingelöst: " + eur(d.rest) + " Guthaben werden vom Zahlbetrag abgezogen."; zeichnen(); return;
+          }
           gutschein = d; gs.className = "klein ok"; gs.textContent = "Gutschein eingelöst: " + d.prozent + " % Rabatt auf den Warenwert." + (d.mindestwert ? " Gilt ab " + eur(d.mindestwert) + " Warenwert (netto)." : ""); zeichnen();
         }).catch(function (err) { gutschein = null; gs.className = "klein fehler"; gs.textContent = err.message; zeichnen(); });
       });
-      form.elements.gutschein.addEventListener("input", function () { if (gutschein) { gutschein = null; gs.textContent = ""; zeichnen(); } });
+      form.elements.gutschein.addEventListener("input", function () { if (gutschein) { gutschein = null; gs.textContent = guthaben ? "Gutschein " + guthaben.code + " bleibt eingelöst." : ""; zeichnen(); } });
       // Lieferland: bestimmt Versand, Steuer und PLZ-Format; gemerkt für die Preisanzeige auf allen Seiten
       var landWahl = form.elements.land;
       landWahl.innerHTML = VERSAND.laender.map(function (l) { return '<option value="' + l.c + '"' + (l.c === landCode ? " selected" : "") + ">" + esc(l.n) + "</option>"; }).join("");
@@ -747,10 +773,91 @@
         $("#konto-name").textContent = k.name || k.email;
         var pf = $("#profil");
         ["name", "firma", "ustid", "strasse", "plz", "ort", "telefon"].forEach(function (f) { if (pf.elements[f]) pf.elements[f].value = k[f] || ""; });
+        partnerBereich();
         $("#meine-bestellungen").innerHTML = d.bestellungen.length ? d.bestellungen.map(function (b) { return bestellHtml(b, k.email); }).join("") : '<p class="klein">Noch keine Bestellungen.</p>';
       }).catch(function (err) { meld(err.message); });
     }
     function sitzungSetzen(d) { schreib("dg-sitzung", d.sitzung); kontoKopf(); angemeldet(); }
+
+    // Partnerprogramm: Link, Guthaben, Provisionen, Auszahlung (Server: /partner)
+    var ZUSTAND = { vorgemerkt: "vorgemerkt", verfuegbar: "verfügbar", storniert: "entfallen" };
+    var AUSZ = { beantragt: "beantragt", ausgezahlt: "ausgezahlt", abgelehnt: "abgelehnt" };
+    function datum(t) { return t ? new Date(t).toLocaleDateString("de-DE") : ""; }
+    function partnerBereich(daten) {
+      var ziel = $("#partner-bereich"); if (!ziel) return;
+      (daten ? Promise.resolve(daten) : api("/partner")).then(function (d) {
+        var p = d.partner, satzT = String(d.satz).replace(".", ",");
+        if (!p) {
+          ziel.innerHTML = '<div class="kasten"><p><b>Empfehlen und ' + satzT + ' % verdienen.</b> Teilen Sie Ihren persönlichen Link. Kauft jemand darüber bei uns, bekommen Sie ' + satzT +
+            ' % vom Warenwert (netto, ohne Versand). Auszahlung ab ' + d.mindest + ' € per Überweisung oder PayPal. <a href="' + B + '/partnerprogramm/">So funktioniert es</a></p>' +
+            '<form id="partner-werden"><label class="check"><input type="checkbox" name="bedingungen" required> Ich stimme den <a href="' + B + '/partnerprogramm/#bedingungen" target="_blank">Partnerbedingungen</a> zu.</label>' +
+            '<button class="btn pri">Partner werden</button></form></div>';
+          $("#partner-werden").addEventListener("submit", function (e) {
+            e.preventDefault();
+            api("/partner/werden", { bedingungen: true }).then(partnerBereich).catch(function (err) { meld(err.message); });
+          });
+          return;
+        }
+        var s = p.summen, a = p.auszahlung || {};
+        var prov = p.provisionen.length ? '<table class="v-tabelle"><tr><th>Datum</th><th>Warenwert netto</th><th>Provision</th><th>Stand</th></tr>' + p.provisionen.map(function (x) {
+          return "<tr><td>" + datum(x.datum) + "</td><td>" + eur(x.basis) + "</td><td>" + eur(x.betrag) + "</td><td>" + ZUSTAND[x.zustand] +
+            (x.zustand === "vorgemerkt" && x.frei_ab ? " (ab " + datum(x.frei_ab) + ")" : "") + "</td></tr>";
+        }).join("") + "</table>" : '<p class="klein">Noch keine vermittelten Bestellungen.</p>';
+        var ausz = p.auszahlungen.length ? '<p class="klein">' + p.auszahlungen.map(function (x) {
+          return datum(x.beantragt) + ": " + eur(x.betrag) + (x.art === "gutschein" ? " als Gutschein <b>" + esc(x.code) + "</b> über " + eur(x.wert) : " " + AUSZ[x.status]);
+        }).join("<br>") + "</p>" : "";
+        var kann = s.guthaben >= d.mindest && !s.beantragt, mehr = r2(s.guthaben * (100 + d.aufschlag) / 100);
+        ziel.innerHTML = (p.status !== "aktiv" ? '<p class="meldung fehler">Ihr Partnerkonto ist gesperrt. Neue Bestellungen über Ihren Link bekommen keine Provision. Fragen an sales@ts-systec.de.</p>' : "") +
+          '<div class="kasten"><p>Ihr Partnerlink (funktioniert auch an jeder Produktseite mit <b>?p=' + esc(p.code) + '</b>):</p>' +
+          '<p style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" readonly value="' + esc(p.link) + '" id="partner-link" style="flex:1;min-width:220px"> <button type="button" class="btn sec" id="partner-kopieren">Kopieren</button></p>' +
+          '<p class="klein">Ihr Code zum Weitersagen: <b>' + esc(p.code) + '</b> (kann an der Kasse eingetragen werden). Bitte kennzeichnen Sie Ihre Empfehlungen als Werbung, z. B. mit „Anzeige“ oder „#werbung“.</p></div>' +
+          '<div class="kasten"><p>Verfügbar: <b>' + eur(s.guthaben) + '</b> · vorgemerkt: ' + eur(s.vorgemerkt) + ' · ausgezahlt: ' + eur(s.ausgezahlt) + (s.beantragt ? " · beantragt: " + eur(s.beantragt) : "") + '</p>' +
+          '<p class="klein">Eine Provision wird ' + d.frei_tage + ' Tage nach dem Versand verfügbar, wenn die Bestellung bezahlt und nicht widerrufen ist. Bei Widerruf oder Storno entfällt sie (bei Teilwiderruf anteilig).</p>' +
+          prov + ausz +
+          '<p style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" class="btn pri" id="partner-gutschein"' + (kann ? "" : " disabled") + '>Als Shop-Gutschein nehmen (+' + d.aufschlag + ' %' + (kann ? ": " + eur(mehr) : "") + ')</button>' +
+          '<button type="button" class="btn sec" id="partner-auszahlen"' + (kann ? "" : " disabled") + '>Auszahlung beantragen</button> <span class="klein">ab ' + d.mindest + ' € verfügbar</span></p>' +
+          '<p class="klein">Als Shop-Gutschein bekommen Sie ' + d.aufschlag + ' % mehr, sofort per E-Mail. Er gilt für alle Artikel, auch in mehreren Bestellungen, und kann weitergegeben werden; eine Auszahlung in Geld ist dann nicht mehr möglich.</p></div>' +
+          '<form id="partner-auszahlung" class="kasten"><p><b>Auszahlungsdaten</b></p>' +
+          '<label class="check"><input type="radio" name="art" value="ueberweisung"' + (a.art !== "paypal" ? " checked" : "") + '> Überweisung</label>' +
+          '<label class="check"><input type="radio" name="art" value="paypal"' + (a.art === "paypal" ? " checked" : "") + '> PayPal</label>' +
+          '<label>Name (Kontoinhaber bzw. Empfänger) <input type="text" name="inhaber" required value="' + esc(a.inhaber || "") + '"></label>' +
+          '<label class="p-ueberweisung">IBAN <input type="text" name="iban" autocomplete="off" spellcheck="false" value="' + esc(a.iban || "") + '"></label>' +
+          '<label class="p-paypal">PayPal-E-Mail <input type="email" name="paypal" value="' + esc(a.paypal || "") + '"></label>' +
+          '<label>Steuerlich bin ich <select name="steuer"><option value="privat">Privatperson</option><option value="klein">Kleinunternehmer (§ 19 UStG)</option><option value="ust">umsatzsteuerpflichtiger Unternehmer</option></select></label>' +
+          '<label class="p-ust">USt-IdNr. oder Steuernummer <input type="text" name="steuernr" value="' + esc(a.steuernr || "") + '"></label>' +
+          '<p class="klein">Umsatzsteuerpflichtige Unternehmer erhalten eine Gutschrift mit Umsatzsteuer. Provisionen können für Sie steuerpflichtig sein; das prüfen Sie bitte selbst.</p>' +
+          '<button class="btn sec">Speichern</button></form>';
+        var f = $("#partner-auszahlung");
+        f.elements.steuer.value = a.steuer || "privat";
+        function felder() {
+          var pp = f.querySelector("input[name=art]:checked").value === "paypal";
+          $(".p-ueberweisung", f).hidden = pp; $(".p-paypal", f).hidden = !pp; $(".p-ust", f).hidden = f.elements.steuer.value !== "ust";
+        }
+        f.addEventListener("change", felder); felder();
+        f.addEventListener("submit", function (e) {
+          e.preventDefault(); var x = new FormData(f), dd = {};
+          x.forEach(function (v, k) { dd[k] = v; });
+          api("/partner/auszahlung", dd, "PUT").then(function (n) { partnerBereich(n); meld("Auszahlungsdaten gespeichert.", true); }).catch(function (err) { meld(err.message); });
+        });
+        $("#partner-kopieren").addEventListener("click", function () {
+          var i = $("#partner-link"); i.select();
+          (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).catch(function () { try { document.execCommand("copy"); } catch (x) {} });
+          this.textContent = "Kopiert ✓";
+        });
+        $("#partner-gutschein").addEventListener("click", function () {
+          if (!confirm("Guthaben von " + eur(s.guthaben) + " in einen Shop-Gutschein über " + eur(mehr) + " umwandeln? Das lässt sich nicht rückgängig machen.")) return;
+          this.disabled = true;
+          api("/partner/auszahlen", { art: "gutschein" }).then(function (n) { partnerBereich(n); meld("Ihr Gutschein ist unterwegs. Den Code finden Sie auch hier im Konto.", true); })
+            .catch(function (err) { meld(err.message); });
+        });
+        $("#partner-auszahlen").addEventListener("click", function () {
+          if (!confirm("Verfügbares Guthaben von " + eur(s.guthaben) + " jetzt auszahlen lassen?")) return;
+          this.disabled = true;
+          api("/partner/auszahlen", {}).then(function (n) { partnerBereich(n); meld("Auszahlung beantragt. Wir zahlen in der Regel innerhalb weniger Werktage aus.", true); })
+            .catch(function (err) { meld(err.message); });
+        });
+      }).catch(function (err) { ziel.innerHTML = '<p class="klein">' + esc(err.message) + "</p>"; });
+    }
     $("#anmelden").addEventListener("submit", function (e) {
       e.preventDefault(); var f = new FormData(e.target);
       api("/konto/anmelden", { email: f.get("email"), passwort: f.get("passwort") }).then(sitzungSetzen).catch(function (err) { meld(err.message); });
@@ -931,7 +1038,8 @@
     if (a) { e.preventDefault(); inDenKorb(a.dataset.sku, 1); }
   });
   korbZaehler(); kontoKopf(); preiseZeigen();
-  if (!einwilligung()) banner(false); else googleLaden();
+  if (!einwilligung()) banner(false);
+  else { googleLaden(); if (partnerAusLink && einwilligung().partner === undefined) banner(true); else partnerMerken(); }
   besuchZaehlen();
   produktseite(); startseiteAuswahl(); kategorieseite(); suchseite(); kasse(); bestellseite(); widerrufseite(); kontoseite(); berater(); newsletter();
 })();

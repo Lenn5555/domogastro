@@ -2,6 +2,7 @@
 // Kunde: POST /widerruf mit Bestellnummer + E-Mail + Artikeln → sofortige Eingangsbestätigung per Mail.
 // Verwaltung: eingegangen → zurueck („Ware ist zurück“) → erstattet (Betrag, Mail an den Kunden). Das Geld überweist Lenn selbst.
 import { Fehler, text, jetzt, runden, gleich } from "./hilfe.js";
+import { wertFreigeben } from "./partner.js";
 import { senden, widerrufKunde, widerrufVertrieb, erstattetMail } from "./mail.js";
 
 const SCHRITTE = ["zurueck", "erstattet"];
@@ -87,6 +88,7 @@ export async function verwaltungWiderruf(env, ctx, d) {
       env.DB.prepare("DELETE FROM bewertungsanfragen WHERE nr = ? AND gesendet = ''").bind(w.nr),
       env.DB.prepare("UPDATE gutscheine SET eingeloest_nr = '', eingeloest_am = '' WHERE eingeloest_nr = ?").bind(w.nr),
     ]);
+    await wertFreigeben(env, w.nr);
   }
   ctx.waitUntil(senden(env, b.email, `Erstattung zu Ihrer Bestellung ${b.nr}`, erstattetMail(env, b, { ...w, positionen: JSON.parse(w.positionen), betrag })));
   return { ok: true };

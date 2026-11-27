@@ -105,3 +105,32 @@ CREATE TABLE IF NOT EXISTS newsletter_ausgabe_gruppe (ausgabe_id INTEGER PRIMARY
 
 -- Eigene Besucherstatistik ohne Cookies (Lenn 2026-11-26): nur Tageszähler, keine IP, keine Kennung
 CREATE TABLE IF NOT EXISTS statistik (tag TEXT NOT NULL, ereignis TEXT NOT NULL, quelle TEXT NOT NULL DEFAULT '', n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tag, ereignis, quelle));
+
+-- Partnerprogramm (Lenn 2026-11-27): 7,5 % auf den vermittelten Warenwert netto. Siehe src/partner.js
+-- partner.auszahlung: JSON { art: ueberweisung|paypal, inhaber, iban, paypal, steuer: privat|klein|ust, steuernr }
+CREATE TABLE IF NOT EXISTS partner (
+  kunde_id INTEGER PRIMARY KEY, code TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL,            -- aktiv, gesperrt, geloescht (Konto gelöscht)
+  seit TEXT NOT NULL, bedingungen TEXT NOT NULL, auszahlung TEXT NOT NULL DEFAULT '{}'
+);
+-- Eine Zeile je vermittelter Bestellung. Eigenkauf: status storniert, betrag 0, grund gesetzt. frei_ab = Versand + 14 Tage
+CREATE TABLE IF NOT EXISTS provisionen (
+  nr TEXT PRIMARY KEY, partner_id INTEGER NOT NULL, code TEXT NOT NULL,
+  basis REAL NOT NULL, satz REAL NOT NULL, betrag REAL NOT NULL,
+  status TEXT NOT NULL,            -- vorgemerkt, storniert (verfügbar/gekürzt wird beim Lesen aus Bestellung und Widerrufen berechnet)
+  grund TEXT NOT NULL DEFAULT '', datum TEXT NOT NULL, frei_ab TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS provisionen_partner ON provisionen(partner_id);
+CREATE TABLE IF NOT EXISTS auszahlungen (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, partner_id INTEGER NOT NULL, betrag REAL NOT NULL,
+  ziel TEXT NOT NULL,              -- Auszahlungsdaten zum Zeitpunkt des Antrags (JSON)
+  status TEXT NOT NULL,            -- beantragt, ausgezahlt, abgelehnt
+  beantragt TEXT NOT NULL, erledigt TEXT NOT NULL DEFAULT '', notiz TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS auszahlungen_partner ON auszahlungen(partner_id);
+-- Shop-Guthaben (Lenn 2026-11-27): Partner kann Provision als Gutschein mit 10 % Aufschlag nehmen. Code DGP-…, Euro-Betrag (brutto),
+-- auch in Teilen einlösbar (rest), übertragbar. Wird bei Storno einer Bestellung wieder gutgeschrieben.
+CREATE TABLE IF NOT EXISTS wertgutscheine (
+  code TEXT PRIMARY KEY, partner_id INTEGER, auszahlung_id INTEGER, wert REAL NOT NULL, rest REAL NOT NULL, erstellt TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS wertgutschein_einloesungen (nr TEXT PRIMARY KEY, code TEXT NOT NULL, betrag REAL NOT NULL, datum TEXT NOT NULL);
