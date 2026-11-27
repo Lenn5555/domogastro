@@ -362,14 +362,20 @@ verschieben und drehen. Am Ende legen Sie alles mit einem Klick in den Warenkorb
 <aside class="pl-links">
 <div class="kasten"><b>1. Raum</b><div class="pl-raumfelder"><label>Breite (m) <input name="raum-b" type="number" min="1.5" max="30" step="0.1" inputmode="decimal"></label>
 <label>Tiefe (m) <input name="raum-t" type="number" min="1.5" max="30" step="0.1" inputmode="decimal"></label></div></div>
-<div class="kasten"><b>2. Geräte hinzufügen</b>
+<div class="kasten pl-ki" hidden><b>2. Von Domo planen lassen</b>
+<p class="klein">Beschreiben Sie, was Sie vorhaben. Domo, unsere KI, stellt passende Geräte aus unserem Sortiment zusammen und ordnet sie im Raum an. Danach können Sie alles von Hand anpassen.</p>
+<textarea name="pl-wunsch" rows="5" maxlength="1500" placeholder="z. B. Imbiss mit Pommes und Burgern, ca. 80 Portionen am Tag, Tür unten links, Budget 8.000 €"></textarea>
+<p class="pl-knoepfe"><button type="button" class="btn pri pl-ki-los">Plan erstellen lassen</button><button type="button" class="btn sec pl-ki-neu" hidden>Ganz neu planen</button></p>
+<div class="pl-ki-antwort" aria-live="polite"></div>
+<p class="klein">Ihre Beschreibung geht dafür an unseren KI-Dienstleister (siehe <a href="{u('/datenschutz/')}#ki-berater">Datenschutz</a>). Bitte keine persönlichen Daten eingeben. Vorschläge der KI sind unverbindlich und können Fehler enthalten.</p></div>
+<div class="kasten"><b><span class="pl-nr">2</span>. Geräte hinzufügen</b>
 <input name="pl-suche" type="search" placeholder="Suchen, z. B. Fritteuse" aria-label="Geräte suchen"><select name="pl-kat" aria-label="Bereich"></select>
 <div class="pl-katalog"></div></div>
 </aside>
 <div class="pl-mitte"><div class="pl-flaeche"></div><p class="klein pl-tipp">Raster: 0,5 m. Geräte rasten an Wänden und aneinander ein. Rot = überschneidet sich oder steht außerhalb. Hauben (gestrichelt, blau) hängen über den Geräten und dürfen darüber liegen.</p></div>
 <aside class="pl-rechts">
 <div class="kasten pl-wahl"></div>
-<div class="kasten"><b>3. Ihre Liste</b><div class="pl-liste"></div>
+<div class="kasten"><b><span class="pl-nr">3</span>. Ihre Liste</b><div class="pl-liste"></div>
 <p class="pl-knoepfe"><button type="button" class="btn pri pl-korb">Alles in den Warenkorb</button></p>
 <p class="pl-knoepfe"><button type="button" class="btn sec pl-link">Link kopieren</button><button type="button" class="btn sec pl-druck">Drucken</button><button type="button" class="btn sec pl-neu">Neu</button></p>
 <p class="klein">Ihr Plan steht nur in der Adresse dieser Seite. Wir speichern nichts. Mit dem Link können Sie ihn später wieder öffnen oder weitergeben.</p></div>
@@ -715,6 +721,9 @@ def main():
             planer.append({"i": v["sku"], "n": n, "s": p["slug"], "k": p["kategorie"], "b": b,
                            "w": round(mm_["breite"]), "d": round(mm_["tiefe"]), "h": round(mm_["hoehe"]) if mm_.get("hoehe") else 0, "p": v["preis_netto"]})
     (OUT / "planer.json").write_text(json.dumps(planer, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    # dieselbe Liste ohne Bild/Slug für die KI-Planung auf dem Server (nur öffentliche Angaben)
+    (ROOT / "worker/src/planer.json").write_text(json.dumps([{k: g[k] for k in ("i", "n", "k", "w", "d", "h", "p")} for g in planer],
+                                                         ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     (OUT / "produkte-index.json").write_text(json.dumps({"artikel": artikel, "produkte": liste}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
     # Katalog für den Shop-Server: Preise prüft der Server selbst, nie der Browser

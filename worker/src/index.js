@@ -14,6 +14,7 @@ import * as konto from "./konto.js";
 import * as shop from "./shop.js";
 import Anthropic from "@anthropic-ai/sdk";
 import * as berater from "./berater.js";
+import * as planer from "./planen.js";
 import * as widerruf from "./widerruf.js";
 import * as newsletter from "./newsletter.js";
 import * as statistik from "./statistik.js";
@@ -88,6 +89,7 @@ async function verteilen(request, env, ctx) {
     case "POST /newsletter/abmelden": return newsletter.abmelden(env, d.s);
     case "GET /beraten": return { aktiv: Boolean(env.ANTHROPIC_API_KEY) };
     case "POST /beraten": return beratenAnfrage(env, d, request);
+    case "POST /planen": return planenAnfrage(env, d, request);
     case "GET /verwaltung": await shop.verwaltungPruefen(env, request); return shop.verwaltungListe(env);
     case "POST /zaehlen": return statistik.zaehlen(env, String(d.e || ""), String(d.q || ""));
     case "GET /verwaltung/statistik": await shop.verwaltungPruefen(env, request); return statistik.verwaltungStatistik(env);
@@ -99,6 +101,22 @@ async function verteilen(request, env, ctx) {
     case "POST /verwaltung/widerruf": await shop.verwaltungPruefen(env, request); return widerruf.verwaltungWiderruf(env, ctx, d);
     case "POST /verwaltung/bewertung": await shop.verwaltungPruefen(env, request); return shop.verwaltungBewertung(env, d);
     default: throw new Fehler("Nicht gefunden.", 404);
+  }
+}
+
+async function planenAnfrage(env, d, request) {
+  const anfrage = planer.anfragePruefen(d);
+  if (!anfrage) throw new Fehler("Bitte Raumgröße (1,5 bis 30 m) und eine kurze Beschreibung angeben.");
+  if (!env.ANTHROPIC_API_KEY) throw new Fehler("Die KI-Planung ist noch nicht eingerichtet.", 503);
+  if (env.BERATER_BREMSE) {
+    const ip = request.headers.get("CF-Connecting-IP") || "unbekannt";
+    if (!(await env.BERATER_BREMSE.limit({ key: `planen:${ip}` })).success) throw new Fehler("Zu viele Anfragen auf einmal. Bitte kurz warten.", 429);
+  }
+  try {
+    return await planer.planen(berater.neuerClient(env), anfrage, env.MODELL || undefined);
+  } catch (err) {
+    console.error("Planen:", err instanceof Anthropic.APIError ? `${err.status} ${err.message}` : err);
+    throw new Fehler("Die KI-Planung ist gerade nicht erreichbar. Bitte später noch einmal versuchen.", err instanceof Anthropic.RateLimitError ? 429 : 502);
   }
 }
 

@@ -426,3 +426,6 @@ footer .steuerhinweis{margin-top:24px;font-size:12px;color:var(--mute)}
 .pl-zeile b{white-space:nowrap;font-weight:600}
 .pl-zeile.summe{border-bottom:0;font-weight:700}
 .pl-zeile.summe b{font-weight:700}
+.pl-ki textarea{width:100%;box-sizing:border-box;background:var(--n2);color:var(--ink);border:1px solid var(--n3);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;resize:vertical;margin-top:6px}
+.pl-ki-text{font-size:14px;line-height:1.45;margin:8px 0}
+.linkknopf{background:none;border:0;padding:0;color:var(--cyan);text-decoration:underline;cursor:pointer;font:inherit}

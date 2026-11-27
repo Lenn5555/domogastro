@@ -266,11 +266,60 @@
     document.addEventListener("dg:modus", function () { katalog(); seite(); });
   }
 
+  /* ---------- KI-Planung (Server: POST /planen, nur wenn der KI-Berater eingerichtet ist) ---------- */
+  function kiAufbauen() {
+    var k = $(".pl-ki", box); if (!k || !DG.api) return;
+    var feld = $("[name=pl-wunsch]", k), los = $(".pl-ki-los", k), neu = $(".pl-ki-neu", k), aus = $(".pl-ki-antwort", k);
+    var vorher = null, sicherung = null;
+    fetch(DG.api + "/beraten").then(function (r) { return r.json(); }).then(function (d) {
+      if (!d.aktiv) return;
+      k.hidden = false;
+      [].forEach.call(box.querySelectorAll(".pl-nr"), function (n) { n.textContent = +n.textContent + 1; });
+    }).catch(function () {});
+    function zustand() {
+      los.textContent = vorher ? "Plan ändern lassen" : "Plan erstellen lassen";
+      neu.hidden = !vorher;
+      feld.placeholder = vorher ? "Was soll Domo ändern? z. B. noch eine Spülmaschine dazu, Kühlung näher an die Tür" : "z. B. Imbiss mit Pommes und Burgern, ca. 80 Portionen am Tag, Tür unten links, Budget 8.000 €";
+    }
+    neu.addEventListener("click", function () { vorher = null; aus.innerHTML = ""; zustand(); feld.focus(); });
+    aus.addEventListener("click", function (ev) {
+      if (!ev.target.closest(".pl-ki-zurueck") || !sicherung) return;
+      plan = sicherung; sicherung = null; wahl = -1; zeichnen();
+      var z = $(".pl-ki-zurueck", aus); if (z) z.remove();
+    });
+    los.addEventListener("click", function () {
+      var text = feld.value.trim();
+      if (text.length < 3) { aus.innerHTML = '<p class="meldung fehler klein">Bitte beschreiben Sie kurz, was in den Raum soll.</p>'; feld.focus(); return; }
+      los.disabled = true; los.textContent = "Domo plant …";
+      aus.innerHTML = '<p class="klein">Das dauert meist 20 bis 60 Sekunden.</p>';
+      fetch(DG.api + "/planen", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ b: plan.w, t: plan.d, text: text, vorher: vorher }) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.fehler || "Die KI-Planung ist gerade nicht erreichbar."); return j; }); })
+        .then(function (d) {
+          var html = '<p class="pl-ki-text">' + esc(d.antwort || "").replace(/\n+/g, "<br>") + "</p>";
+          if (d.teile && d.teile.length) {
+            sicherung = { w: plan.w, d: plan.d, t: plan.t };
+            plan = { w: plan.w, d: plan.d, t: d.teile.filter(function (t) { return t.i === "tuer" || geraete[t.i]; })
+              .map(function (t) { return { id: naechsteId++, i: t.i, x: t.x, y: t.y, r: t.r }; }) };
+            wahl = -1; zeichnen();
+            vorher = { text: vorher ? vorher.text + " / " + text : text, reihen: d.plan.reihen, tuer: d.plan.tuer };
+            feld.value = "";
+            if (d.hinweise && d.hinweise.length) html += '<p class="meldung fehler klein">Nicht alles passte perfekt. Rot markierte Teile bitte von Hand verschieben oder entfernen.</p>';
+            if (sicherung.t.length) html += '<p class="klein"><button type="button" class="linkknopf pl-ki-zurueck">Vorherigen Plan zurückholen</button></p>';
+            if (window.innerWidth < 900) svg.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          aus.innerHTML = html;
+        })
+        .catch(function (e) { aus.innerHTML = '<p class="meldung fehler klein">' + esc(e.message) + "</p>"; })
+        .then(function () { los.disabled = false; zustand(); });
+    });
+  }
+
   fetch(B + "/planer.json").then(function (r) { return r.json(); }).then(function (d) {
     liste = d; liste.forEach(function (g) { geraete[g.i] = g; });
     var h = location.hash.match(/plan=([^&]+)/);
     if (h) { var p = dekodieren(decodeURIComponent(h[1])); if (p) plan = p; }
-    aufbauen(); zeichnen();
+    aufbauen(); zeichnen(); kiAufbauen();
     box.classList.add("bereit");
   }).catch(function () { $(".pl-flaeche", box).innerHTML = '<p class="meldung fehler">Der Planer konnte nicht geladen werden. Bitte Seite neu laden.</p>'; });
 })();
