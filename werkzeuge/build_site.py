@@ -289,7 +289,7 @@ def seite(titel, inhalt, pfad, beschreibung="", aktiv="", index=True):
 <footer class="fuss g"><div class="in">{newsletter_fuss()}<div class="spalten">
 <div><img src="{u('/logo.svg')}" alt="Domo Gastro"><p>Zuhause in der Gastronomie. Profigeräte, Ausstattung und Zubehör für Gastronomie, Hotellerie und alle, die zu Hause wie Profis kochen.</p><p>{e(CFG['betreiber_zeile'])}</p><p class="klein">WEEE-Reg.-Nr. {e(CFG['weee'])}</p></div>
 <div><h3>Shop</h3><ul>{''.join(f'<li><a href="{u("/" + slug(k) + "/")}">{e(k)}</a></li>' for k in kategorien()[:6])}</ul></div>
-<div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/widerrufen/')}">Vertrag widerrufen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li><li><a href="{u('/newsletter/')}">Newsletter</a></li><li><a href="{u('/raumplaner/')}">Raumplaner</a></li><li><a href="{u('/karriere/')}">Karriere</a></li><li><a href="#" class="einw-oeffnen">Cookie-Einstellungen</a></li></ul></div>
+<div><h3>Service</h3><ul><li><a href="{u('/konto/')}">Kundenkonto</a></li><li><a href="{u('/bestellung/')}">Bestellung verfolgen</a></li><li><a href="{u('/widerrufen/')}">Vertrag widerrufen</a></li><li><a href="{u('/versand/')}">Versand und Zahlung</a></li><li><a href="{u('/kontakt/')}">Kontakt</a></li><li><a href="{u('/newsletter/')}">Newsletter</a></li><li><a href="{u('/raumplaner/')}">Raumplaner</a></li><li><a href="{u('/partnerprogramm/')}">Partnerprogramm</a></li><li><a href="{u('/karriere/')}">Karriere</a></li><li><a href="#" class="einw-oeffnen">Cookie-Einstellungen</a></li></ul></div>
 <div><h3>Rechtliches</h3><ul><li><a href="{u('/impressum/')}">Impressum</a></li><li><a href="{u('/datenschutz/')}">Datenschutz</a></li><li><a href="{u('/agb/')}">AGB</a></li><li><a href="{u('/widerruf/')}">Widerrufsbelehrung</a></li><li><a href="{u('/entsorgung/')}">Entsorgung und Batterien</a></li></ul></div>
 </div><p class="steuerhinweis"></p></div></footer>
 </body></html>"""
@@ -536,6 +536,7 @@ def warenkorb():
 <label style="display:block;margin-top:14px">Hinweis zur Bestellung (optional) <textarea name="hinweis" rows="2" maxlength="1000"></textarea></label>
 <div class="gutschein"><label>Gutscheincode (optional) <input type="text" name="gutschein" autocomplete="off" spellcheck="false" style="text-transform:uppercase"></label><button class="btn sec" type="button" id="gutschein-los">Einlösen</button></div>
 <p class="klein" id="gutschein-status" role="status"></p>
+<label class="partner-feld">Partnercode (optional, falls Sie jemand empfohlen hat) <input type="text" name="partner" maxlength="12" autocomplete="off" spellcheck="false" style="text-transform:uppercase"></label>
 <fieldset><legend>Zahlungsart</legend>
 <label class="check zahlart"><input type="radio" name="zahlart" value="Vorkasse" checked> <span><b>Überweisung (Vorkasse)</b><br><span class="klein">Die Bankverbindung kommt per E-Mail, wir versenden nach Zahlungseingang.</span></span></label>
 <label class="check zahlart sofort-art" hidden><input type="radio" name="zahlart" value="Kreditkarte"> <span><b>Kreditkarte</b><br><span class="klein">Sofort bezahlen mit Visa, Mastercard und weiteren Karten, sicher abgewickelt über PayPal. Ein PayPal-Konto ist nicht nötig.</span></span></label>
@@ -570,6 +571,7 @@ def konto():
 <div data-bereich="uebersicht" hidden>
 <p>Angemeldet als <b id="konto-name"></b>. <button type="button" id="abmelden" class="ob">Abmelden</button></p>
 <h2 class="titel" style="font-size:28px;margin-top:28px">Meine Bestellungen</h2><div id="meine-bestellungen"></div>
+<h2 class="titel" style="font-size:28px;margin-top:28px" id="partner">Partnerprogramm</h2><div id="partner-bereich"><p class="klein">Lädt …</p></div>
 <h2 class="titel" style="font-size:28px;margin-top:28px">Meine Daten</h2>
 <form id="profil" class="kasten"><label>Vor- und Nachname <input type="text" name="name"></label><label>Firma (optional) <input type="text" name="firma"></label>
 <label>USt-IdNr. (optional) <input type="text" name="ustid"></label><label>Straße und Hausnummer <input type="text" name="strasse"></label>
@@ -689,7 +691,8 @@ def main():
     for pfad, titel, datei in [("/impressum/", "Impressum", "impressum.html"), ("/datenschutz/", "Datenschutzerklärung", "datenschutz.html"),
                                ("/agb/", "Allgemeine Geschäftsbedingungen", "agb.html"), ("/widerruf/", "Widerrufsbelehrung", "widerruf.html"),
                                ("/versand/", "Versand und Zahlung", "versand.html"), ("/kontakt/", "Kontakt", "kontakt.html"),
-                               ("/entsorgung/", "Entsorgung von Altgeräten, Batterien und Verpackungen", "entsorgung.html")]:
+                               ("/entsorgung/", "Entsorgung von Altgeräten, Batterien und Verpackungen", "entsorgung.html"),
+                               ("/partnerprogramm/", "Partnerprogramm: Empfehlen und 7,5 % Provision erhalten", "partnerprogramm.html")]:
         schreib(pfad, textseite(titel, datei, pfad))
     for r in RATGEBER:
         schreib(f"/ratgeber/{r['slug']}/", ratgeberseite(r))

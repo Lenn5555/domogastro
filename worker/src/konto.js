@@ -1,6 +1,7 @@
 // Kundenkonto: registrieren, anmelden, abmelden, Passwort zurücksetzen, Daten ändern, löschen.
 import { Fehler, sha256, zufall, passwortHash, gleich, text, email, jetzt } from "./hilfe.js";
 import { senden } from "./mail.js";
+import { kontoLoeschen as partnerLoeschen } from "./partner.js";
 
 const SITZUNG_TAGE = 30;
 const FELDER = ["name", "firma", "ustid", "strasse", "plz", "ort", "telefon"];
@@ -111,6 +112,7 @@ export async function loeschen(env, k) {
   await env.DB.batch([
     env.DB.prepare("UPDATE bestellungen SET kunde_id = NULL WHERE kunde_id = ?").bind(k.id),
     env.DB.prepare("UPDATE bewertungen SET kunde_id = NULL, name = 'Ehemaliger Kunde' WHERE kunde_id = ?").bind(k.id),
+    partnerLoeschen(env, k.id),
     env.DB.prepare("DELETE FROM sitzungen WHERE kunde_id = ?").bind(k.id),
     env.DB.prepare("DELETE FROM zuruecksetzen WHERE kunde_id = ?").bind(k.id),
     env.DB.prepare("DELETE FROM kunden WHERE id = ?").bind(k.id),

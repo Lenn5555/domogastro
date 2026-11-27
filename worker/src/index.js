@@ -8,6 +8,7 @@
 // Zeitplan:   täglich fällige Bitten um Bewertung verschicken (wrangler.toml [triggers])
 // Berater:    GET /beraten (eingerichtet?), POST /beraten (KI-Produktberater mit Claude, Schlüssel ANTHROPIC_API_KEY)
 // Newsletter:  POST /newsletter/anmelden, /newsletter/bestaetigen, /newsletter/abmelden; POST /newsletter/ein-klick?s=… (Mailprogramm, RFC 8058)
+// Partner:    GET /partner, POST /partner/werden, PUT /partner/auszahlung, POST /partner/auszahlen (mit Konto); Verwaltung: GET/POST /verwaltung/partner
 // Verwaltung: GET /verwaltung, GET /verwaltung/newsletter, POST /verwaltung/status, /verwaltung/bewertung (Schlüssel VERWALTUNG_SCHLUESSEL)
 import { Fehler, json } from "./hilfe.js";
 import * as konto from "./konto.js";
@@ -18,6 +19,7 @@ import * as planer from "./planen.js";
 import * as widerruf from "./widerruf.js";
 import * as newsletter from "./newsletter.js";
 import * as statistik from "./statistik.js";
+import * as partner from "./partner.js";
 
 function herkunftVon(env, request) {
   const h = request.headers.get("Origin") || "";
@@ -62,6 +64,10 @@ async function verteilen(request, env, ctx) {
     case "GET /konto": return konto.lesen(env, await konto.pflichtKunde(env, request));
     case "PUT /konto": return konto.aendern(env, await konto.pflichtKunde(env, request), d);
     case "DELETE /konto": return konto.loeschen(env, await konto.pflichtKunde(env, request));
+    case "GET /partner": return partner.lesen(env, await konto.pflichtKunde(env, request));
+    case "POST /partner/werden": return partner.werden(env, await konto.pflichtKunde(env, request), d);
+    case "PUT /partner/auszahlung": return partner.auszahlungSpeichern(env, await konto.pflichtKunde(env, request), d);
+    case "POST /partner/auszahlen": return partner.auszahlen(env, ctx, await konto.pflichtKunde(env, request), d);
     case "POST /bestellung": return mitNewsletter(env, ctx, request, d, await shop.bestellen(env, ctx, d, await konto.kundeAusAnfrage(env, request)));
     case "POST /bestellung/status": return shop.status(env, d);
     case "POST /widerruf": return widerruf.widerrufen(env, ctx, d);
@@ -93,6 +99,8 @@ async function verteilen(request, env, ctx) {
     case "GET /verwaltung": await shop.verwaltungPruefen(env, request); return shop.verwaltungListe(env);
     case "POST /zaehlen": return statistik.zaehlen(env, String(d.e || ""), String(d.q || ""));
     case "GET /verwaltung/statistik": await shop.verwaltungPruefen(env, request); return statistik.verwaltungStatistik(env);
+    case "GET /verwaltung/partner": await shop.verwaltungPruefen(env, request); return partner.verwaltungListe(env);
+    case "POST /verwaltung/partner": await shop.verwaltungPruefen(env, request); return partner.verwaltungAktion(env, ctx, d);
     case "GET /verwaltung/newsletter": await shop.verwaltungPruefen(env, request); return newsletter.verwaltungListe(env);
     case "POST /verwaltung/newsletter/test": await shop.verwaltungPruefen(env, request); return newsletter.testSenden(env, d);
     case "POST /verwaltung/newsletter/senden": await shop.verwaltungPruefen(env, request); return newsletter.versandStarten(env, d);

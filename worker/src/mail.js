@@ -39,14 +39,16 @@ export function rechtsAnhaenge(b) {
 }
 
 // Eigene kurze Mail mit der Bankverbindung (Vorkasse)
+// Zu zahlen: Gesamtbetrag minus Shop-Guthaben (Partnerprogramm)
+export const zuZahlen = (b) => runden(b.brutto - (b.kunde?.guthaben?.betrag || 0));
 export function zahlungsmail(env, b) {
   return `Guten Tag ${b.kunde.name},
 
-für Ihre Bestellung ${b.nr} bitten wir Sie, ${euro(b.brutto)} innerhalb von 7 Tagen zu überweisen:
+für Ihre Bestellung ${b.nr} bitten wir Sie, ${euro(zuZahlen(b))} innerhalb von 7 Tagen zu überweisen:
 
   Empfänger: ${env.BANK_INHABER}
   IBAN: ${env.BANK_IBAN}
-  Betrag: ${euro(b.brutto)}
+  Betrag: ${euro(zuZahlen(b))}
   Verwendungszweck: ${b.nr}
 
 Sobald das Geld da ist, versenden wir Ihre Bestellung.
@@ -83,7 +85,7 @@ function summen(b) {
   const rabatt = g ? `Warenwert netto: ${euro(warenwert)}\nGutschein ${g.code} (${g.prozent} %): −${euro(g.rabatt)}` : `Warenwert netto: ${euro(warenwert)}`;
   const steuer = st && st.satz === 0 ? `Umsatzsteuer: 0,00 € (${steuerHinweis(st)})` : `zzgl. ${satz} % MwSt.: ${euro(b.mwst)}`;
   const mehr = st && st.land && st.land !== "DE" ? `\n${MEHRVERSAND}` : "";
-  return `${rabatt}\n${versand}\n${steuer}\nGesamtbetrag: ${euro(b.brutto)}${st?.art === "OSS" ? `\n${steuerHinweis(st)}` : ""}${mehr}`;
+  return `${rabatt}\n${versand}\n${steuer}\nGesamtbetrag: ${euro(b.brutto)}${b.kunde?.guthaben ? `\nBezahlt mit Gutschein ${b.kunde.guthaben.code}: −${euro(b.kunde.guthaben.betrag)}\nNoch zu zahlen: ${euro(zuZahlen(b))}` : ""}${st?.art === "OSS" ? `\n${steuerHinweis(st)}` : ""}${mehr}`;
 }
 const landZeile = (k) => k.steuer?.landname && k.steuer.land !== "DE" ? k.steuer.landname.replace(/ \(.*\)$/, "").toUpperCase() : "";
 function adresse(k) {
@@ -147,7 +149,7 @@ ${summen(b)}
 Kunde (${b.email}${b.kunde_id ? ", mit Konto" : ", Gast"})
 
 ${adressen(b.kunde)}
-${b.kunde.hinweis ? `\nHinweis: ${b.kunde.hinweis}` : ""}${vertriebSteuer(b)}
+${b.kunde.hinweis ? `\nHinweis: ${b.kunde.hinweis}` : ""}${vertriebSteuer(b)}${b.partner ? `\n\nVermittelt von Partner ${b.partner.code}: ${b.partner.grund ? `keine Provision (${b.partner.grund})` : `${euro(b.partner.betrag)} Provision vorgemerkt`}` : ""}
 
 Status ändern: ${env.SITE_URL}/verwaltung/`;
 }
